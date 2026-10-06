@@ -42,13 +42,17 @@ struct Graph {
 extension Solver {
     static func details(_ typed: String) -> Details? {
         if let hash = Hash.parse(typed) { return hash.details }
-        guard let typed = Hash.numbers(in: typed) else { return nil }
-        let input = Latex.plain(typed)
+        guard let typed = Hash.numbers(in: typed).map(Prose.tidy), !Prose.reads(typed) else { return nil }
+        let asked = Rearrangement.asked(Latex.plain(typed))
+        let input = asked?.equation ?? Latex.plain(typed)
         if LinearSystem.parts(input).count >= 2 { return LinearSystem.parse(input)?.details ?? NonlinearSystem.parse(input)?.details }
         if Options.numberFacts, let number = NumberFacts.parse(input) { return number.details }
+        if let logic = Logic.parse(input) { return logic.details }
         if let comparison = Comparison.parse(input) { return comparison.details }
         if let evaluation = Evaluation.parse(input, hadLatex: typed.contains("\\")) { return evaluationDetails(evaluation) }
-        guard let eq = try? Parser.parse(input) else { return nil }
+        if Evaluation.namesNumber(input) { return nil }
+        if let simplification = Simplification.parse(input) { return simplification.details }
+        guard let eq = try? Parser.parse(input) else { return Rearrangement.parse(input, for: asked?.letter)?.details }
         let n = eq.unknown
         let (leftMath, rightMath) = (typeset(eq.left, n), typeset(eq.right, n))
         let header = row(leftMath, t(" = "), rightMath)
@@ -500,32 +504,34 @@ extension Solver {
             }
             return plain(shown)
         }
-        guard let numbered = Hash.numbers(in: typed) else { return nil }
+        guard let numbered = Hash.numbers(in: typed).map(Prose.tidy), !Prose.reads(numbered) else { return nil }
         let input = Latex.plain(numbered)
         if LinearSystem.parts(input).count < 2 {
             if NumberFacts.parse(input) != nil { return nil }
+            if let logic = Logic.parse(input) { return logic.holds ? "True" : "False" }
             if let comparison = Comparison.parse(input) { return comparison.holds ? "True" : "False" }
             if let evaluation = Evaluation.parse(input, hadLatex: numbered.contains("\\")) {
                 return evaluation.value.isFinite ? number(evaluation.value) : nil
             }
         }
+        if let simplification = Simplification.parse(input) { return plain(simplification.result.plain) }
         guard let answer = solve(typed), let d = details(typed) else { return nil }
         return d.roots.isEmpty ? plain(answer.exact) : d.roots.map(number).joined(separator: ", ")
     }
 }
 
-// The one number an answer is, for ans to be next time: what was worked out, or the root of an
-// equation that has just the one. Nil for anything else.
+// The numbers an answer is, for ans to be next time: what was worked out, or the roots of an
+// equation, as many as it has and in the order they are given. None for anything else.
 extension Solver {
-    static func value(_ typed: String) -> Double? {
-        guard Hash.parse(typed) == nil, let numbered = Hash.numbers(in: typed) else { return nil }
+    static func values(_ typed: String) -> [Double] {
+        guard Hash.parse(typed) == nil, let numbered = Hash.numbers(in: typed).map(Prose.tidy), !Prose.reads(numbered) else { return [] }
         let input = Latex.plain(numbered)
-        guard LinearSystem.parts(input).count < 2, NumberFacts.parse(input) == nil, Comparison.parse(input) == nil else { return nil }
+        guard LinearSystem.parts(input).count < 2, NumberFacts.parse(input) == nil, Comparison.parse(input) == nil, Logic.parse(input) == nil,
+              Simplification.parse(input) == nil else { return [] }
         if let evaluation = Evaluation.parse(input, hadLatex: numbered.contains("\\")) {
-            return evaluation.value.isFinite ? evaluation.value : nil
+            return evaluation.value.isFinite ? [evaluation.value] : []
         }
-        guard let d = details(typed), d.roots.count == 1 else { return nil }
-        return d.roots[0]
+        return details(typed)?.roots ?? []
     }
 }
 
@@ -901,6 +907,8 @@ private func render(_ e: Expr, _ n: String) -> (math: Math, level: Int) {
     case .sum(let k, let from, let to, let body, let product):
         let sign = Math.bigOperator(product ? "∏" : "∑", lower: row(t("\(k) = "), render(from, n).math), upper: render(to, n).math)
         return (row(sign, wrap(render(body, n), 2)), 2)
+    case .neg(.num(0)):
+        return (t("0"), 4)
     case .neg(let a):
         return (row(t("−"), wrap(render(a, n), 2)), 1)
     case .op("+", let a, let b):
@@ -910,14 +918,26 @@ private func render(_ e: Expr, _ n: String) -> (math: Math, level: Int) {
     case .op("-", let a, let b):
         return (row(render(a, n).math, t(" − "), wrap(render(b, n), 2)), 1)
     case .op("*", let a, let b):
+        // −2x is minus 2x, not (−2)·x.
+        if case .neg(let inner) = a, case .num = inner { return (row(t("−"), render(.op("*", inner, b), n).math), 1) }
         let l = wrap(render(a, n), 2), r = wrap(render(b, n), 2)
         // Juxtaposed as on paper, 2n and (x + 1)(x − 1); a dot where that would misread, 2·3 and x·x.
         let first = r.plain.first
         if first == "(" { return (row(l, r), 2) }
+        // A letter is written straight after what comes before it, 3ab and 6x²y, unless that is
+        // the same letter or a number: x·x and x·3 keep their dots.
+        var letter: String?
+        if case .index(let y) = b { letter = y }
+        if case .op("^", .index(let y), _) = b { letter = y }
+        if let letter, let last = l.plain.last, (last.isLetter && !letter.hasPrefix(String(last))) || "²³⁴⁵⁶⁷⁸⁹)".contains(last) {
+            return (row(l, r), 2)
+        }
         if case .num = a, !l.plain.contains("×"), let first, first.isLetter || "√|π".contains(first) { return (row(l, r), 2) }
         return (row(l, t("·"), r), 2)
     case .op("/", let a, let b):
         return (.fraction(render(a, n).math, render(b, n).math), 2)
+    case .op("%", let a, let b):
+        return (row(wrap(render(a, n), 2), t(" mod "), wrap(render(b, n), 2)), 1)
     case .op(_, let a, let b):
         return (.power(wrap(render(a, n), 4), render(b, n).math), 3)
     case .call(let f, let a):

@@ -2,8 +2,8 @@ import AppKit
 import ServiceManagement
 import SwiftUI
 
-// The settings window. It is opened by opening Spotlight Plus while it is already running, which
-// is what choosing it in Spotlight does, or by the gear at the foot of the panel. Each setting is
+// The settings window. It is opened by Spotlight Plus Settings, the app's entry for it in
+// Spotlight's list, or by the gear at the foot of the panel. Each setting is
 // kept in the defaults under the name the solver reads it by (Options), or the app (Prefs).
 final class SettingsWindow {
     private var window: NSWindow?
@@ -29,7 +29,18 @@ enum Prefs {
     private static func flag(_ key: String, _ fallback: Bool) -> Bool { UserDefaults.standard.object(forKey: key) as? Bool ?? fallback }
 
     static var returnCopies: Bool { flag("returnCopies", true) }
-    static var log: Bool { flag("log", true) }
+    static var log: Bool { flag("log", false) }
+
+    // The app was com.arstoienn.spotlight-solve before it was Spotlight Plus. What was chosen
+    // and remembered under that name is brought over, the once.
+    static func bringOver() {
+        let before = "com.arstoienn.spotlight-solve", defaults = UserDefaults.standard
+        guard Bundle.main.bundleIdentifier != before, defaults.object(forKey: "broughtOver") == nil else { return }
+        for (key, value) in defaults.persistentDomain(forName: before) ?? [:] where defaults.object(forKey: key) == nil {
+            defaults.set(value, forKey: key)
+        }
+        defaults.set(true, forKey: "broughtOver")
+    }
 }
 
 struct SettingsView: View {
@@ -45,7 +56,7 @@ struct SettingsView: View {
     @AppStorage("precise") private var precise = false
     @AppStorage("copyAsShown") private var copyAsShown = false
     @AppStorage("returnCopies") private var returnCopies = true
-    @AppStorage("log") private var log = true
+    @AppStorage("log") private var log = false
     @State private var atLogin = SMAppService.mainApp.status == .enabled
     @State private var loginProblem: String?
 
@@ -103,7 +114,7 @@ struct SettingsView: View {
                 note("A decimal is what another program can read, and is given to twelve figures whatever is chosen above. Several answers are copied with commas between: 2, 3.")
 
                 Toggle("Return copies, while the pointer is on the card", isOn: $returnCopies)
-                note("With the pointer anywhere else, Return is Spotlight's and opens what is chosen in its list. What is copied becomes ans, for the next sum: ans*2.")
+                note("With the pointer anywhere else, Return is Spotlight's and opens what is chosen in its list. What is copied becomes ans, for the next sum: ans*2. Where there were several answers they are ans1, ans2 and so on.")
             }
 
             Section("General") {
