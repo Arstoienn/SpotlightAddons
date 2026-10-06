@@ -1,0 +1,529 @@
+import Foundation
+
+// Run with ./test.sh. Each case is what Spotlight's field would hold and what the card should say.
+
+var failures = 0
+
+func expect(_ input: String, _ exact: String?, _ approx: String? = nil, approxAny: Bool = false) {
+    let got = Solver.solve(input)
+    let ok = got?.exact == exact && (approxAny || got?.approx == approx)
+    if !ok {
+        failures += 1
+        print("FAIL \(input)\n  want \(exact ?? "nil") / \(approx ?? "nil")\n  got  \(got?.exact ?? "nil") / \(got?.approx ?? "nil")")
+    }
+}
+
+// Quadratics, exactly
+expect("2n^2=10", "n = ±√5", "≈ ±2.23607")
+expect("2N²=10", "N = ±√5", "≈ ±2.23607")
+expect("x^2-5x+6=0", "x = 2, 3")
+expect("x^2=2x+1", "x = 1 ± √2", "≈ −0.414214, 2.41421")
+expect("2x^2+3x-1=0", "x = (−3 ± √17)/4", "≈ −1.78078, 0.280776")
+expect("4x^2=9", "x = ±3/2", "≈ ±1.5")
+expect("x^2+1=0", "No real solutions", "Complex solutions: x ≈ ±i")
+expect("x^2+2x+5=0", "No real solutions", "Complex solutions: x ≈ −1 ± 2i")
+expect("x^2-2x+1=0", "x = 1")
+expect("(x+1)(x-1)=3", "x = ±2")
+expect("x^2/2=8", "x = ±4")
+expect("0.5x^2=2", "x = ±2")
+
+// Linear
+expect("3x+2=11", "x = 3")
+expect("2x=1", "x = 1/2", "≈ 0.5")
+expect("x/3+1=2", "x = 3")
+expect("x=x", "x ∈ ℝ", "Every real number satisfies the equation.")
+expect("x+1=x", "No solution")
+
+// Higher degree and irrational coefficients, numerically
+expect("x^3-6x^2+11x-6=0", "x = 1, 2, 3")
+expect("x^3=2", "x ≈ 1.25992")
+expect("x^2=pi", "x ≈ ±1.77245")
+expect("x^4=16", "x = ±2")
+
+// Not polynomials
+expect("2^x=8", "x = 3")
+expect("e^x=10", "x ≈ 2.30259")
+expect("sqrt(x)=3", "x = 9")
+expect("√x=3", "x = 9")
+expect("ln x=1", "x ≈ 2.71828")
+expect("sin(x rad)=0.5", "x = π/6, 5π/6", "≈ 0.524, 2.618 = 30°, 150°, for 0 ≤ x ≤ 2π")
+expect("1/x=4", "x ≈ 0.25")
+expect("tan(x rad)=x", "x ≈ −7.72525, −4.49341, 0, 4.49341, 7.72525, …", approxAny: true)
+expect("sin(x rad)^2=0", "x = 0, π, 2π", "≈ 0, 3.142, 6.283 = 0°, 180°, 360°, for 0 ≤ x ≤ 2π")
+expect("sin(x^2 rad)=0", "x ≈ −2.50663, −1.77245, 0, 1.77245, 2.50663, …", approxAny: true)
+expect("e^x=-1", "No real solutions found", "The interval −1000 ≤ x ≤ 1000 was searched.")
+
+// An angle is given from 0 to 2π, and in degrees: the unknown only inside sin, cos and tan
+expect("(20^2*sin(2x rad))/9.81=20", "x ≈ 0.256332, 1.31446, 3.39792, 4.45606", "≈ 14.6867°, 75.3133°, 194.687°, 255.313°, for 0 ≤ x ≤ 2π")
+expect("0.5=cos(x rad)", "x = π/3, 5π/3", "≈ 1.047, 5.236 = 60°, 300°, for 0 ≤ x ≤ 2π")
+expect("cos(x rad)=-1", "x = π", "≈ 3.142 = 180°, for 0 ≤ x ≤ 2π")
+expect("sin(x rad)=cos(x rad)", "x = π/4, 5π/4", "≈ 0.785, 3.927 = 45°, 225°, for 0 ≤ x ≤ 2π")
+expect("sin(10x rad)=0.5", "x = π/60, π/12, 13π/60, 17π/60, …", "≈ 0.052, 0.262, 0.681, 0.890, … = 3°, 15°, 39°, 51°, …, for 0 ≤ x ≤ 2π")
+expect("sin(x/100 rad)=1", "x ≈ −471.239, 157.08, 785.398")
+expect("x^2+sin(x rad)=1", "x ≈ −1.40962, 0.636733")
+
+// Angles are in radians unless marked deg or °
+expect("sin(x)=0.5", "x = π/6, 5π/6", "≈ 0.524, 2.618 = 30°, 150°, for 0 ≤ x ≤ 2π")
+expect("sin(x deg)=0.5", "x = 30°, 150°", "= π/6, 5π/6 rad, for 0° ≤ x ≤ 360°")
+expect("(20^2*sin(2x deg))/9.81=20", "x ≈ 14.6867°, 75.3133°, 194.687°, 255.313°", "≈ 0.256, 1.314, 3.398, 4.456 rad, for 0° ≤ x ≤ 360°")
+expect("cos(x°)=-1", "x = 180°", "= π rad, for 0° ≤ x ≤ 360°")
+expect("3sin(x deg)=0", "x = 0°, 180°, 360°", "= 0, π, 2π rad, for 0° ≤ x ≤ 360°")
+expect("sin(10x deg)=0.5", "x = 3°, 15°, 39°, 51°, …", "= π/60, π/12, 13π/60, 17π/60, … rad, for 0° ≤ x ≤ 360°")
+expect("sin(30 deg)=0.5", "True", "0.5 = 0.5")
+expect("sin(30)=0.5", "False", approxAny: true)
+expect("sin(pi/6)=0.5", "True", "0.5 = 0.5")
+expect("x=asin(0.5)", "x ≈ 0.523599")
+expect("x=asin(0.5) deg", "x = 30")
+expect("x=asin(0.5) rad", "x ≈ 0.523599")
+expect("x=sin(2rad)", "x ≈ 0.909297")
+expect("sin(pi*x)=0", "x = 0, 1, 2, 3, …", approxAny: true)
+
+// Implicit multiplication and functions
+expect("2(x+1)=10", "x = 4")
+expect("3sin(x rad)=0", "x = 0, π, 2π", "≈ 0, 3.142, 6.283 = 0°, 180°, 360°, for 0 ≤ x ≤ 2π")
+expect("xx=4", "x = ±2")
+
+// LaTeX, as formulas are often copied
+expect(#"PES=\frac{\frac{120000-80000}{80000}}{\frac{250-200}{200}}"#, "PES = 2")
+expect(#"\frac{1}{3}"#, "= 1/3", "≈ 0.333333")
+expect(#"\frac{x}{2}+1=3"#, "x = 4")
+expect(#"x^{2}=4"#, "x = ±2")
+expect(#"\sqrt{x}=3"#, "x = 9")
+expect(#"2\cdot x=6"#, "x = 3")
+expect(#"\left(x+1\right)^{2}=9"#, "x = −4, 2")
+expect(#"\sqrt[3]{x}=2"#, "x = 8")
+expect(#"\(x^2 - 4x + 1 = 0\)"#, "x = 2 ± √3", "≈ 0.267949, 3.73205")
+expect(#"$\frac12 x = 3$"#, "x = 6")
+expect(#"x \le 3"#, nil)
+
+// Sums and products
+expect(#"\sum_{k=0}^{10}k20"#, "= 1100")
+expect(#"\sum_{k=1}^{10} k"#, "= 55")
+expect(#"\sum_{k=1}^{4} k^{2} + 1"#, "= 31")
+expect(#"\prod_{k=1}^{5} k"#, "= 120")
+expect(#"\sum_{k=1}^{3} kx = 12"#, "x = 2")
+expect(#"S=\sum_{n=1}^{100}\frac{1}{n^2}"#, "S ≈ 1.63498")
+expect("sum(k,1,3,k)=x", "x = 6")
+
+// Systems of equations, including as LaTeX writes them
+expect(#"\[\#n2x+3y=12,\quad 5x-y=7\#n\]"#, "x = 33/17, y = 46/17", "≈ 1.94118, 2.70588")
+expect(#"\begin{cases} x+y=3 \\ x-y=1 \end{cases}"#, "x = 2, y = 1")
+expect(#"\left\{ \begin{aligned} 2x &= 4 \\ x + y &= 5 \end{aligned} \right."#, "x = 2, y = 3")
+expect("x+y=3,\tx-y=1", "x = 2, y = 1")
+expect("2x+y=5, x-y=1", "x = 2, y = 1")
+expect("3x=2, 3x=1", "No solution", "The lines are parallel and do not intersect.")
+expect("x+y=2, 2x+2y=4", "Infinitely many solutions", "The equations represent the same line.")
+expect("x+2y=1; 3x-y=2", "x = 5/7, y = 1/7", "≈ 0.714286, 0.142857")
+expect("y=2x+1, y=-x+4", "x = 1, y = 3")
+expect("a+b+c=6, a-b=0, 2c=6", "a = 3/2, b = 3/2, c = 3", "≈ 1.5, 1.5, 3")
+expect("x^2+y=1, x-y=2", "(x, y) = ((−1 − √13)/2, (−5 − √13)/2), ((−1 + √13)/2, (−5 + √13)/2)", "2 real solutions")
+
+// Systems that are not linear, solved numerically, exact where the values are simple
+expect(#"\[\#n\begin{cases}\#nx^2+y+z=3\\\#nx+y^2+z=3\\\#nx+y+z^2=3\#n\end{cases}\#n\]"#,
+       "(x, y, z) = (−3, −3, −3), (−√2, −√2, 1 + √2), …", "8 real solutions")
+expect("x^2+y^2=25, x+y=7", "(x, y) = (3, 4), (4, 3)", "2 real solutions")
+expect("x^3=8, y=x+1", "x = 2, y = 3")
+expect("x^2+y^2=-1, x=y", "No real solutions found", "The search was conducted from numerous starting points about the origin.")
+
+// Capitals are letters of their own, and E is not Euler's number
+expect("X^2=4", "X = ±2")
+expect("E=0.5*2*3^2", "E = 9")
+expect("E=e^2", "E ≈ 7.38906")
+
+// Powers of ten, and numbers of any size
+expect("m=5.97e24*2", "m = 1.194×10²⁵")
+expect("x=1.6e-19*2", "x = 3.2×10⁻¹⁹")
+expect("x=1.6*10^-19*2", "x = 3.2×10⁻¹⁹")
+expect("x=3E8*2", "x = 6×10⁸")
+expect("x=12345678*2", "x = 24691356")
+expect("x=1/3*10^-19", "x ≈ 3.33333×10⁻²⁰")
+expect("3e-19=6.63e-34*f", "f ≈ 4.52489×10¹⁴")
+expect("2e - 3=1", "e = 2")
+expect("x=0.1+0.2-0.3", "x = 0")
+expect("x=sin(pi)", "x = 0")
+expect("0.1x+0.2x-0.3x=5", "No solution")
+
+// Physical constants, where there is another letter to solve for
+expect("x=2g", "x ≈ 19.6", "Taking g = 9.8 m s⁻²")
+expect("h=0.5g*3^2", "h ≈ 44.1", "Taking g = 9.8 m s⁻²")
+expect("E=0.002c^2", "E = 1.8×10¹⁴", "Taking c = 3.00×10⁸ m s⁻¹")
+expect("F=G*5.97e24*70/6.37e6^2", "F ≈ 686.941", "Taking G = 6.67×10⁻¹¹ N m² kg⁻²")
+expect("20=0.5g*t^2", "t ≈ ±2.02031", "Taking g = 9.8 m s⁻²")
+expect("9.8=G*M/6.37e6^2", "M ≈ 5.96182×10²⁴", "Taking G = 6.67×10⁻¹¹ N m² kg⁻²")
+expect("c=2g", "c ≈ 19.6", "Taking g = 9.8 m s⁻²")
+expect("2c=g", "g = 6×10⁸", "Taking c = 3.00×10⁸ m s⁻¹")
+expect("2g=10", "g = 5")
+expect("2c=6", "c = 3")
+expect("2G=10", "G = 5")
+expect("g=2g", "g = 0")
+expect("e=2g", "g ≈ 1.35914")
+expect("F=mg", nil)
+expect("E=mc^2", nil)
+expect("h=0.5gt^2", nil)
+
+// A letter marked with ! is read the other way round: the constant where it would have been
+// the unknown, and the unknown where it would have been the constant
+expect("9e16=1*c^2", "c = ±3×10⁸")
+expect("9e16=1* !c^2", "True", "9×10¹⁶ = 9×10¹⁶")
+expect("9e16=!c^2", "True", "9×10¹⁶ = 9×10¹⁶")
+expect("!g=9.8", "True", "9.8 = 9.8")
+expect("!g ≈ 9.81", "False", approxAny: true)
+expect("c=2g", "c ≈ 19.6", "Taking g = 9.8 m s⁻²")
+expect("c=2*!g", "g = 1.5×10⁸", "Taking c = 3.00×10⁸ m s⁻¹")
+expect("!c=2g", "g = 1.5×10⁸", "Taking c = 3.00×10⁸ m s⁻¹")
+expect("!c=2*!g", "g = 1.5×10⁸", "Taking c = 3.00×10⁸ m s⁻¹")
+expect("x=2*!g", nil)
+expect("20=0.5*!g*t^2", nil)
+expect("!x=2", nil)
+expect("2!g=10", "g = 5")
+expect("e ≈ 2.718", "True", approxAny: true)
+
+// Greek letters, by name, as themselves and from LaTeX
+expect("2omega=10", "ω = 5")
+expect("2ω=10", "ω = 5")
+expect("rho*2=5", "ρ = 5/2", "≈ 2.5")
+expect("sin(theta rad)=0.5", "θ = π/6, 5π/6", "≈ 0.524, 2.618 = 30°, 150°, for 0 ≤ θ ≤ 2π")
+expect("cos(theta rad)=0.5", "θ = π/3, 5π/3", "≈ 1.047, 5.236 = 60°, 300°, for 0 ≤ θ ≤ 2π")
+expect(#"\sin(2\theta rad)=0.5"#, "θ = π/12, 5π/12, 13π/12, 17π/12", "≈ 0.262, 1.309, 3.403, 4.451 = 15°, 75°, 195°, 255°, for 0 ≤ θ ≤ 2π")
+expect("(20^2*sin(2theta rad))/g=20", "θ ≈ 0.256045, 1.31475, 3.39764, 4.45634", approxAny: true)
+expect("lambda=c/5e14", "λ = 6×10⁻⁷", "Taking c = 3.00×10⁸ m s⁻¹")
+expect("phi^2=phi+1", "φ = (1 ± √5)/2", "≈ −0.618034, 1.61803")
+expect("alpha+beta=3, alpha-beta=1", "α = 2, β = 1")
+expect("v=omega*r", nil)
+expect("3mu=6", "μ = 2")
+expect("3μ=6", "μ = 2")
+expect(#"\mu=0.5*2"#, "μ = 1")
+
+// A subscript makes a letter of its own, and ° or deg an angle in degrees
+expect("F_n=0.4*20cos(35°)", "F_n ≈ 6.55322")
+expect("F_n=0.4*20cos(35deg)", "F_n ≈ 6.55322")
+expect("F_n=0.4*20cos(35)", "F_n ≈ −7.22954")
+expect("F_n=0.4*20cos(35 rad)", "F_n ≈ −7.22954")
+expect("20=F_n*2", "F_n = 10")
+expect(#"F_{net}=2*3"#, "F_net = 6")
+expect("mu_k=6/20", "μ_k = 3/10", "≈ 0.3")
+expect("x_1+x_2=3, x_1-x_2=1", "x_1 = 2, x_2 = 1")
+expect("v_y=3-g*2", "v_y ≈ −16.6", "Taking g = 9.8 m s⁻²")
+expect("v_0t=10", nil)
+expect("x_=3", nil)
+expect("sin(30°)=0.5", "True", "0.5 = 0.5")
+
+// Factorials
+expect("x=5!", "x = 120")
+expect("x=5!/(3!2!)", "x = 10")
+expect(#"x=\frac{10!}{7!3!}"#, "x = 120")
+expect("x=2^3!", "x = 64")
+expect("x=-3!", "x = −6")
+expect("n!=120", "n = 5")
+expect("n!=1", "n = 0, 1")
+expect("x=(-2)!", nil)
+
+// Repeated roots
+expect("x^3-3x^2+3x-1=0", "x = 1")
+expect("(x-1)^2(x+2)=0", "x = −2, 1")
+
+// Numbers alone on both sides are compared: = exactly, ≈ to a tenth of a percent
+expect("2=2", "True", "2 = 2")
+expect("2^2=4", "True", "4 = 4")
+expect("0.1+0.2=0.3", "True", "0.3 = 0.3")
+expect("1/3 = 0.3333", "False", "0.333333 > 0.3333")
+expect("1/3 ~= 0.3333", "True", "The two sides differ by 0.01%, which is within the tolerance of 0.1%.")
+expect("1/3 ≈ 0.3", "False", "The two sides differ by 10%, which exceeds the tolerance of 0.1%.")
+expect("1.6e-19 ≈ 1.7e-19", "False", approxAny: true)
+expect("1e-10 ≈ 0", "True", approxAny: true)
+expect("1/3 != 0.3333", "True", "0.333333 > 0.3333")
+expect("2 ≠ 3", "True", "2 < 3")
+expect("2 != 2", "False", "2 = 2")
+expect("2!=2", "True", "2 = 2")
+expect("5!=120", "True", "120 = 120")
+expect("5 > 3", "True", "5 > 3")
+expect("3>5", "False", "3 < 5")
+expect("3 < 5", "True", "3 < 5")
+expect("5 >= 5", "True", "5 = 5")
+expect("4 <= 5", "True", "4 < 5")
+expect("5 ≥ 5", "True", "5 = 5")
+expect("4 ≤ 5", "True", "4 < 5")
+expect("pi=3.14", "False", "3.14159 > 3.14")
+expect("1/3=1/3+1e-7", "False", "The two sides are not equal: they differ by 1×10⁻⁷.")
+expect(#"\frac{1}{3} \approx 0.3333"#, "True", approxAny: true)
+expect(#"2^{10} \ge 1000"#, "True", "1024 > 1000")
+expect("1<2<3", nil)
+expect("x>3", nil)
+expect("g=9.8", nil)
+expect("1/0=1", nil)
+
+// Digests, of the text as typed; in hexadecimal they are not numbers to do sums with
+expect(#"SHA256("hello")"#, "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824", "SHA-256 digest of 5 bytes, in hexadecimal")
+expect(#"sha256("hello")"#, "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824", approxAny: true)
+expect("Sha256(hello)", "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824", approxAny: true)
+expect(#"sha256("")"#, "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", "SHA-256 digest of 0 bytes, in hexadecimal")
+expect(#"sha256("abc")"#, "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad", approxAny: true)
+expect(#"SHA1("hello")"#, "aaf4c61ddcc5e8a2dabede0f3b482cd9aea9434d", "SHA-1 digest of 5 bytes, in hexadecimal")
+expect(#"sha256("hello", decimal)"#, "20329878786436204988385760252021328656300425018755239228739303522659023427620", "SHA-256 digest of 5 bytes, in decimal")
+expect(#"sha1("hello", binary)"#, "101010101111010011000110000111011101110011000101…", "SHA-1 digest of 5 bytes, in binary")
+expect(#"sha256("a, b")"#, "4a479db6af79906e7200f9560d9af890f0077e394e3ae44cbd2a2bb3ba5c2c2d", "SHA-256 digest of 4 bytes, in hexadecimal")
+expect(#"sha256("f(x) = 1")"#, "44daafd1796bff53b436eef5ef7b02b05ad41dd04e12ab3846978b49c9afe270", approxAny: true)
+expect(#"sha256(2+2)"#, "1acf86226c68c1485ca3939884c43ed99abeea344e806548af7ee813c1c0cff3", approxAny: true)
+expect(#"sha256("hello")+1"#, nil)
+expect(#"x=sha256("hello")"#, nil)
+expect(#"sha256("hello", decimal)/10^76"#, "≈ 2.03299")
+expect(#"x=sha256("hello", binary)/sha256("hello", decimal)"#, "x = 1")
+expect(#"sha256("hello""#, nil)
+
+// A number by itself: its primes, or that it is one; a decimal as a fraction
+expect("2048", "2048 = 2¹¹")
+expect("360", "360 = 2³·3²·5")
+expect("144", "144 = 2⁴·3²", "= 12²")
+expect("1296", "1296 = 2⁴·3⁴", "= 6⁴")
+expect("97", "97 is prime")
+expect("2", "2 is prime")
+expect("2024", "2024 = 2³·11·23")
+expect("999999999989", "999999999989 is prime")
+expect("0.375", "0.375 = 3/8")
+expect("2.50", "2.50 = 5/2")
+expect("3.0", nil)
+expect("-5", nil)
+expect("1e6", nil)
+
+// Arithmetic with no = is worked out as it stands
+expect("2+2", "= 4")
+expect("10/4", "= 5/2", "≈ 2.5")
+expect("2^10", "= 1024")
+expect("5!/(3!2!)", "= 10")
+expect("sqrt(2)", "≈ 1.41421")
+expect("2pi", "≈ 6.28319")
+expect("sin(30°)", "= 1/2", "≈ 0.5")
+expect("1.6e-19*2", "= 3.2×10⁻¹⁹")
+expect("2+", nil)
+expect("2026 10", nil)
+expect("(2+3", nil)
+
+// A name and some arithmetic is a value to work out
+expect("cost=12*3+4", "cost = 40")
+expect("r=22/7", "r = 22/7", "≈ 3.14286")
+expect("a=1", nil)
+expect("a=b", nil)
+expect("sin=2", nil)
+
+// Not equations, or not one unknown: Spotlight's own results are left alone
+expect("hello", nil)
+expect("1", nil)
+expect("2048 report", nil)
+expect("pie", nil)
+expect("c", nil)
+expect("5g", nil)
+expect("x+y=3", nil)
+expect("weather today", nil)
+expect("a=b", nil)
+expect("x=", nil)
+expect("=3", nil)
+expect("x==3", nil)
+expect("2x+", nil)
+expect("x^2=4 apple", nil)
+
+// Solved directly where there is a formula for it: the search only reaches ±1000
+expect("log(n)=5", "n = 100000")
+expect("ln(x)=10", "x ≈ 22026.5")
+expect("sqrt(x)=50", "x = 2500")
+expect("log(n)=499", "n = 10⁴⁹⁹", "Too large to be written out as a decimal.")
+expect("log(x)=-400", "x = 10^−400", "Too small to be written out as a decimal.")
+expect("ln(x)=800", "x = e⁸⁰⁰", "Too large to be written out as a decimal.")
+
+// What is copied: the answer as a number another program can read
+func expectCopy(_ input: String, _ want: String?) {
+    let got = Solver.copy(input)
+    if got != want { failures += 1; print("FAIL copy \(input)\n  want \(want ?? "nil")\n  got  \(got ?? "nil")") }
+}
+expectCopy("12*3+4", "40")
+expectCopy("10/4", "2.5")
+expectCopy("cost=10/4", "2.5")
+expectCopy("2x+3=11", "4")
+expectCopy("4x=10", "2.5")
+expectCopy("x^2-5x+6=0", "2, 3")
+expectCopy("2n^2=10", "-2.2360679775, 2.2360679775")
+expectCopy("x=1.6e-19*2", "3.2e-19")
+expectCopy("h=0.5g*3^2", "44.1")
+expectCopy("sin(x deg)=0.5", "30, 150")
+expectCopy("log(n)=5", "100000")
+expectCopy("log(n)=499", "n = 10⁴⁹⁹")
+expectCopy("2x+y=5, x-y=1", "x = 2, y = 1")
+expectCopy("1/3 ~= 0.3333", "True")
+expectCopy(#"SHA1("hello")"#, "aaf4c61ddcc5e8a2dabede0f3b482cd9aea9434d")
+expectCopy("2048", nil)
+expectCopy("hello", nil)
+
+// What the card opens into: the equation typeset, the key steps, and every solution.
+// Steps compare as (label, the maths on one line, or the note when the step has no maths).
+func expectDetails(_ input: String, _ equation: String, _ steps: [(String, String)], _ solutions: [String]? = nil, note: String? = nil) {
+    guard let d = Solver.details(input) else { failures += 1; print("FAIL \(input): no details"); return }
+    let got = d.steps.map { "\($0.label): \($0.math?.plain ?? $0.note ?? "")" }
+    let want = steps.map { "\($0.0): \($0.1)" }
+    let gotSolutions = d.solutions.map(\.plain)
+    if d.equation.plain != equation || got != want || (solutions != nil && gotSolutions != solutions!) || (note != nil && d.note != note) {
+        failures += 1
+        print("FAIL details \(input)\n  want \(equation) \(want) \(solutions ?? []) \(note ?? "")\n  got  \(d.equation.plain) \(got) \(gotSolutions) \(d.note ?? "")")
+    }
+}
+
+expectDetails("2n^2+3n+1=0", "2n² + 3n + 1 = 0",
+              [("Factorising", "(n + 1)(2n + 1) = 0"), ("Hence", "n = −1 or n = −1/2")],
+              ["n = −1", "n = −1/2 ≈ −0.5"])
+expectDetails("2x+3=11", "2x + 3 = 11", [("Writing in standard form", "x − 4 = 0"), ("Hence", "x = 4")], ["x = 4"])
+expectDetails("3x=2", "3x = 2", [("Writing in standard form", "3x − 2 = 0"), ("Rearranging", "3x = 2"), ("Dividing by 3", "x = 2/3")], ["x = 2/3 ≈ 0.666667"])
+expectDetails("2n^2=10", "2n² = 10", [("Writing in standard form", "n² − 5 = 0"), ("Isolating n²", "n² = 5"), ("Taking the square root", "n = ±√5")],
+              ["n = −√5 ≈ −2.23607", "n = √5 ≈ 2.23607"])
+expectDetails("2x^2+3x-1=0", "2x² + 3x − 1 = 0",
+              [("Evaluating the discriminant", "b² − 4ac = 3² − 4·2·(−1) = 17"), ("Applying the quadratic formula", "x = (−b ± √(b² − 4ac))/2a = (−3 ± √17)/4")],
+              ["x = (−3 − √17)/4 ≈ −1.78078", "x = (−3 + √17)/4 ≈ 0.280776"])
+expectDetails("x^2+2x+5=0", "x² + 2x + 5 = 0",
+              [("Evaluating the discriminant", "b² − 4ac = 2² − 4·1·5 = −16"), ("Hence", "b² − 4ac < 0")],
+              ["No real solutions", "Complex solutions: x = −1 ± 2i"])
+expectDetails("x^2-2x+1=0", "x² − 2x + 1 = 0", [("Factorising", "(x − 1)² = 0"), ("Hence", "x = 1")], ["x = 1"])
+expectDetails("(x+1)(x-1)=3", "(x + 1)(x − 1) = 3", [("Writing in standard form", "x² − 4 = 0"), ("Factorising", "(x + 2)(x − 2) = 0"), ("Hence", "x = −2 or x = 2")])
+expectDetails("x^3-6x^2+11x-6=0", "x³ − 6x² + 11x − 6 = 0", [("Factorising", "(x − 1)(x − 2)(x − 3) = 0")], ["x = 1", "x = 2", "x = 3"])
+expectDetails("x^3=2", "x³ = 2", [("Writing in standard form", "x³ − 2 = 0"), ("Solving numerically", "This polynomial of degree 3 is not readily factorised; its real roots are therefore determined numerically.")], ["x ≈ 1.25992"])
+expectDetails("sin(n rad)=1", "sin(n) = 1", [("Stating the general solution", "n = π/2 + 2kπ, k ∈ ℤ")], ["n = π/2 ≈ 1.571 (90°)"],
+              note: "These are the solutions for 0 ≤ n ≤ 2π; further solutions lie outside this interval.")
+expectDetails("sin(x rad)=0.5", "sin(x) = 0.5", [("Stating the general solution", "x = π/6 + 2kπ or x = 5π/6 + 2kπ, k ∈ ℤ")],
+              ["x = π/6 ≈ 0.524 (30°)", "x = 5π/6 ≈ 2.618 (150°)"])
+expectDetails("(20^2*sin(2x rad))/9.81=20", "(20²·sin(2x))/9.81 = 20",
+              [("Isolating sin(2x)", "sin(2x) = 0.4905"),
+               ("Stating the general solution", "2x = 0.512663 + 2kπ or 2x = 2.62893 + 2kπ, k ∈ ℤ"),
+               ("Hence", "x = 0.256332 + kπ or x = 1.31446 + kπ, k ∈ ℤ")],
+              ["x ≈ 0.256332 (14.6867°)", "x ≈ 1.31446 (75.3133°)", "x ≈ 3.39792 (194.687°)", "x ≈ 4.45606 (255.313°)"])
+expectDetails("(20^2*sin(2x rad))/g=20", "(20²·sin(2x))/g = 20",
+              [("Substituting g = 9.8 m s⁻²", "(20²·sin(2x))/9.8 = 20"), ("Isolating sin(2x)", "sin(2x) = 0.49"),
+               ("Stating the general solution", "2x = 0.51209 + 2kπ or 2x = 2.6295 + 2kπ, k ∈ ℤ"),
+               ("Hence", "x = 0.256045 + kπ or x = 1.31475 + kπ, k ∈ ℤ")])
+expectDetails("2sin(3x+1 rad)-1=0", "2sin(3x + 1) − 1 = 0",
+              [("Isolating sin(3x + 1)", "sin(3x + 1) = 0.5"),
+               ("Stating the general solution", "3x + 1 = π/6 + 2kπ or 3x + 1 = 5π/6 + 2kπ, k ∈ ℤ"),
+               ("Hence", "x = −0.1588 + 2kπ/3 or x = 0.539331 + 2kπ/3, k ∈ ℤ")])
+expectDetails("tan(x/2 rad)=1", "tan(x/2) = 1",
+              [("Stating the general solution", "x/2 = π/4 + kπ, k ∈ ℤ"), ("Hence", "x = π/2 + 2kπ, k ∈ ℤ")], ["x = π/2 ≈ 1.571 (90°)"])
+expectDetails("cos(x rad)=0.5", "cos(x) = 0.5", [("Stating the general solution", "x = ±π/3 + 2kπ, k ∈ ℤ")])
+expectDetails("tan(x rad)=1", "tan(x) = 1", [("Stating the general solution", "x = π/4 + kπ, k ∈ ℤ")])
+expectDetails("sin(x rad)=2", "sin(x) = 2", [("Stating the general solution", "No solution, since −1 ≤ sin x ≤ 1")], ["No real solutions in the interval −1000 ≤ x ≤ 1000"])
+expectDetails("2^x=8", "2^x = 8", [("Expressing both sides as powers of 2", "2^x = 2³"), ("Equating the exponents", "x = 3")], ["x = 3"])
+expectDetails("10=0.1^x", "10 = 0.1^x",
+              [("Interchanging the sides", "0.1^x = 10"), ("Expressing both sides as powers of 10", "(10^−1)^x = 10¹"),
+               ("Multiplying the exponents", "10^−x = 10¹"), ("Equating the exponents", "−x = 1"), ("Hence", "x = −1")], ["x = −1"])
+expectDetails("4^x=8", "4^x = 8",
+              [("Expressing both sides as powers of 2", "(2²)^x = 2³"), ("Multiplying the exponents", "2^2x = 2³"),
+               ("Equating the exponents", "2x = 3"), ("Hence", "x = 3/2")])
+expectDetails("3^x=10", "3^x = 10",
+              [("Taking the logarithm of both sides", "ln(3^x) = ln 10"), ("Applying the power rule for logarithms", "x·ln 3 = ln 10"),
+               ("Dividing by ln 3", "x = ln 10/ln 3"), ("Hence", "x ≈ 2.0959")])
+expectDetails("e^x=10", "e^x = 10",
+              [("Taking the natural logarithm of both sides", "ln(e^x) = ln 10"), ("Simplifying", "x = ln 10"), ("Hence", "x ≈ 2.30259")],
+              ["x ≈ 2.30259"])
+expectDetails("ln x=1", "ln(x) = 1", [("Rewriting in exponential form", "x = e¹"), ("Hence", "x ≈ 2.71828")])
+expectDetails("log x=2", "log(x) = 2", [("Rewriting in exponential form", "x = 10²"), ("Hence", "x = 100")])
+expectDetails("√x=3", "√x = 3", [("Squaring both sides", "x = 3²"), ("Hence", "x = 9")], ["x = 9"])
+expectDetails("x^2+sin(x rad)=1", "x² + sin(x) = 1",
+              [("Solving numerically", "x² + sin(x) − 1 = 0")])
+expectDetails("sin(x deg)=0.5", "sin(x°) = 0.5", [("Stating the general solution", "x = 30° + 360°k or x = 150° + 360°k, k ∈ ℤ")],
+              ["x = 30° (π/6)", "x = 150° (5π/6)"], note: "These are the solutions for 0° ≤ x ≤ 360°; further solutions lie outside this interval.")
+expectDetails("(20^2*sin(2x deg))/9.81=20", "(20²·sin(2x°))/9.81 = 20",
+              [("Isolating sin(2x°)", "sin(2x°) = 0.4905"),
+               ("Stating the general solution", "2x = 29.3735° + 360°k or 2x = 150.627° + 360°k, k ∈ ℤ"),
+               ("Hence", "x = 14.6867° + 180°k or x = 75.3133° + 180°k, k ∈ ℤ")],
+              ["x ≈ 14.6867° (0.256 rad)", "x ≈ 75.3133° (1.314 rad)", "x ≈ 194.687° (3.398 rad)", "x ≈ 255.313° (4.456 rad)"])
+expectDetails("cos(x deg)=0.5", "cos(x°) = 0.5", [("Stating the general solution", "x = ±60° + 360°k, k ∈ ℤ")], ["x = 60° (π/3)", "x = 300° (5π/3)"])
+expectDetails("F_n=0.4*20cos(35°)", "F_n = 0.4·20·cos(35°)", [("Simplifying", "F_n = 8·0.819152"), ("Multiplying", "F_n = 6.55322")])
+expectDetails("3sin(x rad)=0", "3sin(x) = 0", [("Isolating sin(x)", "sin(x) = 0"), ("Stating the general solution", "x = kπ, k ∈ ℤ")],
+              ["x = 0 (0°)", "x = π ≈ 3.142 (180°)", "x = 2π ≈ 6.283 (360°)"])
+expectDetails("x/3+1=2", "x/3 + 1 = 2", [("Writing in standard form", "x − 3 = 0"), ("Hence", "x = 3")])
+
+expectDetails(#"PES=\frac{\frac{120000-80000}{80000}}{\frac{250-200}{200}}"#,
+              "PES = ((120000 − 80000)/80000)/((250 − 200)/200)",
+              [("Subtracting", "PES = (40000/80000)/(50/200)"), ("Dividing", "PES = 0.5/0.25"), ("Dividing", "PES = 2")],
+              ["PES = 2"])
+expectDetails("cost=12*3+4", "cost = 12·3 + 4", [("Multiplying", "cost = 36 + 4"), ("Adding", "cost = 40")])
+
+expectDetails("F_n=20cos(60°)", "F_n = 20cos(60°)",
+              [("Evaluating the function", "F_n = 20·0.5"), ("Multiplying", "F_n = 10")])
+
+expectDetails("12*3+4", "12·3 + 4", [("Multiplying", "= 36 + 4"), ("Adding", "= 40")], ["= 40"])
+
+expectDetails("360", "360", [("Dividing by 2 repeatedly", "360 = 2³·45"), ("Dividing by 3 repeatedly", "45 = 3²·5"), ("Hence", "360 = 2³·3²·5")],
+              ["360 = 2³·3²·5"])
+expectDetails("2048", "2048", [("Dividing by 2 repeatedly", "2048 = 2¹¹")], ["2048 = 2¹¹"])
+expectDetails("72", "72", [("Dividing by 2 repeatedly", "72 = 2³·9"), ("Dividing by 3 repeatedly", "9 = 3²"), ("Hence", "72 = 2³·3²")])
+expectDetails("97", "97", [("Testing for divisors", "97 is divisible by no prime up to its square root, 9.84886; it is therefore prime.")], ["97 is prime"])
+expectDetails("0.375", "0.375", [("Writing as a fraction", "0.375 = 375/1000"), ("Dividing through by 125", "0.375 = 3/8")], ["0.375 = 3/8"])
+
+if let d = Solver.details(#"sha1("hello", binary)"#) {
+    let want = ["10101010 11110100 11000110 00011101 11011100 11000101 11101000 10100010",
+                "11011010 10111110 11011110 00001111 00111011 01001000 00101100 11011001", "10101110 10101001 01000011 01001101"]
+    let whole = "1010101011110100110001100001110111011100110001011110100010100010110110101011111011011110000011110011101101001000001011001101100110101110101010010100001101001101"
+    if d.solutions.map(\.plain) != want || d.whole != whole { failures += 1; print("FAIL sha1 binary lines\n  got \(d.solutions.map(\.plain)) \(d.whole ?? "nil")") }
+} else { failures += 1; print("FAIL sha1 binary: no details") }
+expectDetails(#"SHA256("hello")"#, #"SHA-256("hello")"#,
+              [("Encoding the message as UTF-8", "68 65 6c 6c 6f"),
+               ("Applying SHA-256", "The message is padded to a multiple of 512 bits and compressed block by block, which gives a digest of 256 bits.")],
+              ["2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824"])
+
+// A comparison: both sides worked out together, then compared
+expectDetails("2^2=4", "2² = 4", [("Evaluating the power", "4 = 4"), ("Comparing the two sides", "4 = 4")], ["True"])
+expectDetails("1/3 ~= 0.3333", "1/3 ≈ 0.3333", [("Dividing", "0.333333 ≈ 0.3333"), ("Comparing the two sides", "0.333333 > 0.3333")], ["True"])
+expectDetails("9e16=1*!c^2", "9×10¹⁶ = 1c²",
+              [("Substituting c = 3.00×10⁸ m s⁻¹", "9×10¹⁶ = 1(3×10⁸)²"), ("Evaluating the power", "9×10¹⁶ = 1·9×10¹⁶"),
+               ("Multiplying", "9×10¹⁶ = 9×10¹⁶"), ("Comparing the two sides", "9×10¹⁶ = 9×10¹⁶")], ["True"])
+expectDetails("3*4 < 2^3", "3·4 < 2³", [("Simplifying", "12 < 8"), ("Comparing the two sides", "12 > 8")], ["False"])
+expectDetails("x=5!/(3!2!)", "x = 5!/(3!·2!)",
+              [("Evaluating the factorials", "x = 120/(6·2)"), ("Multiplying", "x = 120/12"), ("Dividing", "x = 10")], ["x = 10"])
+expectDetails("x=3!^2", "x = (3!)²", [("Evaluating the factorial", "x = 6²"), ("Evaluating the power", "x = 36")])
+
+// A constant is written in as its value, and what follows is in decimals
+expectDetails("h=0.5g*3^2", "h = 0.5g·3²",
+              [("Substituting g = 9.8 m s⁻²", "h = 0.5·9.8·3²"), ("Simplifying", "h = 4.9·9"), ("Multiplying", "h = 44.1")], ["h ≈ 44.1"])
+expectDetails("E=0.002c^2", "E = 0.002c²",
+              [("Substituting c = 3.00×10⁸ m s⁻¹", "E = 0.002(3×10⁸)²"), ("Evaluating the power", "E = 0.002·9×10¹⁶"),
+               ("Multiplying", "E = 1.8×10¹⁴")], ["E = 1.8×10¹⁴"])
+expectDetails("20=0.5g*t^2", "20 = 0.5g·t²",
+              [("Substituting g = 9.8 m s⁻²", "20 = 0.5·9.8·t²"), ("Writing in standard form", "4.9t² − 20 = 0"),
+               ("Isolating t²", "t² = 4.08163"), ("Taking the square root", "t ≈ ±2.02031")], ["t ≈ −2.02031", "t ≈ 2.02031"])
+expectDetails("100=m*g", "100 = m·g",
+              [("Substituting g = 9.8 m s⁻²", "100 = m·9.8"), ("Writing in standard form", "9.8m − 100 = 0"),
+               ("Rearranging", "9.8m = 100"), ("Dividing by 9.8", "m ≈ 10.2041")], ["m ≈ 10.2041"])
+expectDetails("0=20t-0.5g*t^2", "0 = 20t − 0.5g·t²",
+              [("Substituting g = 9.8 m s⁻²", "0 = 20t − 0.5·9.8·t²"), ("Writing in standard form", "4.9t² − 20t = 0"),
+               ("Evaluating the discriminant", "b² − 4ac = (−20)² − 4·4.9·0 = 400"),
+               ("Applying the quadratic formula", "t = (−b ± √(b² − 4ac))/2a = (20 ± √400)/9.8")], ["t = 0", "t ≈ 4.08163"])
+expectDetails("x^2=pi", "x² = π",
+              [("Writing in standard form", "x² − 3.14159 = 0"), ("Isolating x²", "x² = 3.14159"), ("Taking the square root", "x ≈ ±1.77245")])
+expectDetails("v=-(3-1)", "v = −(3 − 1)", [("Subtracting", "v = −2")])
+
+expectDetails(#"\sum_{k=0}^{10}k20"#, "∑(k = 0…10) k·20",
+              [("Writing out the terms", "= 0·20 + 1·20 + 2·20 + … + 9·20 + 10·20"),
+               ("Evaluating each term", "= 0 + 20 + 40 + … + 180 + 200"),
+               ("Adding the terms", "= 1100")], ["= 1100"])
+expectDetails(#"\sum_{k=1}^{100} k"#, "∑(k = 1…100) k",
+              [("Writing out the terms", "= 1 + 2 + 3 + … + 99 + 100"), ("Adding the terms", "= 5050")])
+
+expectDetails("2x+y=5, x-y=1", "2x + y = 5,   x − y = 1",
+              [("(1)", "2x + y = 5"), ("(2)", "x − y = 1"), ("Eliminating y: (1) + (2)", "3x = 6"),
+               ("Hence", "x = 2"), ("Substituting x = 2 into (1)", "2·2 + y = 5"), ("Hence", "y = 1")],
+              ["x = 2", "y = 1"])
+expectDetails("3x=2, 3x=1", "3x = 2,   3x = 1",
+              [("(1)", "3x = 2"), ("(2)", "3x = 1"), ("Solving (1)", "x = 2/3"), ("Solving (2)", "x = 1/3")],
+              ["No solution"], note: "The lines are parallel and do not intersect.")
+expectDetails("y=2x+1, y=-x+4", "y = 2x + 1,   y = −x + 4",
+              [("Writing (1) in standard form", "2x − y = −1"), ("Writing (2) in standard form", "x + y = 4"), ("Eliminating y: (1) + (2)", "3x = 3"),
+               ("Hence", "x = 1"), ("Substituting x = 1 into (1)", "2·1 − y = −1"), ("Hence", "y = 3")])
+
+expectDetails("x=2, y=1", "x = 2,   y = 1", [("(1)", "x = 2"), ("(2)", "y = 1")], ["x = 2", "y = 1"])
+expectDetails("2x=4, 3y=2", "2x = 4,   3y = 2",
+              [("Writing (1) in standard form", "x = 2"), ("(2)", "3y = 2"), ("Solving (2) for y", "y = 2/3")])
+
+if let d = Solver.details("x^2+y+z=3, x+y^2+z=3, x+y+z^2=3") {
+    let lines = d.solutions.map(\.plain)
+    let want = ["(−3, −3, −3)", "(−√2, −√2, 1 + √2) ≈ (−1.41421, −1.41421, 2.41421)", "(−√2, 1 + √2, −√2) ≈ (−1.41421, 2.41421, −1.41421)",
+                "(1 − √2, √2, √2) ≈ (−0.414214, 1.41421, 1.41421)", "(1, 1, 1)", "(√2, 1 − √2, √2) ≈ (1.41421, −0.414214, 1.41421)",
+                "(√2, √2, 1 − √2) ≈ (1.41421, 1.41421, −0.414214)", "(1 + √2, −√2, −√2) ≈ (2.41421, −1.41421, −1.41421)"]
+    if lines != want { failures += 1; print("FAIL nonlinear solutions\n  want \(want)\n  got  \(lines)") }
+}
+
+print(failures == 0 ? "all passed" : "\(failures) failed")
+exit(failures == 0 ? 0 : 1)
