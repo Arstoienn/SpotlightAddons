@@ -119,20 +119,20 @@ struct LinearSystem {
         case .unique(let values):
             let exact = zip(variables, values).map { "\($0) = \(exactText($1))" }.joined(separator: ", ")
             let needsApprox = values.contains { abs($0 - $0.rounded()) > 1e-9 }
-            return Solution(exact: exact, approx: needsApprox ? "≈ " + values.map(decimal).joined(separator: ", ") : nil)
+            return Solution(exact: exact, approx: needsApprox && Options.exact ? "≈ " + values.map(decimal).joined(separator: ", ") : nil)
         }
     }
 }
 
 // 2/3 for a simple fraction, the decimal otherwise.
 func exactText(_ v: Double) -> String {
-    if abs(v - v.rounded()) < 1e-9 { return decimal(v) }
+    if !Options.exact || abs(v - v.rounded()) < 1e-9 { return decimal(v) }
     if let (p, q) = rational(v), q <= 1000 { return fraction(p, q) }
     return decimal(v)
 }
 
 func exactMath(_ v: Double) -> Math {
-    if abs(v - v.rounded()) > 1e-9, let (p, q) = rational(v), q <= 1000 { return fractionMath(p, q) }
+    if Options.exact, abs(v - v.rounded()) > 1e-9, let (p, q) = rational(v), q <= 1000 { return fractionMath(p, q) }
     return t(decimal(v))
 }
 
@@ -403,7 +403,7 @@ struct NonlinearSystem {
 // A value as a fraction, or as a + b√k, when it is one of those exactly enough to be sure;
 // otherwise its decimal.
 func closedForm(_ v: Double) -> Math {
-    if abs(v - v.rounded()) < 1e-9 { return t(decimal(v)) }
+    if !Options.exact || abs(v - v.rounded()) < 1e-9 { return t(decimal(v)) }
     if let (p, q) = rational(v), q <= 100 { return fractionMath(p, q) }
     for k in [2, 3, 5, 6, 7, 10, 11, 13, 14, 15] {
         let root = Double(k).squareRoot()

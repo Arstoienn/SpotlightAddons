@@ -156,7 +156,7 @@ struct Evaluation {
         let parts = input.split(separator: "=", omittingEmptySubsequences: false)
         if parts.count == 2 {
             let name = parts[0].trimmingCharacters(in: .whitespaces)
-            let reserved = Functions.names + ["pi", "e"]
+            let reserved = Functions.names + ["pi", "e", "ans", "Ans", "clip"]
             guard name.range(of: "^[A-Za-z][A-Za-z0-9]*(_([A-Za-z]+|[0-9]+))?$", options: .regularExpression) != nil,
                   !reserved.contains(name),
                   let expr = try? Parser.constant(String(parts[1]), naming: name), isWork(expr) else { return nil }
@@ -169,9 +169,11 @@ struct Evaluation {
         // standing for a constant and no two numbers side by side, so that a search for "pie",
         // "c" or "2026 10" brings up no card.
         let plain = !hadLatex
+        if plain, parts.count == 1, !Options.arithmetic { return nil }
         if plain, let tokens = try? Parser.tokenize(input),
            zip(tokens, tokens.dropFirst()).contains(where: { if case (.number, .number) = $0 { true } else { false } }) { return nil }
-        if parts.count == 1, !plain || input.contains(where: { $0.isNumber || "+-*/^()!√×÷−".contains($0) }),
+        let named = (try? Parser.tokenize(input))?.contains(where: { if case .named = $0 { true } else { false } }) == true
+        if parts.count == 1, !plain || named || input.contains(where: { $0.isNumber || "+-*/^()!√×÷−".contains($0) }),
            let expr = try? Parser.constant(input, physical: !plain), isWork(expr) {
             return Evaluation(name: nil, expr: expr)
         }
@@ -194,6 +196,12 @@ struct Evaluation {
         // Worked out from a physical constant, itself only a few figures: a decimal, not a fraction.
         let constants = expr.constants
         if !constants.isEmpty { return Solution(exact: lead + approxOrEqual(v), approx: "Taking " + Constants.values(constants)) }
+        // Decimals only, where that is what is asked for: = where the decimal is the whole of it,
+        // as 2.5 is of 10/4, and ≈ where it is cut short.
+        if !Options.exact {
+            let whole = Double(String(format: "%.\(Options.figures - 1)e", v)).map { abs($0 - v) <= 1e-12 * abs(v) } ?? false
+            return Solution(exact: "\(lead)\(whole ? "=" : "≈") \(decimal(v))", approx: nil)
+        }
         if isExact(v) { return Solution(exact: "\(lead)= \(decimal(v))", approx: nil) }
         if let (p, q) = rational(v), p != 0 { return Solution(exact: "\(lead)= \(fraction(p, q))", approx: "≈ \(decimal(v))") }
         return Solution(exact: "\(lead)≈ \(decimal(v))", approx: nil)

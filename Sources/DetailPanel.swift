@@ -310,9 +310,15 @@ struct DetailContent: View {
                             .padding(.vertical, 14)
                     }
                 }
+
+                HStack {
+                    Spacer()
+                    SettingsButton()
+                }
+                .opacity(shown ? 1 : 0)
             }
             .padding(.horizontal, 12)
-            .padding(.bottom, 14)
+            .padding(.bottom, 8)
         }
         .onAppear { shown = true }
     }

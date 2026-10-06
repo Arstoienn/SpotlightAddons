@@ -205,6 +205,9 @@ expect("mu_k=6/20", "μ_k = 3/10", "≈ 0.3")
 expect("x_1+x_2=3, x_1-x_2=1", "x_1 = 2, x_2 = 1")
 expect("v_y=3-g*2", "v_y ≈ −16.6", "Taking g = 9.8 m s⁻²")
 expect("v_0t=10", nil)
+expect("x_1=10", "x_1 = 10")
+expect("theta=30", "θ = 30")
+expect("x=10", nil)
 expect("x_=3", nil)
 expect("sin(30°)=0.5", "True", "0.5 = 0.5")
 
@@ -328,6 +331,89 @@ expect("sqrt(x)=50", "x = 2500")
 expect("log(n)=499", "n = 10⁴⁹⁹", "Too large to be written out as a decimal.")
 expect("log(x)=-400", "x = 10^−400", "Too small to be written out as a decimal.")
 expect("ln(x)=800", "x = e⁸⁰⁰", "Too large to be written out as a decimal.")
+
+// ans, the answer before, and clip, the number on the clipboard
+expect("ans*2", nil)
+expect("20*clip", nil)
+Memory.ans = 40
+Memory.clip = 9.81
+expect("ans*2", "= 80", "Taking ans = 40")
+expect("ans", "= 40", "Taking ans = 40")
+expect("Ans+1", "= 41", "Taking ans = 40")
+expect("x=ans/3", "x ≈ 13.3333", "Taking ans = 40")
+expect("20*clip", "≈ 196.2", "Taking clip = 9.81")
+expect("2x=ans", "x = 20", "Taking ans = 40")
+expect("h=0.5clip*3^2", "h ≈ 44.145", "Taking clip = 9.81")
+expect("ans=40", "True", "40 = 40")
+expectDetails("ans*2+1", "ans·2 + 1", [("Substituting ans = 40", "= 40·2 + 1"), ("Multiplying", "= 80 + 1"), ("Adding", "= 81")], ["= 81"])
+if Solver.value("12*3+4") != 40 || Solver.value("2x=10") != 5 || Solver.value("x^2=4") != nil || Solver.value("2048") != nil {
+    failures += 1
+    print("FAIL the value an answer leaves for ans")
+}
+Memory.ans = nil
+Memory.clip = nil
+
+// What the settings change. (Each is put back as it was.)
+func with(_ key: String, _ value: Any, _ body: () -> Void) {
+    UserDefaults.standard.set(value, forKey: key)
+    body()
+    UserDefaults.standard.removeObject(forKey: key)
+}
+with("degrees", true) {
+    expect("sin(x)=0.5", "x = 30°, 150°", "= π/6, 5π/6 rad, for 0° ≤ x ≤ 360°")
+    expect("sin(x rad)=0.5", "x = π/6, 5π/6", approxAny: true)
+    expect("sin(pi/6)=0.5", "True", "0.5 = 0.5")
+    expect("F_n=0.4*20cos(35)", "F_n ≈ 6.55322")
+    expect("x=asin(0.5)", "x = 30")
+    expect("x=asin(0.5) rad", "x ≈ 0.523599")
+}
+with("numberFacts", false) {
+    expect("2048", nil)
+    expect("2+2", "= 4")
+}
+with("constant.g", false) {
+    expect("x=2g", nil)
+    expect("2g=10", "g = 5")
+    expect("E=0.002c^2", "E = 1.8×10¹⁴", "Taking c = 3.00×10⁸ m s⁻¹")
+}
+with("constant.c", false) {
+    expect("9e16=!c^2", nil)
+    expect("x=2g", "x ≈ 19.6", "Taking g = 9.8 m s⁻²")
+}
+with("precise", true) {
+    expect("x=2g", "x ≈ 19.6133", "Taking g = 9.80665 m s⁻²")
+    expect("E=0.002c^2", "E ≈ 1.79751×10¹⁴", "Taking c = 299 792 458 m s⁻¹")
+}
+with("figures", 3) {
+    expect("x=1/3", "x = 1/3", "≈ 0.333")
+    expect("2n^2=10", "n = ±√5", "≈ ±2.24")
+    expect("F=G*5.97e24*70/6.37e6^2", "F ≈ 687", "Taking G = 6.67×10⁻¹¹ N m² kg⁻²")
+}
+with("figures", 10) {
+    expect("x=1/3", "x = 1/3", "≈ 0.3333333333")
+}
+with("exact", false) {
+    expect("10/4", "= 2.5")
+    expect("x=1/3", "x ≈ 0.333333")
+    expect("2x=1", "x ≈ 0.5")
+    expect("2n^2=10", "n ≈ ±2.23607")
+    expect("x^2-5x+6=0", "x = 2, 3")
+    expect("sin(x)=0.5", "x ≈ 0.523599, 2.61799", "= 30°, 150°, for 0 ≤ x ≤ 2π")
+    expect("2x+3y=12, 5x-y=7", "x = 1.94118, y = 2.70588")
+}
+with("arithmetic", false) {
+    expect("2+2", nil)
+    expect("x=2+2", "x = 4")
+    expect("2x=4", "x = 2")
+}
+with("copyAsShown", true) {
+    expectCopy("10/4", "5/2")
+    expectCopy("4x=10", "5/2")
+    expectCopy("2n^2=10", "±√5")
+    expectCopy("2x+y=5, x-y=1", "x = 2, y = 1")
+}
+expect("sin(x)=0.5", "x = π/6, 5π/6", approxAny: true)
+expect("x=2g", "x ≈ 19.6", "Taking g = 9.8 m s⁻²")
 
 // What is copied: the answer as a number another program can read
 func expectCopy(_ input: String, _ want: String?) {

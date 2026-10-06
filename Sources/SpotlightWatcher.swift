@@ -158,10 +158,10 @@ private func frame(_ e: AXUIElement) -> CGRect {
     return CGRect(origin: origin, size: size)
 }
 
-// What the card did and why, for finding out when it goes missing: ~/Library/Logs/SpotlightSolve.log.
+// What the card did and why, for finding out when it goes missing: ~/Library/Logs/SpotlightPlus.log.
 // Never what was typed, only how long it was.
 enum Log {
-    private static let url = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Library/Logs/SpotlightSolve.log")
+    private static let url = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Library/Logs/SpotlightPlus.log")
     private static let stamp: DateFormatter = {
         let f = DateFormatter()
         f.dateFormat = "HH:mm:ss.SSS"
@@ -169,6 +169,7 @@ enum Log {
     }()
 
     static func note(_ message: String) {
+        guard Prefs.log else { return }
         let line = Data("\(stamp.string(from: Date())) \(message)\n".utf8)
         // Started afresh once it has grown, so that it never amounts to much.
         if let size = try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize, size < 200_000,

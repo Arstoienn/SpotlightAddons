@@ -1,7 +1,7 @@
 import AppKit
 import ApplicationServices
 
-// Spotlight Solve: type an equation into Spotlight, like "2n^2=10", and the answer appears on a
+// Spotlight Plus: type an equation into Spotlight, like "2n^2=10", and the answer appears on a
 // card above it as you type, the way Spotlight's own calculator answers "2+2". It runs in the
 // background with no window or Dock icon, and reads Spotlight's search field through
 // Accessibility.
@@ -11,6 +11,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let panel = ResultPanel()
     let detail = DetailPanel()
     let returnKey = ReturnKey()
+    let settings = SettingsWindow()
+    var clipboardAsked = Date.distantPast
     var text = ""
     var link: CADisplayLink?
     var placement: SpotlightWatcher.Placement?
@@ -20,7 +22,37 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     var lastAlpha = 1.0
     var typed = 0   // counts changes of text, so that a second look started for an old one gives up
 
+    // ans. The answer showing becomes ans when it is done with: copied, cleared, or Spotlight
+    // closed on it. Until something else is typed, that same text still reads ans as it was
+    // before, so that ans+1 does not climb each time it is looked at again.
+    var shown: String?         // the text the card last answered
+    var remembered: String?    // the text whose answer ans is
+    var ansBefore: Double?     // what ans was until then
+    var ansNow: Double? = UserDefaults.standard.object(forKey: "ans") as? Double
+
+    // Opened while already running, which is what choosing it in Spotlight does: the settings.
+    // Choosing Clipboard History there may open the app in passing as well; that is not this,
+    // so a moment is given for it to say which it was.
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows: Bool) -> Bool {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
+            guard let self, Date().timeIntervalSince(clipboardAsked) > 2 else { return }
+            settings.show()
+        }
+        return false
+    }
+
+    // Clipboard History, chosen in Spotlight's list.
+    func application(_ application: NSApplication, continue userActivity: NSUserActivity,
+                     restorationHandler: @escaping ([any NSUserActivityRestoring]) -> Void) -> Bool {
+        guard ClipboardHistory.chosen(userActivity) else { return false }
+        clipboardAsked = Date()
+        ClipboardHistory.open()
+        return true
+    }
+
     func applicationDidFinishLaunching(_ notification: Notification) {
+        SettingsButton.open = { [weak self] in self?.settings.show() }
+        ClipboardHistory.index()
         let prompt = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true] as CFDictionary
         if AXIsProcessTrustedWithOptions(prompt) {
             start()
@@ -38,9 +70,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         watcher.onChange = { [weak self] text in self?.update(text) }
         panel.onHover = { [weak self] in self?.expand() }
         Copying.shared.text = { [weak self] in self.flatMap { Solver.copy($0.text) } }
+        Copying.shared.copied = { [weak self] in self?.remember() }
         // Return copies only with the pointer resting on the card or its panel.
         returnKey.take = { [weak self] in
-            guard let self, panel.isVisible, detail.isOpen || panel.frame.contains(NSEvent.mouseLocation) else { return false }
+            guard let self, panel.isVisible else { return false }
+            guard Prefs.returnCopies, detail.isOpen || panel.frame.contains(NSEvent.mouseLocation) else { return false }
             return Copying.shared.copy()
         }
         watcher.start()
@@ -54,13 +88,30 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         // Spotlight says the field has changed several times for each key; once is enough.
         if text == self.text, panel.isVisible { return }
+        if text.isEmpty { remember() }
         self.text = text
         typed += 1
+        Memory.ans = text == remembered ? ansBefore : ansNow
+        // The clipboard is only read when it is asked for by name.
+        if text.contains("clip") {
+            let copied = NSPasteboard.general.string(forType: .string)?.trimmingCharacters(in: .whitespacesAndNewlines)
+            Memory.clip = copied.flatMap { Double($0.replacingOccurrences(of: "−", with: "-")) }
+        }
         guard Solver.solve(text) != nil else {
             Log.note("typed \(text.count) characters: nothing to show")
             return hide()
         }
         if present() { Log.note("typed \(text.count) characters: shown") } else { lost("no place for the card as it was typed") }
+    }
+
+    // The answer showing becomes ans.
+    func remember() {
+        guard let shown, shown != remembered else { return }
+        Memory.ans = ansNow
+        guard let value = Solver.value(shown) else { return }
+        (ansBefore, ansNow, remembered) = (ansNow, value, shown)
+        UserDefaults.standard.set(value, forKey: "ans")
+        Memory.ans = text == remembered ? ansBefore : ansNow
     }
 
     // Puts the card up for the text as it stands, if Spotlight is there with room for it.
@@ -73,6 +124,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // Everything has an answer to copy but a number typed by itself. (Working out what the
         // answer is waits until it is asked for: this runs at every keystroke.)
         Copying.shared.available = NumberFacts.parse(Latex.plain(text)) == nil
+        shown = text
         panel.show(solution, window: geometry.window)
         returnKey.isOn = true
         watch()
@@ -90,7 +142,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         for delay in [0.12, 0.3, 0.6, 1.0] {
             DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
                 guard let self, asked == typed, !panel.isVisible else { return }
-                guard (SpotlightWatcher.alpha() ?? 0) > 0.5, watcher.current() == text else { return }
+                guard (SpotlightWatcher.alpha() ?? 0) > 0.5, watcher.current() == text else {
+                    // Still gone at the last look: Spotlight has closed, on an answer that is now ans.
+                    if delay == 1.0 { remember() }
+                    return
+                }
                 if present() { Log.note("back after \(delay) s") }
             }
         }

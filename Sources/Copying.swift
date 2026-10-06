@@ -10,12 +10,14 @@ import SwiftUI
     var available = false   // there is something to copy for what is typed
     var done = false        // it has just been copied, and the card says so for a moment
     @ObservationIgnored var text: () -> String? = { nil }
+    @ObservationIgnored var copied: () -> Void = {}
     @ObservationIgnored private var generation = 0
 
     @discardableResult func copy() -> Bool {
         guard let text = text() else { return false }
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString(text, forType: .string)
+        copied()
         done = true
         generation += 1
         let mine = generation
@@ -49,14 +51,14 @@ struct CopyButton: View {
     }
 }
 
-private struct ClickTarget: NSViewRepresentable {
+struct ClickTarget: NSViewRepresentable {
     var action: () -> Void
 
     func makeNSView(context: Context) -> ClickTargetView { ClickTargetView() }
     func updateNSView(_ view: ClickTargetView, context: Context) { view.action = action }
 }
 
-private final class ClickTargetView: NSView {
+final class ClickTargetView: NSView {
     var action: () -> Void = {}
 
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
