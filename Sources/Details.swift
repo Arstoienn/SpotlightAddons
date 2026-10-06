@@ -45,7 +45,7 @@ extension Solver {
         guard let typed = Hash.numbers(in: typed) else { return nil }
         let input = Latex.plain(typed)
         if LinearSystem.parts(input).count >= 2 { return LinearSystem.parse(input)?.details ?? NonlinearSystem.parse(input)?.details }
-        if let number = NumberFacts.parse(input) { return number.details }
+        if Options.numberFacts, let number = NumberFacts.parse(input) { return number.details }
         if let comparison = Comparison.parse(input) { return comparison.details }
         if let evaluation = Evaluation.parse(input, hadLatex: typed.contains("\\")) { return evaluationDetails(evaluation) }
         guard let eq = try? Parser.parse(input) else { return nil }
@@ -60,7 +60,7 @@ extension Solver {
         let written = constants.isEmpty ? header : row(typeset(worked.left, n), t(" = "), typeset(worked.right, n))
         var d: Details
         if let l = poly(worked.left), let r = poly(worked.right) {
-            d = polynomialDetails(trim(sub(l, r)), n, written, f, exact: constants.isEmpty)
+            d = polynomialDetails(trim(sub(l, r)), n, written, f, exact: constants.isEmpty && Options.exact)
         } else {
             d = numericDetails(worked, n, written, f)
         }
@@ -68,6 +68,8 @@ extension Solver {
             d.equation = header
             d.steps.insert(Step(label: "Substituting " + Constants.values(constants), math: written), at: 0)
         }
+        // x_1 = 10 is its own answer, shown for the sake of its subscript: there is no working.
+        if case .unknown = eq.left, case .num = eq.right { d.steps = [] }
         // A height that is only rounding noise is marked as zero. Nothing is drawn at all round
         // the mass of the Earth or the charge on an electron: there is no scale to draw it to.
         let points = d.roots.map { x in
@@ -489,6 +491,15 @@ extension Solver {
         func number(_ x: Double) -> String { x == 0 ? "0" : String(format: "%.12g", x) }
         func plain(_ s: String) -> String { s.replacingOccurrences(of: "−", with: "-") }
         if let hash = Hash.parse(typed) { return hash.written }
+        // As shown, where that is asked for: the card's own line, without the "x = " before a
+        // single answer.
+        if Options.copyAsShown {
+            guard let shown = solve(typed)?.exact else { return nil }
+            if let sign = shown.range(of: "= ") ?? shown.range(of: "≈ "), !shown[sign.upperBound...].contains("=") {
+                return plain(String(shown[sign.upperBound...]))
+            }
+            return plain(shown)
+        }
         guard let numbered = Hash.numbers(in: typed) else { return nil }
         let input = Latex.plain(numbered)
         if LinearSystem.parts(input).count < 2 {
@@ -500,6 +511,21 @@ extension Solver {
         }
         guard let answer = solve(typed), let d = details(typed) else { return nil }
         return d.roots.isEmpty ? plain(answer.exact) : d.roots.map(number).joined(separator: ", ")
+    }
+}
+
+// The one number an answer is, for ans to be next time: what was worked out, or the root of an
+// equation that has just the one. Nil for anything else.
+extension Solver {
+    static func value(_ typed: String) -> Double? {
+        guard Hash.parse(typed) == nil, let numbered = Hash.numbers(in: typed) else { return nil }
+        let input = Latex.plain(numbered)
+        guard LinearSystem.parts(input).count < 2, NumberFacts.parse(input) == nil, Comparison.parse(input) == nil else { return nil }
+        if let evaluation = Evaluation.parse(input, hadLatex: numbered.contains("\\")) {
+            return evaluation.value.isFinite ? evaluation.value : nil
+        }
+        guard let d = details(typed), d.roots.count == 1 else { return nil }
+        return d.roots[0]
     }
 }
 
@@ -619,14 +645,14 @@ func angleUnit(_ eq: Equation) -> AngleUnit? {
 func angleLine(_ n: String, _ x: Double, _ unit: AngleUnit) -> Math {
     guard unit == .degrees else {
         let degrees = "(\(decimal(x * 180 / .pi))°)"
-        guard let fraction = piFraction(x), fraction.plain != "0" else {
+        guard Options.exact, let fraction = piFraction(x), fraction.plain != "0" else {
             return t("\(n) \(isExact(x) ? "=" : "≈") \(decimal(x)) \(degrees)")
         }
         return row(t("\(n) = "), fraction, t(" ≈ \(threePlaces(x)) \(degrees)"))
     }
     let radians = x * .pi / 180, start = "\(n) \(wholeDegrees(x) ? "=" : "≈") \(degreesText(x))"
     if x == 0 { return t(start) }
-    guard let fraction = piFraction(radians) else { return t("\(start) (\(threePlaces(radians)) rad)") }
+    guard Options.exact, let fraction = piFraction(radians) else { return t("\(start) (\(threePlaces(radians)) rad)") }
     return row(t("\(start) ("), fraction, t(")"))
 }
 
@@ -641,7 +667,7 @@ func angleCard(_ name: String, _ shown: [Double], more: Bool, _ unit: AngleUnit)
     let degrees = unit == .degrees ? shown : shown.map { $0 * 180 / .pi }
     // π/6 where every one of them is such a part of π: a list half in π and half in decimals reads badly.
     let fractions = radians.compactMap(piFraction).map(\.plain)
-    let inPi = fractions.count == shown.count && fractions.contains { $0 != "0" }
+    let inPi = Options.exact && fractions.count == shown.count && fractions.contains { $0 != "0" }
     let whole = degrees.allSatisfy(wholeDegrees)
     let degreeList = "\(whole ? "=" : "≈") \(degrees.map(degreesText).joined(separator: ", "))\(rest)"
     if unit == .degrees {

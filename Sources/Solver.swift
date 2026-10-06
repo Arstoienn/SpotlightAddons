@@ -17,20 +17,22 @@ enum Solver {
         guard let typed = Hash.numbers(in: typed) else { return nil }
         let input = Latex.plain(typed)
         if LinearSystem.parts(input).count >= 2 { return LinearSystem.parse(input)?.solution ?? NonlinearSystem.parse(input)?.solution }
-        if let number = NumberFacts.parse(input) { return number.solution }
+        if Options.numberFacts, let number = NumberFacts.parse(input) { return number.solution }
         if let comparison = Comparison.parse(input) { return comparison.solution }
         if let evaluation = Evaluation.parse(input, hadLatex: typed.contains("\\")) { return evaluation.solution }
         guard let equation = try? Parser.parse(input) else { return nil }
-        // "x = 5" is already its own answer.
-        if case .unknown = equation.left, case .num = equation.right { return nil }
-        if case .num = equation.left, case .unknown = equation.right { return nil }
+        // "x = 5" is already its own answer. "x_1 = 10" and "theta = 30" are not quite: the card
+        // has the name as it is written, x with its subscript and θ.
         let name = equation.unknown
+        let asTyped = name.count == 1 && name.first?.isASCII == true
+        if asTyped, case .unknown = equation.left, case .num = equation.right { return nil }
+        if asTyped, case .num = equation.left, case .unknown = equation.right { return nil }
         // With a physical constant in it the answer is a decimal, the constant being only a few
         // figures itself, and the card says what was taken for it when it has the room.
         let constants = equation.constants
         var solution: Solution?
         if let left = poly(equation.left), let right = poly(equation.right) {
-            solution = solvePolynomial(trim(sub(left, right)), name, exact: constants.isEmpty)
+            solution = solvePolynomial(trim(sub(left, right)), name, exact: constants.isEmpty && Options.exact)
         } else {
             solution = solveNumerically(equation, name)
         }
@@ -197,10 +199,14 @@ enum Functions {
 enum Angle {
     static let functions = ["sin", "cos", "tan"], inverses = ["asin", "acos", "atan"]
 
-    // A sine whose angle has a degree mark anywhere in it works in degrees throughout.
+    // A sine whose angle has a degree mark anywhere in it works in degrees throughout. With
+    // degrees chosen in the settings every sine does, but one whose angle is marked rad or has π
+    // in it, and asin answers in degrees.
     static func call(_ f: String, _ argument: Expr) -> Expr {
+        if inverses.contains(f) { return .call(Options.degrees ? f + "°" : f, argument) }
         guard functions.contains(f) else { return .call(f, argument) }
-        return .call(saysDegrees(argument) ? f + "°" : f, unmarked(argument))
+        let degrees = says("deg", argument) || (Options.degrees && !says("rad", argument) && !says("π", argument))
+        return .call(degrees ? f + "°" : f, unmarked(argument))
     }
 
     // What ° and rad after something make of it. After asin they choose what it answers in;
@@ -213,13 +219,15 @@ enum Angle {
         return .call(degrees ? "deg" : "rad", e)
     }
 
-    private static func saysDegrees(_ e: Expr) -> Bool {
+    // Whether the angle has in it a mark, deg or rad, or π.
+    private static func says(_ mark: String, _ e: Expr) -> Bool {
         switch e {
-        case .num, .unknown, .index, .constant: return false
-        case .neg(let a): return saysDegrees(a)
-        case .op(_, let a, let b): return saysDegrees(a) || saysDegrees(b)
-        case .call(let f, let a): return f == "deg" || saysDegrees(a)
-        case .sum(_, let from, let to, let body, _): return saysDegrees(from) || saysDegrees(to) || saysDegrees(body)
+        case .num(let v): return mark == "π" && v == .pi
+        case .unknown, .index, .constant: return false
+        case .neg(let a): return says(mark, a)
+        case .op(_, let a, let b): return says(mark, a) || says(mark, b)
+        case .call(let f, let a): return f == mark || says(mark, a)
+        case .sum(_, let from, let to, let body, _): return says(mark, from) || says(mark, to) || says(mark, body)
         }
     }
 
@@ -248,20 +256,58 @@ enum Greek {
     static let symbols = "θωλαβφρτμ"
 }
 
-// The constants of the IB physics data booklet whose symbols are typed as they stand, with the
-// values it gives. A letter is one of these only when the equation has another letter to be its
-// unknown: 2c = 6 is still solved for c, and x = 2g is 19.6.
+// The physical constants whose symbols are typed as they stand. A letter is one of these only
+// when the equation has another letter to be its unknown: 2c = 6 is still solved for c, and
+// x = 2g is 19.6.
 enum Constants {
-    static let all: [String: (value: Double, text: String)] = [
-        "g": (9.8, "9.8 m s⁻²"),
-        "G": (6.67e-11, "6.67×10⁻¹¹ N m² kg⁻²"),
-        "c": (3.00e8, "3.00×10⁸ m s⁻¹"),
+    // Each as the data booklet rounds it, which is what a mark scheme expects, and as it is known.
+    static let table: [(name: String, title: String, booklet: (value: Double, text: String), precise: (value: Double, text: String))] = [
+        ("g", "Acceleration of free fall", (9.8, "9.8 m s⁻²"), (9.80665, "9.80665 m s⁻²")),
+        ("G", "Gravitational constant", (6.67e-11, "6.67×10⁻¹¹ N m² kg⁻²"), (6.6743e-11, "6.6743×10⁻¹¹ N m² kg⁻²")),
+        ("c", "Speed of light in vacuum", (3.00e8, "3.00×10⁸ m s⁻¹"), (299_792_458, "299 792 458 m s⁻¹")),
     ]
 
-    // "g = 9.8 m s⁻², c = 3.00×10⁸ m s⁻¹", for the card and the working to say what was used.
-    static func values(_ names: [String]) -> String {
-        names.compactMap { name in all[name].map { "\(name) = \($0.text)" } }.joined(separator: ", ")
+    // Those switched on in the settings, with the values chosen there.
+    static var all: [String: (value: Double, text: String)] {
+        var out: [String: (value: Double, text: String)] = [:]
+        for row in table where Options.constant(row.name) { out[row.name] = Options.precise ? row.precise : row.booklet }
+        return out
     }
+
+    // "g = 9.8 m s⁻², c = 3.00×10⁸ m s⁻¹", for the card and the working to say what was used.
+    // ans and clip are said the same way, with the number each stands for.
+    static func values(_ names: [String]) -> String {
+        names.compactMap { name in (all[name]?.text ?? Memory.value(name).map(decimal)).map { "\(name) = \($0)" } }.joined(separator: ", ")
+    }
+}
+
+// What is chosen in the settings window, as far as it changes an answer. Read from the defaults
+// each time, so that a change there is a change in the next card.
+enum Options {
+    private static func flag(_ key: String, _ fallback: Bool) -> Bool { UserDefaults.standard.object(forKey: key) as? Bool ?? fallback }
+
+    static var degrees: Bool { flag("degrees", false) }          // angles in degrees unless marked rad
+    static var exact: Bool { flag("exact", true) }               // 5/2, √5 and π/6 where there are such, not only decimals
+    static var numberFacts: Bool { flag("numberFacts", true) }   // 2048 = 2¹¹ for a number by itself
+    static var arithmetic: Bool { flag("arithmetic", true) }     // 12*3+4 answered with no = in it
+    static var precise: Bool { flag("precise", false) }          // constants as they are known, not as the booklet rounds them
+    static var copyAsShown: Bool { flag("copyAsShown", false) }  // 5/2 on the pasteboard, where it would have been 2.5
+    static func constant(_ name: String) -> Bool { flag("constant." + name, true) }
+
+    // How many significant figures a decimal is given to: six, unless chosen otherwise.
+    static var figures: Int {
+        let chosen = UserDefaults.standard.integer(forKey: "figures")
+        return chosen == 0 ? 6 : min(max(chosen, 3), 12)
+    }
+}
+
+// Two numbers kept from outside what is typed: ans, the answer before this one, and clip, the
+// number on the clipboard. The app sets them; a sum uses them by name, ans*2 and 20*clip.
+enum Memory {
+    static var ans: Double?
+    static var clip: Double?
+
+    static func value(_ name: String) -> Double? { name == "ans" ? ans : name == "clip" ? clip : nil }
 }
 
 struct Equation {
@@ -279,6 +325,7 @@ enum Parser {
 
     enum Token: Equatable {
         case number(Double), letter(String), function(String), constant(Double)
+        case named(String, Double)   // ans or clip, and the number it stands for
         case marked(String)   // !c: c read the other way round, the constant where it would have been the unknown
         case symbol(Character)
     }
@@ -468,7 +515,7 @@ enum Parser {
     // Whether what has been read so far ends in something a factorial could be of.
     static func endsOperand(_ tokens: [Token]) -> Bool {
         switch tokens.last {
-        case .number, .letter, .constant, .marked, .symbol(")"), .symbol("!"), .symbol("°"), .symbol("㎭"): true
+        case .number, .letter, .constant, .named, .marked, .symbol(")"), .symbol("!"), .symbol("°"), .symbol("㎭"): true
         default: false
         }
     }
@@ -487,6 +534,11 @@ enum Parser {
             } else if rest.hasPrefix("deg") {
                 out.append(.symbol("°"))
                 rest = rest.dropFirst(3)
+            } else if let word = ["ans", "Ans", "clip"].first(where: { rest.hasPrefix($0) }) {
+                // With no answer yet, or no number on the clipboard, there is nothing to say.
+                guard let value = Memory.value(word.lowercased()) else { throw Failure() }
+                out.append(.named(word.lowercased(), value))
+                rest = rest.dropFirst(word.count)
             } else if rest.hasPrefix("rad") {
                 out.append(.symbol("㎭"))
                 rest = rest.dropFirst(3)
@@ -537,7 +589,7 @@ enum Parser {
 
         var startsOperand: Bool {
             switch next {
-            case .number, .letter, .function, .constant, .marked, .symbol("("): true
+            case .number, .letter, .function, .constant, .named, .marked, .symbol("("): true
             default: false
             }
         }
@@ -567,6 +619,7 @@ enum Parser {
             at += 1
             switch t {
             case .number(let v), .constant(let v): return .num(v)
+            case .named(let name, let v): return .constant(name, v)
             case .letter(let s), .marked(let s):
                 if bound.contains(s) { return .index(s) }
                 if constants.contains(s), let known = Constants.all[s] { return .constant(s, known.value) }
@@ -950,11 +1003,11 @@ func minus(_ n: Int) -> String { n < 0 ? "−\(-n)" : "\(n)" }
 func isExact(_ x: Double) -> Bool {
     let size = abs(x)
     if x == 0 || (size >= 1e-6 && size < 1e12) { return abs(x - x.rounded()) < 1e-9 }
-    guard let shown = Double(String(format: "%.5e", x)) else { return false }
+    guard let shown = Double(String(format: "%.\(Options.figures - 1)e", x)) else { return false }
     return abs(shown - x) <= 1e-12 * size
 }
 
-// Six significant figures, with a real minus sign: written out where that can be read, and as
+// Six significant figures, or as many as the settings ask for, with a real minus sign: written out where that can be read, and as
 // 6.67×10⁻¹¹ where it cannot, which is the very large, the very small, and round numbers from ten
 // million up (3×10⁸, but 12345678).
 func decimal(_ x: Double) -> String {
@@ -963,14 +1016,14 @@ func decimal(_ x: Double) -> String {
     let size = abs(x)
     let round = size >= 1e7 && size < 1e12 && x == x.rounded() && String(Int(size)).reversed().drop(while: { $0 == "0" }).count <= 4
     if size >= 1e12 || size < 1e-6 || round {
-        let parts = String(format: "%.5e", x).split(separator: "e")
+        let parts = String(format: "%.\(Options.figures - 1)e", x).split(separator: "e")
         var mantissa = String(parts[0])
         while mantissa.hasSuffix("0") { mantissa.removeLast() }
         if mantissa.hasSuffix(".") { mantissa.removeLast() }
         let power = Int(parts[1]) ?? 0
         return "\(mantissa)×10\(power < 0 ? "⁻" : "")\(superscript(abs(power)))".replacingOccurrences(of: "-", with: "−")
     }
-    let digits = min(12, max(0, 5 - Int(floor(log10(abs(x))))))
+    let digits = min(12, max(0, Options.figures - 1 - Int(floor(log10(abs(x))))))
     var s = String(format: "%.\(digits)f", x)
     if s.contains(".") {
         while s.hasSuffix("0") { s.removeLast() }

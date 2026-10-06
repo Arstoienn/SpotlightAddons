@@ -1,8 +1,13 @@
-# Spotlight Solve
+# Spotlight Plus
 
 Type an equation into Spotlight and the answer appears on a glass card just above it, as you type,
 the way Spotlight's own calculator answers 2+2. Rest the pointer on the card and it grows into a
 panel with the working, every solution and a graph; move the pointer off and it shrinks back.
+
+Type `clipboard` or `history`, choose Clipboard History in Spotlight's list and press Return, and
+Spotlight comes back open on its clipboard history, the view that ⌘Space and then ⌘4 gives.
+Clipboard History is an entry Spotlight Plus puts in Spotlight's list itself, through Core
+Spotlight; there is no second app.
 
 ## What it solves
 
@@ -18,11 +23,14 @@ panel with the working, every solution and a graph; move the pointer off and it 
 - **Digests**: `SHA256("hello")` and `SHA1("hello")`, in capitals or not, give the digest of
   the text in hexadecimal. `sha256("hello", decimal)` and `sha256("hello", binary)` give it as
   a whole number, which, unlike the hexadecimal, can go into a sum.
+- **The answer before, and the clipboard**: `ans` is the last answer, once it has been copied or
+  Spotlight closed on it, so `ans*2` carries on from it; `clip` is the number on the clipboard,
+  as in `20*clip`.
 - **True or false**: with numbers alone on both sides, the two are compared. `2^2=4` is True
   and `1/3=0.3333` is False; `1/3~=0.3333` is True, `~=` or `≈` allowing a tenth of a percent.
   Also `!=`, `<`, `>`, `<=`, `>=` and their signs `≠`, `≤`, `≥`. (`5!=120` is five factorial;
   not equal is written with a space before it, `5 != 120`.)
-- **Physics**: `g`, `G` and `c` are the constants of the IB data booklet (9.8, 6.67×10⁻¹¹ and
+- **Physics**: `g`, `G` and `c` are the physical constants (9.8, 6.67×10⁻¹¹ and
   3.00×10⁸) whenever the equation has another letter to solve for. `h=0.5g*3^2` gives `h ≈ 44.1`
   and `x=2g` gives 19.6, while `2g=10` is still solved for `g`. The card says what was taken, and
   the working writes it in. Large and small numbers are typed as `5.97e24` and `1.6e-19`.
@@ -59,11 +67,32 @@ The top of the panel is the card itself, so opening it moves nothing. Below it:
 The card follows Spotlight when it is dragged, and goes when Spotlight closes. Nothing takes the
 keyboard, so typing carries on going to Spotlight.
 
+## Settings
+
+Open Spotlight Plus while it is running, which is what choosing it in Spotlight does, or press the
+gear at the foot of the panel. Each setting has under it what it does, by example.
+
+- **Answers**: angles in radians or degrees; how many significant figures a decimal is given to,
+  from three to ten; and whether an answer is exact where it can be (5/2, √5, π/6) or always a
+  decimal.
+- **What brings up a card**: arithmetic with no equals sign, and a number typed by itself, each
+  of which can be turned off.
+- **Physical constants**: g, G and c each on or off, and their values as a data booklet
+  rounds them (9.8, 6.67×10⁻¹¹, 3.00×10⁸) or as measured (9.80665, 6.6743×10⁻¹¹, 299 792 458).
+- **Copying**: whether the copy button gives a decimal or the answer as shown, and whether
+  Return copies while the pointer is on the card.
+- **General**: opening at login, keeping the log, and a button to quit.
+
 ## How it reads Spotlight
 
-There is no public way to add results to Spotlight. Spotlight Solve runs in the background and reads
+There is no public way to add results to Spotlight. Spotlight Plus runs in the background and reads
 Spotlight's search field through Accessibility, so it needs that permission: System Settings ›
-Privacy & Security › Accessibility. It never types into Spotlight or changes it.
+Privacy & Security › Accessibility. It never types into Spotlight or changes what is in it. The
+keys it presses are the two for the clipboard history, ⌘Space and ⌘4, when Clipboard History is
+chosen: Spotlight has no public way to be opened on that view either.
+
+While a card is up it watches for Return, and nothing else: Return copies the answer when the
+pointer is on the card, and at any other time is Spotlight's.
 
 ## Build and install
 
