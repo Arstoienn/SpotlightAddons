@@ -14,13 +14,25 @@ enum Solver {
         // A digest is of the text exactly as typed. One asked for as a number, inside a sum, is
         // written in as that number first; one in hexadecimal inside a sum is nothing to work out.
         if let hash = Hash.parse(typed) { return hash.solution }
-        guard let typed = Hash.numbers(in: typed) else { return nil }
-        let input = Latex.plain(typed)
+        guard let typed = Hash.numbers(in: typed).map(Prose.tidy), !Prose.reads(typed) else { return nil }
+        // "x=?" after a formula asks for it to be turned round to give x.
+        let asked = Rearrangement.asked(Latex.plain(typed))
+        let input = asked?.equation ?? Latex.plain(typed)
+        // ans, when the question before had several answers, is no one of them: the card says
+        // what to write instead.
+        if Memory.answers.count > 1, input.range(of: "(?<![A-Za-z])[Aa]ns(?![A-Za-z0-9_])", options: .regularExpression) != nil {
+            let named = Memory.answers.prefix(4).enumerated().map { "ans\($0 + 1) = \(decimal($1))" }.joined(separator: ", ")
+            return Solution(exact: "ans has \(Memory.answers.count) values", approx: "Write \(named)\(Memory.answers.count > 4 ? ", …" : "").")
+        }
         if LinearSystem.parts(input).count >= 2 { return LinearSystem.parse(input)?.solution ?? NonlinearSystem.parse(input)?.solution }
         if Options.numberFacts, let number = NumberFacts.parse(input) { return number.solution }
+        if let logic = Logic.parse(input) { return logic.solution }
         if let comparison = Comparison.parse(input) { return comparison.solution }
         if let evaluation = Evaluation.parse(input, hadLatex: typed.contains("\\")) { return evaluation.solution }
-        guard let equation = try? Parser.parse(input) else { return nil }
+        // cost = 90 gives a name a number, and there is nothing to work out: it is not cos t = 90.
+        if Evaluation.namesNumber(input) { return nil }
+        if let simplification = Simplification.parse(input) { return simplification.solution }
+        guard let equation = try? Parser.parse(input) else { return Rearrangement.parse(input, for: asked?.letter)?.solution }
         // "x = 5" is already its own answer. "x_1 = 10" and "theta = 30" are not quite: the card
         // has the name as it is written, x with its subscript and θ.
         let name = equation.unknown
@@ -67,6 +79,7 @@ indirect enum Expr {
             case "-": return added(l, -r)
             case "*": return l * r
             case "/": return l / r
+            case "%": return r == 0 ? .nan : l - r * (l / r).rounded(.down)
             default: return pow(l, r)
             }
         case .call(let f, let e): return Functions.apply(f, e.eval(x, indices))
@@ -199,6 +212,12 @@ enum Functions {
 enum Angle {
     static let functions = ["sin", "cos", "tan"], inverses = ["asin", "acos", "atan"]
 
+    // Whether a function gives an angle, and in degrees if so: asin and asin°.
+    static func givesAngle(_ f: String) -> (degrees: Bool, Void)? {
+        let name = f.hasSuffix("°") ? String(f.dropLast()) : f
+        return inverses.contains(name) ? (f.hasSuffix("°"), ()) : nil
+    }
+
     // A sine whose angle has a degree mark anywhere in it works in degrees throughout. With
     // degrees chosen in the settings every sine does, but one whose angle is marked rad or has π
     // in it, and asin answers in degrees.
@@ -304,10 +323,18 @@ enum Options {
 // Two numbers kept from outside what is typed: ans, the answer before this one, and clip, the
 // number on the clipboard. The app sets them; a sum uses them by name, ans*2 and 20*clip.
 enum Memory {
-    static var ans: Double?
+    static var answers: [Double] = []   // every answer the question before had: one, or the several roots of an equation
     static var clip: Double?
 
-    static func value(_ name: String) -> Double? { name == "ans" ? ans : name == "clip" ? clip : nil }
+    // ans is the answer before where there was just the one. Where there were several it is no
+    // one number, and they are ans1, ans2 and so on, kept here as ans_1 and ans_2, in the order
+    // they were given.
+    static func value(_ name: String) -> Double? {
+        if name == "clip" { return clip }
+        if name == "ans" { return answers.count == 1 ? answers[0] : nil }
+        guard name.hasPrefix("ans_"), let i = Int(name.dropFirst(4)), i >= 1, i <= answers.count else { return nil }
+        return answers[i - 1]
+    }
 }
 
 struct Equation {
@@ -444,11 +471,13 @@ enum Parser {
 
     static func tokenize(_ input: String) throws -> [Token] {
         let replacements: [(String, String)] = [
-            ("×", "*"), ("·", "*"), ("÷", "/"), ("−", "-"), ("²", "^2"), ("³", "^3"), ("π", "pi"), ("√", "sqrt"),
+            ("×", "*"), ("·", "*"), ("÷", "/"), ("−", "-"), ("⁻¹", "^-1"), ("²", "^2"), ("³", "^3"), ("π", "pi"), ("√", "sqrt"),
         ]
         // Capitals are kept: G is not g, and E is a letter where e is Euler's number.
         var s = input
         for (from, to) in replacements { s = s.replacingOccurrences(of: from, with: to) }
+        // 15% of 80 is 15% times 80.
+        s = s.replacingOccurrences(of: "%\\s*of\\s+", with: "%*", options: [.regularExpression, .caseInsensitive])
 
         var tokens: [Token] = []
         var i = s.startIndex
@@ -474,8 +503,12 @@ enum Parser {
             } else if c.isLetter, c.isASCII {
                 var j = i
                 while j < s.endIndex, s[j].isLetter, s[j].isASCII { j = s.index(after: j) }
-                tokens += try splitLetters(String(s[i..<j]))
-                i = try attachSubscript(&tokens, s, j)
+                // The digits straight after, for ans2, which is not ans times 2.
+                var k = j
+                while k < s.endIndex, s[k].isASCII, s[k].isNumber { k = s.index(after: k) }
+                let (read, numbered) = try splitLetters(String(s[i..<j]), then: String(s[j..<k]))
+                tokens += read
+                i = try attachSubscript(&tokens, s, numbered ? k : j)
             } else if Greek.symbols.contains(c) {
                 tokens.append(.letter(String(c)))
                 i = try attachSubscript(&tokens, s, s.index(after: i))
@@ -488,7 +521,7 @@ enum Parser {
                 // is about the speed of light, where 9e16 = c^2 would be solved for c.
                 tokens.append(.marked(String(next)))
                 i = s.index(i, offsetBy: 2)
-            } else if "+-*/^()=,!".contains(c) {
+            } else if "+-*/^()=,!%".contains(c) {
                 tokens.append(.symbol(c))
                 i = s.index(after: i)
             } else {
@@ -521,9 +554,11 @@ enum Parser {
     }
 
     // "sinx" is sin x and "2nx" would be n times x: known names first, then single letters.
-    static func splitLetters(_ run: String) throws -> [Token] {
+    // digits are what follows the letters; numbered says they were used up, as the 2 of ans2.
+    static func splitLetters(_ run: String, then digits: String = "") throws -> (tokens: [Token], numbered: Bool) {
         var out: [Token] = []
         var rest = Substring(run)
+        var numbered = false
         while !rest.isEmpty {
             if let f = (["sum", "prod"] + Functions.names).first(where: { rest.hasPrefix($0) }) {
                 out.append(.function(f))
@@ -536,8 +571,13 @@ enum Parser {
                 rest = rest.dropFirst(3)
             } else if let word = ["ans", "Ans", "clip"].first(where: { rest.hasPrefix($0) }) {
                 // With no answer yet, or no number on the clipboard, there is nothing to say.
-                guard let value = Memory.value(word.lowercased()) else { throw Failure() }
-                out.append(.named(word.lowercased(), value))
+                var name = word.lowercased()
+                if name == "ans", rest.count == word.count, !digits.isEmpty {
+                    name = "ans_" + digits
+                    numbered = true
+                }
+                guard let value = Memory.value(name) else { throw Failure() }
+                out.append(.named(name, value))
                 rest = rest.dropFirst(word.count)
             } else if rest.hasPrefix("rad") {
                 out.append(.symbol("㎭"))
@@ -550,7 +590,7 @@ enum Parser {
                 rest = rest.dropFirst()
             }
         }
-        return out
+        return (out, numbered)
     }
 
     struct State {
@@ -559,6 +599,7 @@ enum Parser {
         var constants: Set<String> = []   // the letters read as physical constants
         var at = 0
         var bound: [String] = []   // the k of each sum being read
+        var percent: (start: Int, end: Int)?   // the tokens of the last n%, to see whether it stands alone
 
         var next: Token? { at < tokens.count ? tokens[at] : nil }
 
@@ -570,9 +611,17 @@ enum Parser {
         mutating func expression() throws -> Expr {
             var e = try term()
             while true {
-                if take("+") { e = .op("+", e, try term()) }
-                else if take("-") { e = .op("-", e, try term()) }
-                else { return e }
+                let sign: Character
+                if take("+") { sign = "+" } else if take("-") { sign = "-" } else { return e }
+                let begins = at
+                let t = try term()
+                // 200 + 10% is 200 and a tenth of it more, as a calculator reads it; 200 + 50 * 10%
+                // is not, the percentage there being of 50.
+                if let p = percent, p.start == begins, p.end == at {
+                    e = .op("*", e, .op(sign, .num(1), t))
+                } else {
+                    e = .op(sign, e, t)
+                }
             }
         }
 
@@ -582,8 +631,17 @@ enum Parser {
             while true {
                 if take("*") { e = .op("*", e, try unary()) }
                 else if take("/") { e = .op("/", e, try unary()) }
+                else if take("%") { e = .op("%", e, try unary()) }
                 else if startsOperand { e = .op("*", e, try power()) }
                 else { return e }
+            }
+        }
+
+        // 10 % 3 is a remainder; 10% is a tenth. It is the remainder when an operand follows.
+        func startsOperand(after i: Int) -> Bool {
+            switch i + 1 < tokens.count ? tokens[i + 1] : nil {
+            case .number, .letter, .function, .constant, .named, .marked, .symbol("("): true
+            default: false
             }
         }
 
@@ -602,6 +660,7 @@ enum Parser {
 
         // 5! binds before a power does: 2^3! is 2⁶, and n!^2 is (n!)².
         mutating func power() throws -> Expr {
+            let start = at
             var base = try primary()
             // 35° and x deg say degrees, to the sine they are inside; x rad says radians, as it
             // would have been anyway.
@@ -609,9 +668,27 @@ enum Parser {
                 if take("!") { base = .call("fact", base) }
                 else if take("°") { base = Angle.marked(base, degrees: true) }
                 else if take("㎭") { base = Angle.marked(base, degrees: false) }
+                else if next == .symbol("%"), !startsOperand(after: at) { at += 1; base = .op("/", base, .num(100)); percent = (start, at) }
                 else { break }
             }
             return take("^") ? .op("^", base, try unary()) : base
+        }
+
+        // What a function is of when it is written without brackets: sin 2x is of 2x, with what
+        // is written straight after taken in, and tan⁻¹ 24/21 is of the fraction. It stops at
+        // another function, so that sin x cos x is two; and sin x/2 is half of sin x.
+        mutating func bare() throws -> Expr {
+            var e = try power()
+            if case .num = e, next == .symbol("/"), at + 1 < tokens.count, case .number(let below) = tokens[at + 1] {
+                at += 2
+                e = .op("/", e, .num(below))
+            }
+            while true {
+                switch next {
+                case .number, .letter, .constant, .named, .marked, .symbol("("): e = .op("*", e, try power())
+                default: return e
+                }
+            }
         }
 
         mutating func primary() throws -> Expr {
@@ -640,12 +717,21 @@ enum Parser {
                 return .sum(k, from: from, to: to, body, product: f == "prod")
             // sin(x)^2 is (sin x)², as written on paper; sin x^2 is sin(x²).
             case .function(let f):
+                // A power written on the function itself: sin^2 x is (sin x)², and tan^-1 x, as
+                // LaTeX's \tan^{-1} comes, is the angle whose tangent is x.
+                let raised = take("^") ? try unary() : nil
+                var argument: Expr
                 if take("(") {
-                    let e = try expression()
+                    argument = try expression()
                     guard take(")") else { throw Failure() }
-                    return Angle.call(f, e)
+                } else {
+                    argument = try bare()
                 }
-                return Angle.call(f, try power())
+                guard let raised else { return Angle.call(f, argument) }
+                var inverse = false
+                if case .neg(.num(1)) = raised { inverse = true }
+                if inverse, Angle.functions.contains(f) { return Angle.call("a" + f, argument) }
+                return .op("^", Angle.call(f, argument), raised)
             case .symbol("("):
                 let e = try expression()
                 guard take(")") else { throw Failure() }
@@ -689,6 +775,9 @@ func poly(_ e: Expr) -> Poly? {
         case "/":
             guard r.count == 1, r[0] != 0 else { return nil }
             return l.map { $0 / r[0] }
+        case "%":
+            guard l.count <= 1, r.count <= 1 else { return nil }
+            return [Expr.op("%", .num(l.first ?? 0), .num(r.first ?? 0)).eval(0)]
         default:
             guard r.count <= 1 else { return nil }
             let k = r.first ?? 0

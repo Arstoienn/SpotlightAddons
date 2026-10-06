@@ -72,9 +72,16 @@ expect("sin(10x deg)=0.5", "x = 3°, 15°, 39°, 51°, …", "= π/60, π/12, 13
 expect("sin(30 deg)=0.5", "True", "0.5 = 0.5")
 expect("sin(30)=0.5", "False", approxAny: true)
 expect("sin(pi/6)=0.5", "True", "0.5 = 0.5")
-expect("x=asin(0.5)", "x ≈ 0.523599")
-expect("x=asin(0.5) deg", "x = 30")
-expect("x=asin(0.5) rad", "x ≈ 0.523599")
+expect("x=asin(0.5)", "x = π/6", "= 30°")
+expect("x=asin(0.5) deg", "x = 30°", "= π/6 rad")
+expect(#"\tan^{-1}24/21"#, "≈ 0.851966", "≈ 48.8141°")
+expect("x=tan^-1(1)", "x = π/4", "= 45°")
+expect("x=atan(24/21) deg", "x ≈ 48.8141°", "≈ 0.851966 rad")
+expect("sin 2x=1", "x = π/4, 5π/4", approxAny: true)
+expect("x=sin^2(pi/6)", "x = 1/4", "≈ 0.25")
+expect("sin x cos x=0.25", "x = π/12, 5π/12, 13π/12, 17π/12", approxAny: true)
+expect("x=sin 1/2", "x ≈ 0.479426")
+expect("x=asin(0.5) rad", "x = π/6", "= 30°")
 expect("x=sin(2rad)", "x ≈ 0.909297")
 expect("sin(pi*x)=0", "x = 0, 1, 2, 3, …", approxAny: true)
 
@@ -273,6 +280,52 @@ expect(#"sha256("hello", decimal)/10^76"#, "≈ 2.03299")
 expect(#"x=sha256("hello", binary)/sha256("hello", decimal)"#, "x = 1")
 expect(#"sha256("hello""#, nil)
 
+// Letters with no = are tidied: like terms collected, and what is common to them taken out
+expect("xb+xc", "= x(b + c)")
+expect("2x+3x", "= 5x")
+expect("x+x", "= 2x")
+expect("2x+4", "= 2(x + 2)")
+expect("x^2+x", "= x(x + 1)")
+expect("ab+ba", "= 2ab")
+expect("2x+3x+y", "= 5x + y")
+expect("3ab-ab+2b", "= 2b(a + 1)")
+expect("6x^2y+9xy^2", "= 3xy(2x + 3y)")
+expect("2(x+1)+3(x+1)", "= 5(x + 1)")
+expect("-2x-4", "= −2(x + 2)")
+expect("x/2+x/2", "= x")
+expect("theta+2theta", "= 3θ")
+expect("2x*3x", "= 6x²")
+expect("(m^4*q^4*z^-1)(mq^5*z^3)", "= m⁵q⁹z²")
+expect("x^3/x", "= x²")
+expect("6x^2y/(3x)", "= 2xy")
+expect("2x/y+3x/y", "= 5x/y")
+expect("a^2b^-1*b^3", "= a²b²")
+// Nothing where there is nothing simpler to say, or it is not algebra at all
+expect("a+b", nil)
+expect("x(b+c)", nil)
+expect("(a+b)^2", nil)
+expect("x^2-5x+6", nil)
+expect("ab+ac+d", nil)
+expect("wi-fi", nil)
+expect("rock+roll", nil)
+expect("c++", nil)
+expect("2x+3x=10", "x = 2")
+
+// A formula turned round to give one letter: x, or the one asked for with "x=?"
+expect(#"\frac{1}{7b}=\frac{11x}{y}"#, "x = y/(77b)")
+expect("\\frac{1}{7b}=\\frac{11x}{y}\nx=?", "x = y/(77b)")
+expect(#"\frac{1}{7b}=\frac{11x}{y}, y=?"#, "y = 77bx")
+expect("x+y=3", "x = 3 − y")
+expect("ax+bx=c", "x = c/(a + b)")
+expect("F=ma, a=?", "a = F/m")
+expect("v=u+at, t=?", "t = (v − u)/a")
+expect("1/f=1/u+1/v, f=?", "f = uv/(v + u)")
+expect("E=1/2mv^2, v=?", "v = ±√(2E/m)")
+expect("PV=nRT, T=?", "T = PV/(nR)")
+expect("2x+3=11, x=?", "x = 4")
+expect("ax^2+bx=c", nil)
+expect("F=ma, z=?", nil)
+
 // A number by itself: its primes, or that it is one; a decimal as a fraction
 expect("2048", "2048 = 2¹¹")
 expect("360", "360 = 2³·3²·5")
@@ -315,7 +368,8 @@ expect("2048 report", nil)
 expect("pie", nil)
 expect("c", nil)
 expect("5g", nil)
-expect("x+y=3", nil)
+expect("F=ma", nil)
+expect("y=mx+b", nil)
 expect("weather today", nil)
 expect("a=b", nil)
 expect("x=", nil)
@@ -335,7 +389,7 @@ expect("ln(x)=800", "x = e⁸⁰⁰", "Too large to be written out as a decimal.
 // ans, the answer before, and clip, the number on the clipboard
 expect("ans*2", nil)
 expect("20*clip", nil)
-Memory.ans = 40
+Memory.answers = [40]
 Memory.clip = 9.81
 expect("ans*2", "= 80", "Taking ans = 40")
 expect("ans", "= 40", "Taking ans = 40")
@@ -346,11 +400,19 @@ expect("2x=ans", "x = 20", "Taking ans = 40")
 expect("h=0.5clip*3^2", "h ≈ 44.145", "Taking clip = 9.81")
 expect("ans=40", "True", "40 = 40")
 expectDetails("ans*2+1", "ans·2 + 1", [("Substituting ans = 40", "= 40·2 + 1"), ("Multiplying", "= 80 + 1"), ("Adding", "= 81")], ["= 81"])
-if Solver.value("12*3+4") != 40 || Solver.value("2x=10") != 5 || Solver.value("x^2=4") != nil || Solver.value("2048") != nil {
+if Solver.values("12*3+4") != [40] || Solver.values("2x=10") != [5] || Solver.values("x^2=4") != [-2, 2]
+    || Solver.values("2048") != [] || Solver.values("xb+xc") != [] || Solver.values("x^2-5x+6=0") != [2, 3] {
     failures += 1
-    print("FAIL the value an answer leaves for ans")
+    print("FAIL the values an answer leaves for ans")
 }
-Memory.ans = nil
+// After several answers ans is no one number: ans1 and ans2 are
+Memory.answers = [2, 3]
+expect("ans*2", "ans has 2 values", "Write ans1 = 2, ans2 = 3.")
+expect("ans1*2", "= 4", "Taking ans_1 = 2")
+expect("ans2+ans1", "= 5", "Taking ans_2 = 3, ans_1 = 2")
+expect("x=10ans2", "x = 30", "Taking ans_2 = 3")
+expect("ans3", nil)
+Memory.answers = []
 Memory.clip = nil
 
 // What the settings change. (Each is put back as it was.)
@@ -364,8 +426,8 @@ with("degrees", true) {
     expect("sin(x rad)=0.5", "x = π/6, 5π/6", approxAny: true)
     expect("sin(pi/6)=0.5", "True", "0.5 = 0.5")
     expect("F_n=0.4*20cos(35)", "F_n ≈ 6.55322")
-    expect("x=asin(0.5)", "x = 30")
-    expect("x=asin(0.5) rad", "x ≈ 0.523599")
+    expect("x=asin(0.5)", "x = 30°", "= π/6 rad")
+    expect("x=asin(0.5) rad", "x = π/6", "= 30°")
 }
 with("numberFacts", false) {
     expect("2048", nil)
@@ -436,6 +498,7 @@ expectCopy("2x+y=5, x-y=1", "x = 2, y = 1")
 expectCopy("1/3 ~= 0.3333", "True")
 expectCopy(#"SHA1("hello")"#, "aaf4c61ddcc5e8a2dabede0f3b482cd9aea9434d")
 expectCopy("2048", nil)
+expectCopy("xb+xc", "x(b + c)")
 expectCopy("hello", nil)
 
 // What the card opens into: the equation typeset, the key steps, and every solution.
@@ -550,6 +613,16 @@ expectDetails(#"SHA256("hello")"#, #"SHA-256("hello")"#,
                ("Applying SHA-256", "The message is padded to a multiple of 512 bits and compressed block by block, which gives a digest of 256 bits.")],
               ["2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824"])
 
+expectDetails("xb+xc", "xb + xc", [("Taking out the common factor", "= x(b + c)")], ["= x(b + c)"])
+expectDetails("2x+3x", "2x + 3x", [("Collecting like terms", "= 5x")], ["= 5x"])
+expectDetails("3ab-ab+2b", "3ab − ab + 2b", [("Collecting like terms", "= 2ab + 2b"), ("Taking out the common factor", "= 2b(a + 1)")])
+expectDetails("-2x-4", "−2x − 4", [("Taking out the common factor", "= −2(x + 2)")])
+
+expectDetails(#"\frac{1}{7b}=\frac{11x}{y}"#, "1/(7b) = 11x/y",
+              [("Collecting the terms in x", "11x/y = 1/(7b)"), ("Hence", "x = y/(77b)")], ["x = y/(77b)"])
+expectDetails("E=1/2mv^2, v=?", "E = 1/2·mv²",
+              [("Collecting the terms in v", "mv²/2 = E"), ("Isolating v²", "v² = 2E/m"), ("Taking the square root", "v = ±√(2E/m)")])
+
 // A comparison: both sides worked out together, then compared
 expectDetails("2^2=4", "2² = 4", [("Evaluating the power", "4 = 4"), ("Comparing the two sides", "4 = 4")], ["True"])
 expectDetails("1/3 ~= 0.3333", "1/3 ≈ 0.3333", [("Dividing", "0.333333 ≈ 0.3333"), ("Comparing the two sides", "0.333333 > 0.3333")], ["True"])
@@ -610,6 +683,38 @@ if let d = Solver.details("x^2+y+z=3, x+y^2+z=3, x+y+z^2=3") {
                 "(√2, √2, 1 − √2) ≈ (1.41421, 1.41421, −0.414214)", "(1 + √2, −√2, −√2) ≈ (2.41421, −1.41421, −1.41421)"]
     if lines != want { failures += 1; print("FAIL nonlinear solutions\n  want \(want)\n  got  \(lines)") }
 }
+
+// Percentages and remainders, as they are used
+expect("10*10%", "= 1")
+expect("50%", "= 1/2", "≈ 0.5")
+expect("200+10%", "= 220")
+expect("200-10%", "= 180")
+expect("200+50*10%", "= 205")
+expect("15% of 80", "= 12")
+expect("15%*80", "= 12")
+expect("5%5", "= 0")
+expect("10 % 3", "= 1")
+expect("-7%3", "= 2")
+expect("(10+5)%4", "= 3")
+
+// Words, prices and dates bring up nothing
+for typed in ["m1 mac", "r2d2", "9to5mac", "q4 2026", "5 ft 10", "wi-fi 6", "e2e", "2+2=5 meme", "$100", "100$", "2026-10-06", "10/6/2026", "007"] {
+    if let got = Solver.solve(typed) { failures += 1; print("FAIL \(typed) should show nothing, got \(got.exact)") }
+}
+expect("2 x + 3 x", "= 5x")
+expect("F=kq/r^2, r=?", "r = ±√(kq/F)")
+
+// Statements joined, and exact equality
+for (typed, want) in [("3+1=4 || 3=1", "True"), ("3=1 || 2=5", "False"), ("3=1 && 2=2", "False"), ("2=2 && 3=3", "True"), ("1=1 && 2=3 || 4=4", "True"),
+                      ("1<2 && 2<3 && 3<4", "True"), ("1/3===0.33", "False"), ("1/3===0.3333333333333333", "False"), ("1/3===1/3", "True"),
+                      ("0.5===1/2", "True"), ("2^10===1024", "True"), ("sqrt(2)^2===2", "True"), ("0.1+0.2==0.3", "True"), ("1/3==0.3333", "False"),
+                      ("5 !== 5", nil), ("3=1 and 2=2", "False"), ("3=1 or 2=2", "True"), ("3=1 AND 2=2", "False"), ("not 3=1", "True"), ("!(3=1)", "True"),
+                      ("!(3=1 || 2=2)", "False"), ("(1=1 || 2=3) && 3=3", "True"), ("1=1 and not 2=3", "True"), ("not (1=1 and 2=3) or 4=5", "True"),
+                      ("2 and 3", nil), ("salt and pepper", nil), ("x or y", nil)] as [(String, String?)] {
+    let got = Solver.solve(typed)?.exact
+    if got != want { failures += 1; print("FAIL \(typed)\n  want \(want ?? "nil")\n  got  \(got ?? "nil")") }
+}
+expect("x=2 && 3=3", nil)
 
 print(failures == 0 ? "all passed" : "\(failures) failed")
 exit(failures == 0 ? 0 : 1)

@@ -16,11 +16,16 @@ indirect enum Math: Equatable {
         switch self {
         case .text(let s): return s
         case .row(let parts): return parts.map(\.plain).joined()
-        case .fraction(let n, let d): return Math.bracketed(n) + "/" + Math.bracketed(d)
+        case .fraction(let n, let d):
+            // On one line a product below the line needs brackets as much as a sum does: y/(77b).
+            var below = Math.bracketed(d)
+            if case .row(let parts) = d, parts.filter({ !$0.plain.isEmpty }).count > 1, !below.hasPrefix("(") { below = "(\(below))" }
+            return Math.bracketed(n) + "/" + below
         case .root(let x): return "√" + Math.bracketed(x)
         case .power(let base, let exponent):
             let e = exponent.plain
-            if !e.isEmpty, e.allSatisfy(\.isWholeNumber) { return base.plain + superscript(Int(e)!) }
+            // Plain digits only: ² is a whole number too, as far as Swift is concerned, and 2^3² is not 2 to the 32.
+            if !e.isEmpty, e.allSatisfy({ $0.isASCII && $0.isNumber }), let k = Int(e) { return base.plain + superscript(k) }
             return base.plain + "^" + Math.bracketed(exponent)
         case .bigOperator(let symbol, let lower, let upper):
             return "\(symbol)(\(lower.plain)…\(upper.plain)) "

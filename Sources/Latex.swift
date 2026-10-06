@@ -173,11 +173,23 @@ struct Evaluation {
         if plain, let tokens = try? Parser.tokenize(input),
            zip(tokens, tokens.dropFirst()).contains(where: { if case (.number, .number) = $0 { true } else { false } }) { return nil }
         let named = (try? Parser.tokenize(input))?.contains(where: { if case .named = $0 { true } else { false } }) == true
-        if parts.count == 1, !plain || named || input.contains(where: { $0.isNumber || "+-*/^()!√×÷−".contains($0) }),
+        if parts.count == 1, !plain || named || input.contains(where: { $0.isNumber || "+-*/^()!√×÷−%".contains($0) }),
            let expr = try? Parser.constant(input, physical: !plain), isWork(expr) {
             return Evaluation(name: nil, expr: expr)
         }
         return nil
+    }
+
+    // Whether it is a word given a plain number, cost = 90, where the word has a function's name
+    // in it and would otherwise be read as cos t.
+    static func namesNumber(_ input: String) -> Bool {
+        let parts = input.split(separator: "=", omittingEmptySubsequences: false)
+        guard parts.count == 2 else { return false }
+        let name = parts[0].trimmingCharacters(in: .whitespaces)
+        guard name.range(of: "^[A-Za-z][A-Za-z0-9]+$", options: .regularExpression) != nil,
+              let tokens = try? Parser.tokenize(name), tokens.contains(where: { if case .function = $0 { true } else { false } }),
+              let value = try? Parser.constant(String(parts[1])) else { return false }
+        return !isWork(value)
     }
 
     // Something to work out; "a = 1" is not.
@@ -193,6 +205,17 @@ struct Evaluation {
         let v = value
         guard v.isFinite else { return nil }
         let lead = name.map { "\($0) " } ?? ""
+        // An angle, from asin, acos or atan: in the unit it was worked out in, π/6 where it is
+        // that, with the other unit beneath.
+        if case .call(let f, _) = expr, let (inDegrees, _) = Angle.givesAngle(f), expr.constants.isEmpty {
+            let radians = inDegrees ? v * .pi / 180 : v, degrees = inDegrees ? v : v * 180 / .pi
+            let fraction = Options.exact ? piFraction(radians)?.plain : nil
+            let whole = wholeDegrees(degrees)
+            let inRadians = fraction.map { "= \($0)" } ?? "≈ \(decimal(radians))"
+            let inDegreeMeasure = "\(whole ? "=" : "≈") \(degreesText(degrees))"
+            return inDegrees ? Solution(exact: lead + inDegreeMeasure, approx: inRadians + " rad")
+                             : Solution(exact: lead + inRadians, approx: inDegreeMeasure)
+        }
         // Worked out from a physical constant, itself only a few figures: a decimal, not a fraction.
         let constants = expr.constants
         if !constants.isEmpty { return Solution(exact: lead + approxOrEqual(v), approx: "Taking " + Constants.values(constants)) }
@@ -205,5 +228,106 @@ struct Evaluation {
         if isExact(v) { return Solution(exact: "\(lead)= \(decimal(v))", approx: nil) }
         if let (p, q) = rational(v), p != 0 { return Solution(exact: "\(lead)= \(fraction(p, q))", approx: "≈ \(decimal(v))") }
         return Solution(exact: "\(lead)≈ \(decimal(v))", approx: nil)
+    }
+}
+
+
+// What is typed into Spotlight is mostly not mathematics, and what is not must bring up no card:
+// r2d2, 9to5mac, wi-fi 6, 5 ft 10, 2026-10-06, $100. This is the test of whether it is words, a
+// price or a date, and not letters and numbers to be worked.
+enum Prose {
+    static func reads(_ input: String) -> Bool {
+        if input.contains("\\") { return false }
+        // A single $ is a price; a pair is LaTeX's brackets.
+        if input.filter({ $0 == "$" }).count == 1 { return true }
+        // Dates, 2026-10-06 and 10/6/2026.
+        if input.range(of: "\\d{4}-\\d{1,2}-\\d{1,2}|\\d{1,2}/\\d{1,2}/\\d{2,4}", options: .regularExpression) != nil { return true }
+        // A number with noughts in front of it is a code, not a quantity: 007.
+        if input.range(of: "^\\s*0[0-9]+\\s*$", options: .regularExpression) != nil { return true }
+
+        // A letter with a digit straight after it, m1 and e2e, or a digit and a letter and a
+        // digit, 9to5: not algebra. A function with its argument, log2, ans2 and 1e5 are.
+        var spelled = input
+        for name in Functions.names + ["ans", "Ans"] {
+            spelled = spelled.replacingOccurrences(of: "\(name)[0-9]", with: " ", options: .regularExpression)
+        }
+        spelled = spelled.replacingOccurrences(of: "[0-9.][eE][-+]?[0-9]", with: " ", options: .regularExpression)
+        if spelled.range(of: "[A-Za-z][0-9]|[0-9][A-Za-z]+[0-9]", options: .regularExpression) != nil { return true }
+
+        // Two things side by side with only a space between, one of them a word: 5 ft 10, wi-fi 6.
+        // 2 x and sin x are not words, x being a letter and sin a name.
+        var known = Set(Functions.names + Array(Greek.names.keys) + ["pi", "ans", "Ans", "clip", "of", "deg", "rad", "mod"])
+        // and, or and not are words of the language of statements, where there is a relation.
+        if input.contains(where: { "=<>≈≠≤≥".contains($0) }) { known.formUnion(["and", "or", "not", "AND", "OR", "NOT", "And", "Or", "Not"]) }
+        func word(_ run: Substring) -> Bool { run.count >= 2 && run.allSatisfy({ $0.isLetter && $0.isASCII }) && !known.contains(String(run)) }
+        var runs: [(text: Substring, spaceBefore: Bool)] = []
+        var current = input.startIndex, spaced = false
+        while current < input.endIndex {
+            let c = input[current]
+            if c.isLetter && c.isASCII || c.isNumber {
+                var end = current
+                while end < input.endIndex, input[end].isLetter && input[end].isASCII || input[end].isNumber { end = input.index(after: end) }
+                runs.append((input[current..<end], spaced))
+                spaced = false
+                current = end
+            } else {
+                // Only spaces between two runs keep them side by side; anything else parts them.
+                if c == " " && !runs.isEmpty && current > input.startIndex && (input[input.index(before: current)].isLetter || input[input.index(before: current)].isNumber || input[input.index(before: current)] == " ") { spaced = true } else { spaced = false }
+                current = input.index(after: current)
+            }
+        }
+        return zip(runs, runs.dropFirst()).contains { ($1.spaceBefore) && (word($0.text) || word($1.text)) }
+    }
+}
+
+extension Prose {
+    // What people type for arithmetic, said the way the parser reads it: 1,000 + 250, 2**8, 3 x 4,
+    // 0xFF, log2(8), and =2+2 or 2+2= as a calculator would show it. Left alone where it means
+    // something else: x+y=3, x-y=1 has a comma, and x=? is a question.
+    static func tidy(_ input: String) -> String {
+        if input.contains("\\") { return input }
+        var s = input
+        func replace(_ pattern: String, _ template: String) {
+            s = s.replacingOccurrences(of: pattern, with: template, options: .regularExpression)
+        }
+        // 1,000,000: a comma between groups of three, with no digit before the first group or
+        // after the last.
+        let grouped = try! NSRegularExpression(pattern: "(?<![0-9,.])[0-9]{1,3}(,[0-9]{3})+(?![0-9])")
+        for match in grouped.matches(in: s, range: NSRange(s.startIndex..., in: s)).reversed() {
+            guard let range = Range(match.range, in: s) else { continue }
+            s.replaceSubrange(range, with: s[range].replacingOccurrences(of: ",", with: ""))
+        }
+        replace("\\*\\*", "^")
+        // 0xFF and 0b1010 are numbers in other bases.
+        for (prefix, radix) in [("0[xX]", 16), ("0[bB]", 2)] {
+            let digits = radix == 16 ? "[0-9a-fA-F]{1,15}" : "[01]{1,50}"
+            while let range = s.range(of: "(?<![0-9A-Za-z])\(prefix)\(digits)(?![0-9A-Za-z])", options: .regularExpression),
+                  let value = Int(s[range].dropFirst(2), radix: radix) {
+                s.replaceSubrange(range, with: String(value))
+            }
+        }
+        // 3 x 4 and 3x4 are three times four.
+        replace("(?<=[0-9])\\s*[xX×]\\s*(?=[0-9])", "*")
+        // log2(8): the logarithm to base 2, log10 the one that log is.
+        replace("log10\\(", "log(")
+        while let range = s.range(of: "log2(") {
+            var depth = 1, end = range.upperBound
+            while end < s.endIndex, depth > 0 {
+                if s[end] == "(" { depth += 1 } else if s[end] == ")" { depth -= 1 }
+                end = s.index(after: end)
+            }
+            guard depth == 0 else { break }
+            let inner = s[range.upperBound..<s.index(before: end)]
+            s.replaceSubrange(range.lowerBound..<end, with: "(ln(\(inner))/ln(2))")
+        }
+        // =2+2, and 2+2= or 2+2=? : the answer asked for. Not x=? , which names a letter.
+        let trimmed = s.trimmingCharacters(in: .whitespaces)
+        if trimmed.hasPrefix("="), trimmed.dropFirst().contains(where: { $0.isNumber }), trimmed.dropFirst().contains(where: { "+-*/^%()!".contains($0) }), !trimmed.dropFirst().contains("=") {
+            s = String(trimmed.dropFirst())
+        } else if let range = trimmed.range(of: "\\s*=\\s*\\??\\s*$", options: .regularExpression) {
+            let before = trimmed[..<range.lowerBound]
+            if before.contains(where: { $0.isNumber }), before.contains(where: { "+-*/^%()!".contains($0) }), !before.contains("="), !before.contains(where: { $0.isLetter }) { s = String(before) }
+        }
+        return s
     }
 }

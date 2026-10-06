@@ -12,7 +12,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let detail = DetailPanel()
     let returnKey = ReturnKey()
     let settings = SettingsWindow()
-    var clipboardAsked = Date.distantPast
     var text = ""
     var link: CADisplayLink?
     var placement: SpotlightWatcher.Placement?
@@ -27,32 +26,29 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     // before, so that ans+1 does not climb each time it is looked at again.
     var shown: String?         // the text the card last answered
     var remembered: String?    // the text whose answer ans is
-    var ansBefore: Double?     // what ans was until then
-    var ansNow: Double? = UserDefaults.standard.object(forKey: "ans") as? Double
+    var ansBefore: [Double] = []   // what ans was until then
+    var ansNow: [Double] = (UserDefaults.standard.array(forKey: "answers") as? [Double])
+        ?? (UserDefaults.standard.object(forKey: "ans") as? Double).map { [$0] } ?? []   // "ans" is where the one answer was kept before there could be several
 
-    // Opened while already running, which is what choosing it in Spotlight does: the settings.
-    // Choosing Clipboard History there may open the app in passing as well; that is not this,
-    // so a moment is given for it to say which it was.
-    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows: Bool) -> Bool {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
-            guard let self, Date().timeIntervalSince(clipboardAsked) > 2 else { return }
-            settings.show()
-        }
-        return false
-    }
+    // Opened while already running, which is what choosing Spotlight Plus in Spotlight does:
+    // it is running, and there is nothing more to do. The settings have an entry of their own.
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows: Bool) -> Bool { false }
 
-    // Clipboard History, chosen in Spotlight's list.
+    // One of the app's own entries, chosen in Spotlight's list.
     func application(_ application: NSApplication, continue userActivity: NSUserActivity,
                      restorationHandler: @escaping ([any NSUserActivityRestoring]) -> Void) -> Bool {
-        guard ClipboardHistory.chosen(userActivity) else { return false }
-        clipboardAsked = Date()
-        ClipboardHistory.open()
+        guard let entry = Entry.chosen(userActivity) else { return false }
+        switch entry {
+        case .clipboardHistory: ClipboardHistory.open()
+        case .settings: settings.show()
+        }
+        Entry.index()
         return true
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         SettingsButton.open = { [weak self] in self?.settings.show() }
-        ClipboardHistory.index()
+        Entry.index()
         let prompt = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true] as CFDictionary
         if AXIsProcessTrustedWithOptions(prompt) {
             start()
@@ -91,7 +87,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if text.isEmpty { remember() }
         self.text = text
         typed += 1
-        Memory.ans = text == remembered ? ansBefore : ansNow
+        Memory.answers = text == remembered ? ansBefore : ansNow
         // The clipboard is only read when it is asked for by name.
         if text.contains("clip") {
             let copied = NSPasteboard.general.string(forType: .string)?.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -107,11 +103,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     // The answer showing becomes ans.
     func remember() {
         guard let shown, shown != remembered else { return }
-        Memory.ans = ansNow
-        guard let value = Solver.value(shown) else { return }
-        (ansBefore, ansNow, remembered) = (ansNow, value, shown)
-        UserDefaults.standard.set(value, forKey: "ans")
-        Memory.ans = text == remembered ? ansBefore : ansNow
+        Memory.answers = ansNow
+        let values = Solver.values(shown)
+        guard !values.isEmpty else { return }
+        (ansBefore, ansNow, remembered) = (ansNow, values, shown)
+        UserDefaults.standard.set(values, forKey: "answers")
+        Memory.answers = text == remembered ? ansBefore : ansNow
     }
 
     // Puts the card up for the text as it stands, if Spotlight is there with room for it.
@@ -218,6 +215,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 }
 
+// Its entries taken out of Spotlight's list again, for when the app is to be removed:
+//     "/Applications/Spotlight Plus.app/Contents/MacOS/SpotlightPlus" --forget-entries
+if CommandLine.arguments.contains("--forget-entries") { Entry.forget() }
+
+Prefs.bringOver()
 let app = NSApplication.shared
 let delegate = AppDelegate()
 app.delegate = delegate
