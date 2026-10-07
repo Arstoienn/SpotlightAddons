@@ -3,6 +3,8 @@ import Foundation
 // Run with ./test.sh. Each case is what Spotlight's field would hold and what the card should say.
 
 var failures = 0
+// The expectations below are of a sum answered as a fraction first; decimals first is tried further down.
+UserDefaults.standard.set(false, forKey: "decimalFirst")
 
 func expect(_ input: String, _ exact: String?, _ approx: String? = nil, approxAny: Bool = false) {
     let got = Solver.solve(input)
@@ -303,7 +305,7 @@ expect("a^2b^-1*b^3", "= a²b²")
 // Nothing where there is nothing simpler to say, or it is not algebra at all
 expect("a+b", nil)
 expect("x(b+c)", nil)
-expect("(a+b)^2", nil)
+expect("(a+b)^2", "= a² + 2ab + b²")
 expect("x^2-5x+6", nil)
 expect("ab+ac+d", nil)
 expect("wi-fi", nil)
@@ -832,6 +834,51 @@ for (typed, want) in [("sin(x)^2+cos(x)^2", "= 1"), ("1-sin(x)^2", "= cos(x)²")
 for typed in ["sin(x)", "tan(x)", "sin(x)+cos(x)", "sin(x)^2", "x+sin(x)", "sin x^2 + cos x^2"] {
     if let got = Solver.solve(typed) { failures += 1; print("FAIL \(typed) should show nothing, shows \(got.exact)") }
 }
+
+// A bracket that was meant to start earlier
+for (typed, want) in [("29-12)/5", "= 17/5"), ("1+2)*3", "= 9"), ("x=29-12)/5", "x = 17/5"),
+                      ("(1+2)+3)", "= 6"), ("2*(1+2))", "= 6")] as [(String, String?)] {
+    let got = Solver.solve(typed)?.exact
+    if let want, got != want { failures += 1; print("FAIL \(typed)\n  want \(want)\n  got  \(got ?? "nil")") }
+}
+
+// Sequences: nothing is said until d, r, a term or a sum is asked for
+for (typed, want) in [("u_1=12, u_5=29, d", "d = 17/4"), ("u_{1}=12, u_{5}=29, d", "d = 17/4"), ("u_2=6, u_4=24, d", "d = 9"), ("u_1=3, u_4=24, r", "r = 2"),
+                      ("u_1=2, d=3, u_10=?", "u_10 = 29"), ("u_1=2, r=3, u_5=?", "u_5 = 162"), ("u_1=2, u_3=18, S_5=?", "Arithmetic: S_5 = 90"),
+                      ("u_1=12, u_5=29, d=?", "d = 17/4"), ("u_1=12, u_5=29, r=?", "r = ±(29/12)^(1/4)"),
+                      ("u_1=12, u_5=29", nil), ("u+1=12, u_5=29", nil)] as [(String, String?)] {
+    let got = Solver.solve(typed)?.exact
+    if let want, got != want { failures += 1; print("FAIL \(typed)\n  want \(want)\n  got  \(got ?? "nil")") }
+    if want == nil, let got, got.hasPrefix("Arithmetic") || got.hasPrefix("Geometric") { failures += 1; print("FAIL \(typed) is a sequence before it is asked about: \(got)") }
+}
+expect("u+1=12, u_5=29, d", "d = 17/4", "u_n = 12 + (17/4)(n − 1)")
+expect("u1=12, u_5=29, d", "d = 17/4", "u_n = 12 + (17/4)(n − 1)")
+expect("u-1=12, u_5=29, r", "r = ±(29/12)^(1/4)", "≈ ±1.24682, u_n = 12·r^(n − 1)")
+expect("u_2=6, u_4=24, r", "r = ±2", "u_n = 6·r^(n − 2)")
+expect("d_1=10,d_3=20,r", "r = ±√2", "≈ ±1.41421, d_n = 10·r^(n − 1)")
+expect("u_1=3, u_3=7, r", "r = ±√21/3", approxAny: true)
+expect("u_1=1, u_2=2, u_3=4, d", "No common difference", approxAny: true)
+expect("u_2=6, u_4=24, u_6=?", "Arithmetic: u_6 = 42", "Geometric: u_6 = 96")
+expect("u_2=6, u_4=24, u_5=?", "Arithmetic: u_5 = 33", "Geometric: u_5 = 48 or −48")
+for typed in ["d_1=10,d_3=20,r", "u_1=12, u_5=29, d", "u_2=6, u_4=24, u_6=?", "u_1=-4, u_2=6, r"] {
+    if Solver.details(typed)?.graph == nil { failures += 1; print("FAIL \(typed) has no graph") }
+}
+// A sum raised to a power, or sums multiplied, is written out
+for (typed, want) in [("(a+b)^2", "= a² + 2ab + b²"), ("(a-b)^2", "= a² − 2ab + b²"), ("(x+1)^3", "= x³ + 3x² + 3x + 1"), ("(x+1)(x-1)", "= x² − 1"),
+                      ("(a+b)(c+d)", "= ac + ad + bc + bd"), ("2(a+b)^2", "= 2a² + 4ab + 2b²"), ("(a+b)^2-(a-b)^2", "= 4ab"), ("(a+b)^1", "= a + b"), ("(a+b)^0", "= 1"), ("(x-1)^1", "= x − 1"), ("(2a+3b)^2", "= 4a² + 12ab + 9b²"),
+                      ("x(b+c)", nil), ("3(x+1)", nil), ("(a+b)", nil)] as [(String, String?)] {
+    let got = Solver.solve(typed)?.exact
+    if got != want { failures += 1; print("FAIL \(typed)\n  want \(want ?? "nil")\n  got  \(got ?? "nil")") }
+}
+
+// A sum answered as a decimal first, the fraction beneath it
+UserDefaults.standard.set(true, forKey: "decimalFirst")
+expect("10/4", "= 2.5", "= 5/2")
+expect("1/3", "≈ 0.333333", "= 1/3")
+expect("1/3+1/6", "= 0.5", "= 1/2")
+expect("2/3*3", "= 2")
+expect("x=10/4", "x = 2.5", "= 5/2")
+UserDefaults.standard.set(false, forKey: "decimalFirst")
 
 print(failures == 0 ? "all passed" : "\(failures) failed")
 exit(failures == 0 ? 0 : 1)

@@ -10,7 +10,7 @@ final class SettingsWindow {
 
     func show() {
         if window == nil {
-            let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 560, height: 720),
+            let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 620, height: 560),
                                   styleMask: [.titled, .closable], backing: .buffered, defer: false)
             window.title = "Spotlight Plus Settings"
             window.isReleasedWhenClosed = false
@@ -44,11 +44,50 @@ enum Prefs {
     }
 }
 
+// What is kept, and what it was before anything was chosen.
+private let defaultSettings: [String: Any] = [
+    "degrees": false, "figures": 6, "exact": true, "decimalFirst": true, "arithmetic": true, "numberFacts": true, "paths": true, "conversions": true,
+    "basePrefix": false, "inequalities": true, "algebra": true, "matrices": true, "constant.g": true, "constant.G": true,
+    "constant.c": true, "precise": false, "copyAsShown": false, "returnCopies": true, "log": false, "welcome": true,
+]
+
 struct SettingsView: View {
-    var height: CGFloat = 720   // of the window; what is in it is longer, and scrolls
+    var height: CGFloat = 560
+    @State private var resetting = false
+    // The page last looked at, kept for the next time.
+    @AppStorage("settingsPage") private var page = "answers"
+
+    var body: some View {
+        TabView(selection: $page) {
+            AnswersSettings().tabItem { Label("Answers", systemImage: "equal.square") }.tag("answers")
+            CardsSettings().tabItem { Label("Cards", systemImage: "rectangle.stack") }.tag("cards")
+            ConstantsSettings().tabItem { Label("Constants", systemImage: "atom") }.tag("constants")
+            CopyingSettings().tabItem { Label("Copying", systemImage: "doc.on.doc") }.tag("copying")
+            GeneralSettings(resetting: $resetting).tabItem { Label("General", systemImage: "gearshape") }.tag("general")
+        }
+        .frame(width: 620, height: height)
+        .alert("Reset every setting?", isPresented: $resetting) {
+            Button("Reset", role: .destructive) { for key in defaultSettings.keys { UserDefaults.standard.removeObject(forKey: key) } }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("The choices on every page go back to what they were when Spotlight Plus was first opened. Nothing else is touched.")
+        }
+    }
+}
+
+// What a setting does, under it, in the words of an example.
+private func note(_ text: String) -> some View {
+    Text(text).font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+}
+
+// An example typed into Spotlight, and what it gives now, with the settings as they stand: so
+// that turning one off is seen to take the card away.
+private struct Example: View {
+    let typed: String
     @AppStorage("degrees") private var degrees = false
     @AppStorage("figures") private var figures = 6
     @AppStorage("exact") private var exact = true
+    @AppStorage("decimalFirst") private var decimalFirst = true
     @AppStorage("arithmetic") private var arithmetic = true
     @AppStorage("numberFacts") private var numberFacts = true
     @AppStorage("paths") private var paths = true
@@ -57,64 +96,139 @@ struct SettingsView: View {
     @AppStorage("inequalities") private var inequalities = true
     @AppStorage("algebra") private var algebra = true
     @AppStorage("matrices") private var matrices = true
-    @AppStorage("constant.g") private var g = true
-    @AppStorage("constant.G") private var bigG = true
-    @AppStorage("constant.c") private var c = true
     @AppStorage("precise") private var precise = false
-    @AppStorage("copyAsShown") private var copyAsShown = false
-    @AppStorage("returnCopies") private var returnCopies = true
-    @AppStorage("log") private var log = false
-    @AppStorage("welcome") private var welcome = true
-    @State private var atLogin = SMAppService.mainApp.status == .enabled
-    @State private var loginProblem: String?
+
+    var body: some View {
+        // Read here so that the view is made again when any of them changes.
+        _ = (degrees, figures, exact, decimalFirst, arithmetic, numberFacts, paths, conversions, basePrefix, inequalities, algebra, matrices, precise)
+        let answer = Solver.solve(typed)
+        return HStack(alignment: .firstTextBaseline, spacing: 8) {
+            Text(typed).font(.system(.callout, design: .monospaced))
+            Image(systemName: "arrow.right").font(.caption2).foregroundStyle(.tertiary)
+            if let answer {
+                Text(answer.exact + (answer.approx.map { "   " + $0 } ?? "")).font(.callout).lineLimit(2)
+            } else {
+                Text("no card").font(.callout).foregroundStyle(.tertiary)
+            }
+        }
+        .foregroundStyle(.secondary)
+    }
+}
+
+// A switch, with what it does and an example.
+private struct CardToggle: View {
+    let title: String
+    @Binding var isOn: Bool
+    let detail: String
+    var examples: [String] = []
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Toggle(title, isOn: $isOn)
+            note(detail)
+            ForEach(examples, id: \.self) { Example(typed: $0) }
+        }
+        .padding(.vertical, 2)
+    }
+}
+
+private struct AnswersSettings: View {
+    @AppStorage("degrees") private var degrees = false
+    @AppStorage("figures") private var figures = 6
+    @AppStorage("exact") private var exact = true
+    @AppStorage("decimalFirst") private var decimalFirst = true
 
     var body: some View {
         Form {
-            Section("Answers") {
+            Section("Angles") {
                 Picker("Angles are in", selection: $degrees) {
                     Text("Radians").tag(false)
                     Text("Degrees").tag(true)
                 }
-                note(degrees ? "sin(x) = 0.5 gives x = 30°, 150°. An angle marked rad, or with π in it, is still in radians: sin(x rad), sin(π/6)."
-                             : "sin(x) = 0.5 gives x = π/6, 5π/6. An angle marked deg or ° is in degrees: sin(x deg), cos(35°).")
-
+                .pickerStyle(.segmented)
+                note(degrees ? "An angle marked rad, or with π in it, is still in radians: sin(x rad), sin(π/6)."
+                             : "An angle marked deg or ° is in degrees: sin(x deg), cos(35°).")
+                Example(typed: "sin(x)=0.5")
+            }
+            Section("Numbers") {
                 Picker("Significant figures", selection: $figures) {
                     ForEach(3...10, id: \.self) { Text("\($0)").tag($0) }
                 }
-                note("How far a decimal is carried: 1/3 is \(third). Six is what a calculator shows; three is what an answer is usually asked to.")
+                note("How far a decimal is carried. Six is what a calculator shows; three is what an answer is usually asked to.")
+                Example(typed: "1/3+0.5*sqrt(2)")
 
                 Toggle("Exact answers where there are any", isOn: $exact)
-                note(exact ? "10/4 gives 5/2, with 2.5 beneath; 2n² = 10 gives n = ±√5; an angle gives π/6."
-                           : "Decimals only: 10/4 gives 2.5, and 2n² = 10 gives n ≈ ±2.23607.")
+                note("Fractions, roots and π where they are exact; otherwise decimals only.")
+                Example(typed: "2n^2=10")
+
+                Toggle("Decimals before fractions in a sum", isOn: $decimalFirst)
+                    .disabled(!exact)
+                note(decimalFirst ? "A sum is answered as a decimal first, with the fraction beneath it."
+                                  : "A sum is answered as a fraction first, with the decimal beneath it.")
+                Example(typed: "10/4")
+                Example(typed: "1/3+1/6")
             }
+        }
+        .formStyle(.grouped)
+    }
+}
 
-            Section("What brings up a card") {
-                Toggle("Arithmetic with no equals sign", isOn: $arithmetic)
-                note("12*3+4, 5!/(3!2!), sqrt(2). Turn this off if Spotlight's own calculator is on, or the two will both answer. A name still works: x = 12*3+4.")
+private struct CardsSettings: View {
+    @AppStorage("arithmetic") private var arithmetic = true
+    @AppStorage("numberFacts") private var numberFacts = true
+    @AppStorage("paths") private var paths = true
+    @AppStorage("conversions") private var conversions = true
+    @AppStorage("basePrefix") private var basePrefix = false
+    @AppStorage("inequalities") private var inequalities = true
+    @AppStorage("algebra") private var algebra = true
+    @AppStorage("matrices") private var matrices = true
 
-                Toggle("A number typed by itself", isOn: $numberFacts)
-                note("2048 gives 2¹¹, 97 is prime, 0.375 gives 3/8. Turned on, every number typed into Spotlight brings up a card, a year among them.")
-
-                Toggle("Units and number bases", isOn: $conversions)
-                note("5 km to miles, 100 F in C, 255 in hex, hex(255). Only a quantity and a unit known to the calculator, and a unit of the same kind to convert to.")
-
-                Toggle("Mark a base with its prefix", isOn: $basePrefix)
-                note("255 in hex is FF; with this on it is 0xFF, and 3 in binary is 0b11, not 11. The prefix is always understood when typed: 0xFF + 1 is 256.")
-
-                Toggle("Inequalities", isOn: $inequalities)
-                note("x^2>4 gives x < −2 or x > 2. Polynomials in one letter.")
-
-                Toggle("Algebra by name", isOn: $algebra)
-                note("expand((x+1)^2), factor(x^2-5x+6), derivative(x^3), integrate(x^2, 0, 1) and d/dx sin(x). Nothing is done to an expression unless it is asked for.")
-
-                Toggle("Matrices and vectors", isOn: $matrices)
-                note("det([[1,2],[3,4]]), inv, transpose, dot([1,2,3],[4,5,6]), cross, and products and sums of them.")
-
-                Toggle("A path to a file or folder", isOn: $paths)
-                note("/Users/shane/Code/App/app.jar names the file, and shows it in Finder when the card is clicked, or Return is pressed with the pointer on it. A folder is opened. Only a path that exists brings up a card.")
+    var body: some View {
+        Form {
+            Section("Typed with no equals sign") {
+                CardToggle(title: "Arithmetic", isOn: $arithmetic,
+                           detail: "Turn this off if Spotlight's own calculator is on, or the two will both answer. A name still works: x = 12*3+4.",
+                           examples: ["12*3+4", "5!/(3!2!)"])
+                CardToggle(title: "A number by itself", isOn: $numberFacts,
+                           detail: "Every number typed into Spotlight brings up a card when this is on, a year among them.",
+                           examples: ["2048", "0.375"])
+                CardToggle(title: "A path to a file or folder", isOn: $paths,
+                           detail: "Names the file, and shows it in Finder when the card is clicked, or Return is pressed with the pointer on it. Only a path that exists brings up a card.",
+                           examples: ["/usr/bin"])
             }
+            Section("Units and bases") {
+                CardToggle(title: "Units and number bases", isOn: $conversions,
+                           detail: "A quantity and a unit known to the calculator, and a unit of the same kind to convert to.",
+                           examples: ["5 km to miles", "255 in hex"])
+                CardToggle(title: "Mark a base with its prefix", isOn: $basePrefix,
+                           detail: "The prefix is always understood when typed: 0xFF + 1 is 256.",
+                           examples: ["3 in binary"])
+            }
+            Section("Algebra and calculus") {
+                CardToggle(title: "Inequalities", isOn: $inequalities,
+                           detail: "In one letter: polynomials, and abs, exp and the like. Several taken together with && and ||.",
+                           examples: ["x^2>4", "1<x<5"])
+                CardToggle(title: "Algebra by name", isOn: $algebra,
+                           detail: "Nothing is done to an expression unless it is asked for by name. Includes limits and trigonometric identities.",
+                           examples: ["expand((x+1)^2)", "integrate(x^2, 0, 1)", "sin(x)^2+cos(x)^2"])
+                CardToggle(title: "Matrices and vectors", isOn: $matrices,
+                           detail: "Determinants, inverses, products, dot and cross products.",
+                           examples: ["det([[1,2],[3,4]])"])
+            }
+        }
+        .formStyle(.grouped)
+    }
+}
 
-            Section("Physical constants") {
+private struct ConstantsSettings: View {
+    @AppStorage("constant.g") private var g = true
+    @AppStorage("constant.G") private var bigG = true
+    @AppStorage("constant.c") private var c = true
+    @AppStorage("precise") private var precise = false
+
+    var body: some View {
+        Form {
+            Section("Which letters are constants") {
                 ForEach(Array(Constants.table.enumerated()), id: \.offset) { index, row in
                     Toggle(isOn: [$g, $bigG, $c][index]) {
                         VStack(alignment: .leading, spacing: 2) {
@@ -123,27 +237,61 @@ struct SettingsView: View {
                         }
                     }
                 }
+                note("A letter is its constant only where the equation has another letter to solve for: h = 0.5g·3² uses g, and 2g = 10 is solved for g. A ! before the letter turns that round: 9e16 = !c² is about the speed of light. Switch one off to keep its letter always an unknown.")
+                Example(typed: "h=0.5g*3^2")
+                Example(typed: "2g=10")
+            }
+            Section("Values") {
                 Picker("Values", selection: $precise) {
                     Text("Rounded").tag(false)
                     Text("As measured").tag(true)
                 }
+                .pickerStyle(.segmented)
                 note(precise ? "The values as they are known, to more figures than the booklet gives: use these for a real quantity."
                              : "The values as a data booklet rounds them, to three figures or so, which is what a mark scheme works from.")
-                note("A letter is its constant only where the equation has another letter to solve for: h = 0.5g·3² uses g, and 2g = 10 is solved for g. A ! before the letter turns that round: 9e16 = !c² is about the speed of light. Switch one off to keep its letter always an unknown, c for a specific heat capacity, say.")
+                Example(typed: "F=G*5*6/2^2")
             }
+        }
+        .formStyle(.grouped)
+    }
+}
 
-            Section("Copying") {
+private struct CopyingSettings: View {
+    @AppStorage("copyAsShown") private var copyAsShown = false
+    @AppStorage("returnCopies") private var returnCopies = true
+
+    var body: some View {
+        Form {
+            Section("What is copied") {
                 Picker("The copy button copies", selection: $copyAsShown) {
                     Text("A decimal: 2.5").tag(false)
                     Text("The answer as shown: 5/2").tag(true)
                 }
-                note("A decimal is what another program can read, and is given to twelve figures whatever is chosen above. Several answers are copied with commas between: 2, 3.")
-
-                Toggle("Return copies, while the pointer is on the card", isOn: $returnCopies)
-                note("With the pointer anywhere else, Return is Spotlight's and opens what is chosen in its list. What is copied becomes ans, for the next sum: ans*2. Where there were several answers they are ans1, ans2 and so on.")
+                .pickerStyle(.radioGroup)
+                note("A decimal is what another program can read, and is given to twelve figures whatever is chosen on the Answers page. Several answers are copied with commas between: 2, 3.")
             }
+            Section("Return") {
+                Toggle("Return copies, while the pointer is on the card", isOn: $returnCopies)
+                note("With the pointer anywhere else, Return is Spotlight's and opens what is chosen in its list.")
+            }
+            Section("Afterwards") {
+                note("What is copied becomes ans, for the next sum: ans*2. Where there were several answers they are ans1, ans2 and so on. clip is the number on the clipboard: 20*clip.")
+            }
+        }
+        .formStyle(.grouped)
+    }
+}
 
-            Section("General") {
+private struct GeneralSettings: View {
+    @Binding var resetting: Bool
+    @AppStorage("log") private var log = false
+    @AppStorage("welcome") private var welcome = true
+    @State private var atLogin = SMAppService.mainApp.status == .enabled
+    @State private var loginProblem: String?
+
+    var body: some View {
+        Form {
+            Section("Starting") {
                 Toggle("Open at login", isOn: $atLogin)
                     .onChange(of: atLogin) { _, wanted in
                         do {
@@ -158,28 +306,24 @@ struct SettingsView: View {
 
                 Toggle("Show a note when it is opened", isOn: $welcome)
                 note("A moment's note at the top of the screen that Spotlight Plus is running, since it has no window. It says so too when the permission it needs has not been given.")
-
+            }
+            Section("Troubleshooting") {
                 Toggle("Keep a log", isOn: $log)
                 note("When the card came and went, and why, in ~/Library/Logs/SpotlightPlus.log: for finding out why a card went missing. It has how many characters were typed and never what they were.")
-
+                Button("Show the log in Finder") {
+                    NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: NSHomeDirectory() + "/Library/Logs/SpotlightPlus.log")])
+                }
+                .disabled(!FileManager.default.fileExists(atPath: NSHomeDirectory() + "/Library/Logs/SpotlightPlus.log"))
+            }
+            Section("Spotlight Plus \(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "")") {
                 HStack {
-                    Text("Spotlight Plus \(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "")")
-                        .foregroundStyle(.secondary)
+                    Button("Reset every setting…") { resetting = true }
                     Spacer()
                     Button("Quit Spotlight Plus") { NSApp.terminate(nil) }
                 }
             }
         }
         .formStyle(.grouped)
-        .frame(width: 560, height: height)
-    }
-
-    // 1/3 to as many figures as are chosen.
-    private var third: String { String(format: "%.\(figures)f", 1.0 / 3) }
-
-    // What a setting does, under it, in the words of an example.
-    private func note(_ text: String) -> some View {
-        Text(text).font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
     }
 }
 

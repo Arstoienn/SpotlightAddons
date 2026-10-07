@@ -17,6 +17,8 @@ enum Solver {
         if let hash = Hash.parse(typed) { return hash.solution }
         guard let typed = Hash.numbers(in: typed).map(Prose.tidy), !Prose.reads(typed) else { return nil }
         // "x=?" after a formula asks for it to be turned round to give x.
+        // u_1 = 12, u_5 = 29, u_10 = ? asks for the tenth term, and is no "x = ?" after a formula.
+        if let sequence = Sequence.parse(Latex.plain(typed)) { return sequence.solution }
         let asked = Rearrangement.asked(Latex.plain(typed))
         let input = asked?.equation ?? Latex.plain(typed)
         // ans, when the question before had several answers, is no one of them: the card says
@@ -568,6 +570,7 @@ enum Options {
     static var matrices: Bool { flag("matrices", true) }            // det([[1,2],[3,4]]), dot, cross
     static var algebra: Bool { flag("algebra", true) }              // expand(), factor(), derivative(), integrate()
     static var inequalities: Bool { flag("inequalities", true) }   // x^2 > 4 solved for the numbers that satisfy it
+    static var decimalFirst: Bool { flag("decimalFirst", true) }    // 10/4 gives 2.5, with 5/2 beneath, and not the other way
     static var basePrefix: Bool { flag("basePrefix", false) }       // 0xFF and 0b11 where it is FF and 11
     static var conversions: Bool { flag("conversions", true) }   // 5 km to miles, 255 in hex
     static var paths: Bool { flag("paths", true) }               // /Users/me/file.txt named, and shown in Finder
