@@ -151,7 +151,7 @@ struct CardFace: View {
 
     var body: some View {
         HStack(spacing: 0) {
-            Image(systemName: "function")
+            Image(systemName: Copying.shared.symbol)
                 .font(.system(size: 17, weight: .medium))
                 .foregroundStyle(.secondary)
                 .frame(width: 33, height: 30)

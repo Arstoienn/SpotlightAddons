@@ -12,6 +12,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let detail = DetailPanel()
     let returnKey = ReturnKey()
     let settings = SettingsWindow()
+    let welcome = Welcome()
     var text = ""
     var link: CADisplayLink?
     var placement: SpotlightWatcher.Placement?
@@ -32,7 +33,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     // Opened while already running, which is what choosing Spotlight Plus in Spotlight does:
     // it is running, and there is nothing more to do. The settings have an entry of their own.
-    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows: Bool) -> Bool { false }
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows: Bool) -> Bool {
+        welcome.show(AXIsProcessTrusted() ? .running : .waitingForPermission)
+        return false
+    }
 
     // One of the app's own entries, chosen in Spotlight's list.
     func application(_ application: NSApplication, continue userActivity: NSUserActivity,
@@ -51,12 +55,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         Entry.index()
         let prompt = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true] as CFDictionary
         if AXIsProcessTrustedWithOptions(prompt) {
+            welcome.show(.running)
             start()
         } else {
+            welcome.show(.waitingForPermission)
             // Wait for the permission rather than asking to be opened again once it is given.
             Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] timer in
                 guard AXIsProcessTrusted() else { return }
                 timer.invalidate()
+                self?.welcome.show(.running)
                 self?.start()
             }
         }
@@ -67,6 +74,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         panel.onHover = { [weak self] in self?.expand() }
         Copying.shared.text = { [weak self] in self.flatMap { Solver.copy($0.text) } }
         Copying.shared.copied = { [weak self] in self?.remember() }
+        Copying.shared.go = { [weak self] in self.flatMap { Location.parse($0.text) }?.show() }
         // Return copies only with the pointer resting on the card or its panel.
         returnKey.take = { [weak self] in
             guard let self, panel.isVisible else { return false }
@@ -94,7 +102,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             Memory.clip = copied.flatMap { Double($0.replacingOccurrences(of: "−", with: "-")) }
         }
         guard Solver.solve(text) != nil else {
-            Log.note("typed \(text.count) characters: nothing to show")
+            let foreign = text.unicodeScalars.filter { $0.value > 0x7F }.count
+            Log.note("typed \(text.count) characters\(foreign > 0 ? " (\(foreign) not ASCII)" : ""): nothing to show")
             return hide()
         }
         if present() { Log.note("typed \(text.count) characters: shown") } else { lost("no place for the card as it was typed") }
@@ -120,7 +129,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         spotlight = geometry.window
         // Everything has an answer to copy but a number typed by itself. (Working out what the
         // answer is waits until it is asked for: this runs at every keystroke.)
-        Copying.shared.available = NumberFacts.parse(Latex.plain(text)) == nil
+        let place = Location.parse(text)
+        Copying.shared.isPlace = place != nil
+        Copying.shared.symbol = place.map { $0.isFolder ? "folder" : "doc" } ?? "function"
+        Copying.shared.available = Copying.shared.isPlace || NumberFacts.parse(Latex.plain(text)) == nil
         shown = text
         panel.show(solution, window: geometry.window)
         returnKey.isOn = true

@@ -45,13 +45,23 @@ extension Solver {
         guard let typed = Hash.numbers(in: typed).map(Prose.tidy), !Prose.reads(typed) else { return nil }
         let asked = Rearrangement.asked(Latex.plain(typed))
         let input = asked?.equation ?? Latex.plain(typed)
-        if LinearSystem.parts(input).count >= 2 { return LinearSystem.parse(input)?.details ?? NonlinearSystem.parse(input)?.details }
+        if let matrix = MatrixValue.parse(input) { return matrix.details }
+        if let algebra = Algebra.parse(input) { return algebra.details }
+        if let domain = Domain.parse(input) { return domain.details }
+        if LinearSystem.parts(input).count >= 2 {
+            return Given.parse(input)?.details ?? LinearSystem.parse(input)?.details ?? NonlinearSystem.parse(input)?.details
+        }
+        if let conversion = Conversion.parse(input) { return conversion.details }
+        if let complex = ComplexValue.parse(input) { return complex.details }
         if Options.numberFacts, let number = NumberFacts.parse(input) { return number.details }
         if let logic = Logic.parse(input) { return logic.details }
         if let comparison = Comparison.parse(input) { return comparison.details }
+        if let inequality = Inequality.parse(input) { return inequality.details }
+        if let inequalities = InequalitySet.parse(input) { return inequalities.details }
         if let evaluation = Evaluation.parse(input, hadLatex: typed.contains("\\")) { return evaluationDetails(evaluation) }
         if Evaluation.namesNumber(input) { return nil }
         if let simplification = Simplification.parse(input) { return simplification.details }
+        if let trig = TrigSimplification.parse(input) { return trig.details }
         guard let eq = try? Parser.parse(input) else { return Rearrangement.parse(input, for: asked?.letter)?.details }
         let n = eq.unknown
         let (leftMath, rightMath) = (typeset(eq.left, n), typeset(eq.right, n))
@@ -65,6 +75,8 @@ extension Solver {
         var d: Details
         if let l = poly(worked.left), let r = poly(worked.right) {
             d = polynomialDetails(trim(sub(l, r)), n, written, f, exact: constants.isEmpty && Options.exact)
+        } else if let rational = RationalEquation.parse(worked), rational.solution != nil {
+            d = rational.details(written, f: f)
         } else {
             d = numericDetails(worked, n, written, f)
         }
@@ -133,7 +145,7 @@ func evaluationDetails(_ ev: Evaluation) -> Details {
         let factorials = readyFactorials(e)
         let (next, done) = reduceOnce(e)
         e = next
-        guard !done.isEmpty else { break }
+        guard !done.isEmpty, !e.hasNonFinite else { break }
         d.steps.append(Step(label: reductionLabel(done, factorials: factorials), math: row(t(lead), typeset(e, ""))))
     }
     d.solutions = evaluationSolutions(ev)
@@ -153,8 +165,9 @@ private func evaluationSolutions(_ ev: Evaluation) -> [Math] {
 func reductionLabel(_ done: Set<Character>, factorials: Int) -> String {
     let names: [Character: String] = ["+": "Adding", "-": "Subtracting", "*": "Multiplying", "/": "Dividing", "^": "Evaluating the power",
                                       "f": "Evaluating the function", "!": "Evaluating the factorial", "s": "Evaluating the sum",
-                                      "°": "Converting to radians"]
+                                      "°": "Converting to radians", "%": "Taking the remainder"]
     if done == ["!"], factorials > 1 { return "Evaluating the factorials" }
+    if done.count == 1, let one = done.first, Binary.table[one] != nil, one != "%" { return "Evaluating the function" }
     return done.count == 1 ? names[done.first!] ?? "Simplifying" : "Simplifying"
 }
 
@@ -180,6 +193,10 @@ func reduceOnce(_ e: Expr) -> (Expr, Set<Character>) {
         if case .num = a { return (.num(e.eval(0)), [f == "fact" ? "!" : f == "deg" ? "°" : "f"]) }
         let (r, done) = reduceOnce(a)
         return (.call(f, r), done)
+    case .apply(let f, let args):
+        if args.allSatisfy({ if case .num = $0 { true } else { false } }) { return (.num(e.eval(0)), ["f"]) }
+        let steps = args.map(reduceOnce)
+        return (.apply(f, steps.map(\.0)), steps.reduce(into: Set<Character>()) { $0.formUnion($1.1) })
     }
 }
 
@@ -277,7 +294,7 @@ func polynomialDetails(_ p: Poly, _ n: String, _ header: Math, _ f: @escaping (D
         guard disc > 0 else {
             d.steps.append(Step(label: "Hence", math: row(squared(n), t(" < 0")),
                                 note: negativeSquare))
-            d.solutions = [t("No real solutions"), t("Complex solutions: \(n) = ±\(imaginary(a, disc))")]
+            d.solutions = [t("\(n) = \(complexQuadratic(a, 0, disc).exact)"), t("No real solutions")]
             return d
         }
         let (_, kk, _, den) = radicalForm(a, 0, disc)
@@ -296,7 +313,8 @@ func polynomialDetails(_ p: Poly, _ n: String, _ header: Math, _ f: @escaping (D
     guard disc > 0 else {
         d.steps.append(Step(label: "Hence", math: row(squared("b"), t(" − 4ac < 0")),
                             note: negativeDiscriminant))
-        d.solutions = [t("No real solutions"), row(t("Complex solutions: \(n) = "), fractionMath(-b, 2 * a), t(" ± \(imaginary(a, disc))"))]
+        let complex = complexQuadratic(a, b, disc)
+        d.solutions = [t("\(n) = \(complex.exact)" + (complex.exact.contains("√") || complex.exact.contains("/") ? " ≈ \(complex.decimals)" : "")), t("No real solutions")]
         return d
     }
     let (bb, kk, _, den) = radicalForm(a, b, disc)
@@ -506,15 +524,25 @@ extension Solver {
         }
         guard let numbered = Hash.numbers(in: typed).map(Prose.tidy), !Prose.reads(numbered) else { return nil }
         let input = Latex.plain(numbered)
+        if let matrix = MatrixValue.parse(input) { return matrix.copyText }
+        if let algebra = Algebra.parse(input) { return algebra.copyText }
+        if let domain = Domain.parse(input) { return domain.copyText }
         if LinearSystem.parts(input).count < 2 {
+            if let conversion = Conversion.parse(input) { return conversion.copyText }
+            if let complex = ComplexValue.parse(input) { return complex.copyText }
             if NumberFacts.parse(input) != nil { return nil }
             if let logic = Logic.parse(input) { return logic.holds ? "True" : "False" }
             if let comparison = Comparison.parse(input) { return comparison.holds ? "True" : "False" }
+            if let inequality = Inequality.parse(input) { return plain(inequality.solution.exact) }
+            if let inequalities = InequalitySet.parse(input) { return plain(inequalities.solution.exact) }
             if let evaluation = Evaluation.parse(input, hadLatex: numbered.contains("\\")) {
+                if abs(evaluation.value) >= 1e15, evaluation.expr.constants.isEmpty, let big = evaluation.expr.exactInteger, big.digitCount <= 60 { return plain(big.description) }
                 return evaluation.value.isFinite ? number(evaluation.value) : nil
             }
         }
         if let simplification = Simplification.parse(input) { return plain(simplification.result.plain) }
+        if let trig = TrigSimplification.parse(input) { return trig.copyText }
+        if LinearSystem.parts(input).count >= 2, let given = Given.parse(input) { return given.copyText }
         guard let answer = solve(typed), let d = details(typed) else { return nil }
         return d.roots.isEmpty ? plain(answer.exact) : d.roots.map(number).joined(separator: ", ")
     }
@@ -526,8 +554,14 @@ extension Solver {
     static func values(_ typed: String) -> [Double] {
         guard Hash.parse(typed) == nil, let numbered = Hash.numbers(in: typed).map(Prose.tidy), !Prose.reads(numbered) else { return [] }
         let input = Latex.plain(numbered)
-        guard LinearSystem.parts(input).count < 2, NumberFacts.parse(input) == nil, Comparison.parse(input) == nil, Logic.parse(input) == nil,
-              Simplification.parse(input) == nil else { return [] }
+        if let matrix = MatrixValue.parse(input) { return matrix.values }
+        if let conversion = Conversion.parse(input) { return [conversion.value] }
+        if let algebra = Algebra.parse(input) { return algebra.values }
+        if let domain = Domain.parse(input) { return domain.roots }
+        if let complex = ComplexValue.parse(input) { return complex.values }
+        if LinearSystem.parts(input).count >= 2, let given = Given.parse(input) { return given.values }
+        guard LinearSystem.parts(input).count < 2, NumberFacts.parse(input) == nil, Comparison.parse(input) == nil, Logic.parse(input) == nil, Inequality.parse(input) == nil, InequalitySet.parse(input) == nil,
+              Simplification.parse(input) == nil, TrigSimplification.parse(input) == nil else { return [] }
         if let evaluation = Evaluation.parse(input, hadLatex: numbered.contains("\\")) {
             return evaluation.value.isFinite ? [evaluation.value] : []
         }
@@ -640,6 +674,7 @@ func angleUnit(_ eq: Equation) -> AngleUnit? {
             }
             return angular(a)
         case .sum(_, let from, let to, let body, _): return angular(from) && angular(to) && angular(body)
+        case .apply(_, let args): return args.allSatisfy(angular)
         }
     }
     guard angular(eq.left), angular(eq.right), units.count == 1 else { return nil }
@@ -667,7 +702,7 @@ func wholeDegrees(_ x: Double) -> Bool { abs(x - x.rounded()) < 1e-6 }
 func degreesText(_ x: Double) -> String { decimal(wholeDegrees(x) ? x.rounded() : x) + "°" }
 
 // The card for an angle: the unit it was asked in on the first line, the other underneath.
-func angleCard(_ name: String, _ shown: [Double], more: Bool, _ unit: AngleUnit) -> Solution {
+func angleCard(_ name: String, _ shown: [Double], more: Bool, _ unit: AngleUnit, range: String? = nil) -> Solution {
     let rest = more ? ", …" : ""
     let radians = unit == .degrees ? shown.map { $0 * .pi / 180 } : shown
     let degrees = unit == .degrees ? shown : shown.map { $0 * 180 / .pi }
@@ -678,12 +713,12 @@ func angleCard(_ name: String, _ shown: [Double], more: Bool, _ unit: AngleUnit)
     let degreeList = "\(whole ? "=" : "≈") \(degrees.map(degreesText).joined(separator: ", "))\(rest)"
     if unit == .degrees {
         let radianList = inPi ? "= \(fractions.joined(separator: ", "))" : "≈ \(radians.map(threePlaces).joined(separator: ", "))"
-        return Solution(exact: "\(name) \(degreeList)", approx: "\(radianList)\(rest) rad, for \(unit.range(name))")
+        return Solution(exact: "\(name) \(degreeList)", approx: "\(radianList)\(rest) rad, for \(range ?? unit.range(name))")
     }
     let values = (inPi ? fractions : shown.map(decimal)).joined(separator: ", ")
     let decimals = inPi ? "≈ \(shown.map(threePlaces).joined(separator: ", "))\(rest) " : ""
     return Solution(exact: "\(name) \(inPi || shown.allSatisfy(isExact) ? "=" : "≈") \(values)\(rest)",
-                    approx: "\(decimals)\(degreeList), for \(unit.range(name))")
+                    approx: "\(decimals)\(degreeList), for \(range ?? unit.range(name))")
 }
 
 // An angle found numerically that is π/6, 5π/4 or the like, to as many figures as it was found.
@@ -721,6 +756,7 @@ func trigEquation(_ eq: Equation) -> TrigEquation? {
         case .num, .index, .constant, .sum: return e
         case .neg(let a): return .neg(lifted(a))
         case .op(let o, let a, let b): return .op(o, lifted(a), lifted(b))
+        case .apply(let f, let args): return .apply(f, args.map(lifted))
         case .call(let f, let a):
             guard trigFunction(f) != nil, a.hasUnknown else { return .call(f, lifted(a)) }
             calls.append((f, a))
@@ -907,6 +943,10 @@ private func render(_ e: Expr, _ n: String) -> (math: Math, level: Int) {
     case .sum(let k, let from, let to, let body, let product):
         let sign = Math.bigOperator(product ? "∏" : "∑", lower: row(t("\(k) = "), render(from, n).math), upper: render(to, n).math)
         return (row(sign, wrap(render(body, n), 2)), 2)
+    case .apply(let f, let args):
+        var parts: [Math] = [t(f + "(")]
+        for (i, a) in args.enumerated() { parts += (i > 0 ? [t(", ")] : []) + [render(a, n).math] }
+        return (.row(parts + [t(")")]), 4)
     case .neg(.num(0)):
         return (t("0"), 4)
     case .neg(let a):
@@ -938,11 +978,15 @@ private func render(_ e: Expr, _ n: String) -> (math: Math, level: Int) {
         return (.fraction(render(a, n).math, render(b, n).math), 2)
     case .op("%", let a, let b):
         return (row(wrap(render(a, n), 2), t(" mod "), wrap(render(b, n), 2)), 1)
+    case .op(let o, let a, let b) where Binary.table[o] != nil:
+        return (row(t("\(Binary.table[o]!.name)("), render(a, n).math, t(", "), render(b, n).math, t(")")), 4)
     case .op(_, let a, let b):
         return (.power(wrap(render(a, n), 4), render(b, n).math), 3)
     case .call(let f, let a):
         // 5! and (n − 1)!; under a power it is bracketed, (n!)².
         if f == "fact" { return (row(wrap(render(a, n), 4), t("!")), 3) }
+        if f == "abs" { return (row(t("|"), render(a, n).math, t("|")), 4) }
+        if f == "ln", case .call("abs", let inner) = a { return (row(t("ln|"), render(inner, n).math, t("|")), 3) }
         if f == "deg" { return (row(wrap(render(a, n), 4), t("°")), 3) }
         if f == "rad" { return (row(wrap(render(a, n), 4), t(" rad")), 3) }
         // In degrees: sin(2x°), and asin as it is, its answer being the angle.

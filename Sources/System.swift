@@ -13,8 +13,8 @@ struct LinearSystem {
     static func parts(_ input: String) -> [String] {
         var parts: [String] = [], current = "", depth = 0
         for c in input {
-            if c == "(" { depth += 1 }
-            if c == ")" { depth -= 1 }
+            if c == "(" || c == "[" || c == "{" { depth += 1 }
+            if c == ")" || c == "]" || c == "}" { depth -= 1 }
             if depth == 0, c == "," || c == ";" {
                 parts.append(current)
                 current = ""

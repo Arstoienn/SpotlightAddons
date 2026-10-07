@@ -22,6 +22,33 @@ Spotlight; there is no second app. Spotlight Plus Settings is another, and opens
   where the percentage is of what it is added to; the remainder, `17%5` as 2; thousands
   separators, `1,000+250`; `2**8`; `3x4` or `3 x 4` as a product; `0xFF` and `0b1010`;
   `log2(8)`; and a leading or trailing `=`, as `2+2=`.
+- **A path**: an absolute path that exists, `/Users/me/Code/App/build/app.jar`, brings
+  up a card with the name and where it is. Clicking the card's folder sign, or Return with the
+  pointer on it, shows the file selected in Finder; a folder is opened. It can be turned off in
+  the settings. A path from the home folder, `~/Code`, is left to Spotlight, which finds it. macOS may ask once for access to Desktop, Documents or Downloads.
+- **Functions of a calculator**: `floor`, `ceil`, `round(x, 2)`, `trunc`, `frac`, `sign`, `min`, `max`,
+  `gcd`, `lcm`, `mod` (or `17 mod 5`), `nCr` and `nPr` (or `5C2`, `5P2`), `fib`, `totient`, `nextprime`,
+  `cbrt`, `root(27, 3)`, `hypot`, `atan2`, `sinh`, `cosh`, `tanh` and their inverses, `sec`, `csc`,
+  `cot`, `log(8, 2)`, `lg`, `lb`, `|x|`, and `1<<4`, `256>>2`, `12&10`, `xor(12, 10)`.
+- **Statistics**: `mean`, `median`, `mode`, `stdev` and `stdevp`, `var` and `varp`, `geomean`, `rms`,
+  `range`, `total`, and the distributions `binompdf`, `binomcdf`, `normpdf`, `normcdf`, `normalcdf`,
+  `invnorm`, `poissonpdf`, `poissoncdf`. Lists are written `mean(1,2,3)` or `mean([1,2,3])`.
+- **Division by nought and the like** are said to be undefined, with the reason, and a number past
+  1.8×10³⁰⁸ is "Too large". The square root of a negative number is imaginary.
+- **Complex numbers**: with `i` in a sum, `(1+2i)(3-i)`, `i^2`, `e^(i*pi)`, `|3+4i|`, `conj`, `arg`.
+  A quadratic with no real root gives its complex roots: `x^2+x+1=0` is x = (−1 ± √3 i)/2.
+- **Units**: `5 km to miles`, `100 F in C`, `72 kg to lb`, `60 mph to km/h`, `1 GiB to MB`, `1 atm to psi`
+  and the like, for length, mass, volume, time, speed, area, data, energy, power, pressure, force,
+  angle, frequency and temperature. **Bases**: `255 in hex`, `hex(255)`, `bin(10)`, `255 in base 7`,
+  and `0xFF`, `0b1010` as numbers.
+- **Inequalities** in one letter: `x^2>4` is x < −2 or x > 2; `x^3-x<=0`; `|2x+1|<3`; `x^2 != 4`.
+- **Algebra, when asked for by name**: `expand((x+1)^2)`, `factor(x^2-5x+6)`, `derivative(x^3+2x)`,
+  `d/dx sin(x)`, `derivative(x^2, 3)`, `integrate(x^2)`, `integrate(x^2, 0, 1)`, `∫_0^1 x^2 dx`,
+  `limit(sin(x)/x, x, 0)` and `limit((1+1/x)^x, x, inf)`.
+- **Matrices and vectors**: `det([[1,2],[3,4]])`, `inv`, `transpose`, `trace`, `rank`, `dot`, `cross`,
+  `norm`, and `[[1,2],[3,4]]*[[0,1],[1,0]]`, sums and powers of them.
+- **LaTeX** is read for all of this too: `\binom{5}{2}`, `\log_2 8`, `\left|x\right|`, `\int_0^1 x^2\,dx`,
+  `\lim_{x\to 0}`, `\frac{d}{dx}`.
 - **What it leaves alone**: words, prices and dates are no mathematics. `r2d2`, `wi-fi 6`,
   `5 ft 10`, `$100`, `2026-10-06` and `007` bring up no card.
 - **Letters with no equals sign** are tidied: like terms are collected, `2x+3x` to 5x, and what
@@ -69,6 +96,125 @@ letters of their own: `G` is not `g`, and `E` is a letter where `e` is Euler's n
 letter with a subscript, `F_n` or `v_0`. Angles are in radians unless marked `deg` or `°`:
 `cos(35°)` is of 35 degrees, and `sin(x deg)=0.5` is answered in degrees, `x = 30°, 150°`.
 
+## Syntax
+
+Everything is typed into Spotlight's search field. Spaces do not matter, capitals matter where a
+letter stands for something (`G` is not `g`, `E` is not `e`), and the full-width characters a
+Chinese input method types, `（ｘ＋１）＾２`, are read as the ordinary ones. Each row gives what is
+typed, and the same in LaTeX.
+
+### Numbers and arithmetic
+
+| Asked | Typed | LaTeX |
+| --- | --- | --- |
+| Sum, product, quotient | `2+3*4`, `10/4`, `5 x 5`, `5×5`, `5÷5` | `2+3\times 4`, `\frac{10}{4}`, `5\cdot 5`, `5\div 5` |
+| Power, root | `2^10`, `2**8`, `x²`, `x⁴`, `sqrt(2)`, `√2`, `cbrt(27)`, `root(27,3)` | `2^{10}`, `\sqrt{2}`, `\sqrt[3]{27}` |
+| Brackets, juxtaposition | `2(3+4)`, `(x+1)(x-1)`, `3sin x` | `\left( \right)` |
+| Factorial | `5!`, `(n-1)!`, `10!/(3!7!)` | `5!` |
+| Percentage | `10*10%`, `200+10%`, `200-10%`, `15% of 80`, `20% off 80` | `10\%`, `15\% \text{ of } 80` |
+| Remainder | `17%5`, `17 mod 5`, `mod(17,5)` | `17 \bmod 5`, `17 \pmod{5}` |
+| Scientific notation | `5.97e24`, `1.6E-19`, `3e8*2` | the same |
+| Grouped digits | `1,000+250` | |
+| Money | `$12.50*3`, `€10+5` | |
+| Constants | `pi`, `π`, `e^2`; `g`, `G`, `c` when another letter is the unknown | `\pi`, `e^{2}` |
+| Degrees and radians | `sin(30°)`, `sin(x deg)`, `sin(x rad)`; radians where nothing is said | `\sin 30^\circ` |
+| Rounding | `floor(3.7)`, `ceil(3.2)`, `round(3.14159,2)`, `trunc(3.9)`, `frac(3.75)`, `sign(-5)` | `\lfloor 3.7 \rfloor`, `\lceil 3.2 \rceil` |
+| Size | `abs(-5)`, `\|3-7\|` | `\left\| 3-7 \right\|`, `\lvert x \rvert` |
+| Greatest, least | `max(3,5,9)`, `min(3,5)` | `\max(3,5,9)` |
+| Divisors | `gcd(12,18)`, `lcm(4,6)`, `totient(36)`, `nextprime(100)`, `fib(10)` | `\gcd(12,18)`, `\operatorname{lcm}(4,6)` |
+| Choosing, arranging | `nCr(5,2)`, `5C2`, `comb(5,2)`, `nPr(5,2)`, `5P2` | `\binom{5}{2}`, `{5 \choose 2}` |
+| Bits | `1<<4`, `256>>2`, `12&10`, `xor(12,10)`, `bor(12,10)`, `0xFF`, `0b1010` | |
+| Logarithms | `ln(e)`, `log(1000)`, `log(8,2)`, `log2(8)`, `log10(1000)`, `lg(8)`, `lb(8)` | `\ln e`, `\log 1000`, `\log_2 8`, `\log_{10} 1000` |
+| Trigonometry | `sin`, `cos`, `tan`, `sec`, `csc`, `cot`, `asin`/`arcsin`/`sin^-1`, `sinh`, `asinh`, `atan2(1,1)`, `hypot(3,4)` | `\sin`, `\sec`, `\arcsin`, `\tan^{-1}`, `\sinh` |
+| Exponential | `exp(2)`, `e^x` | `\exp(2)`, `e^{x}` |
+| Sum, product | `sum(k,1,10,k^2)`, `prod(k,1,5,k)` | `\sum_{k=1}^{10} k^2`, `\prod_{k=1}^{5} k` |
+| Whole numbers in full | `2^64`, `20!`, `30!`, `3^50` are written out to 60 figures | |
+| Mixed numbers | `1 1/2 + 2 3/4` | |
+| A run of terms | `1+2+...+100`, `2+4+6+…+20`, `1*2*...*5`, `sum of 1 to 100` | |
+| Words in front | `solve 2x+3=7`, `find x: 2x=6`, `2x+3=7 solve for x`, `what is 15% of 80`, `calculate 5*5` | |
+| Function names | `SIN(30°)`, `Sqrt(16)`, `NCR(5,2)` are the same in capitals | |
+| The last answer, the clipboard | `ans`, `ans1`, `ans2`, `clip` | |
+
+A name given a value, `cost = 12*3+4`, is worked out and not solved. A number by itself is given
+as its primes, or as a fraction if it has a decimal point.
+
+### Equations and inequalities
+
+| Asked | Typed | LaTeX |
+| --- | --- | --- |
+| One unknown | `2n^2=10`, `x^2-5x+6=0`, `2^x=8`, `log(n)=2`, `sqrt(x)=3`, `20=0.5g*t^2`; with the unknown in a denominator, `1/x+1/(x+1)=1` (exact, and what makes a denominator zero struck out) | `\frac{x}{2}+1=3`, `x^{2}-5x+6=0` |
+| Trigonometric | `sin(x)=0.5`, `2sin(3x+1)=1`, `sin(x deg)=0.5`; answered from 0 to 2π, in radians and in degrees | `\sin x=\frac12` |
+| In a range | `sin(x)=sqrt(3)/2, 0°<=x<360°`, `cos(x)=1/2, x in [0,2π)`, `x^2=4, x>0`; degrees where the range is in them | `\sin x=\frac{\sqrt{3}}{2},\quad 0^\circ\le x<360^\circ`, `x\in[0,2\pi)` |
+| Systems | `x+y=3, x-y=1`; nonlinear ones too | `\begin{cases} x+y=3 \\ x-y=1 \end{cases}` |
+| A formula with values given | `v=u+at, u=2, a=3, t=4`, `E=1/2*m*v^2, m=2, v=3`, `PV=nRT, P=2, V=3, n=1, R=8.314` | |
+| A formula turned round | `1/(7b)=11x/y`, `F=ma, a=?`, `F=kq/r^2, r=?` | `\frac{1}{7b}=\frac{11x}{y}, x=?` |
+| Which letter | the unknown is the one letter; `!c` reads c the other way round; Greek names, `theta`, `omega`, …, and subscripts, `F_n`, are letters | `\theta`, `F_{n}` |
+| Inequalities | `x^2>4`, `x^2-4<=0`, `x^3-x>0`, `x^2 != 4`, `\|2x+1\|<3`, `exp(x)>1`; together, `1<x<5`, `x>1 && x<5`, `x<1 or x>5`, `x^2>4 && x<10` | `x^2 \ge 4`, `x \ne 2`, `\left\| x \right\| < 3` |
+| Complex roots | `x^2+x+1=0` gives x = (−1 ± √3 i)/2 | |
+| Tidying | `2x+3x`, `xb+xc`, `(m^4q^4z^-1)(mq^5z^3)` | |
+| Trigonometric identities | `sin(x)^2+cos(x)^2` is 1, `sin(x)/cos(x)` is tan(x), `2sin(x)cos(x)` is sin(2x), `1-2sin(x)^2` is cos(2x), `1+tan(x)^2` is sec(x)² | `\sin^2 x + \cos^2 x`, `\frac{\sin x}{\cos x}` |
+
+### Comparisons and logic
+
+`2^2=4`, `1/3=0.333` (within rounding), `1/3~=0.3333` (within 0.1%), `1/3===1/3` (exactly), `5 != 120`,
+`<`, `>`, `<=`, `>=`; joined with `&&` or `and`, `||` or `or`, `!(…)` or `not`, as in
+`3+1=4 || 3=1`. In LaTeX: `\approx`, `\ne`, `\le`, `\ge`, `\land`, `\lor`, `\lnot`.
+
+### Statistics
+
+`mean`, `median`, `mode`, `stdev` (sample), `stdevp`, `var`, `varp`, `geomean`, `rms`, `range`, `total`,
+each of a list: `mean(1,2,3,4)` or `mean([1,2,3,4])`; `quartile([…],1)`, `percentile([…],90)`, `iqr([…])`,
+`corr([…],[…])`, `cov([…],[…])`, `linreg([…],[…])` (the line, y = 2x + 1), `zscore(x,mu,sigma)`. Distributions: `binompdf(n,p,k)`, `binomcdf(n,p,k)`,
+`normpdf(x[,mu,sigma])`, `normcdf(x[,mu,sigma])`, `normalcdf(lo,hi[,mu,sigma])`, `invnorm(p[,mu,sigma])`,
+`poissonpdf(λ,k)`, `poissoncdf(λ,k)`. In LaTeX, `\operatorname{mean}(1,2,3,4)`.
+
+### Complex numbers
+
+`i` stands by itself in a sum: `(1+2i)*(3-i)`, `i^2`, `e^(i*pi)`, `|3+4i|`, `conj(3+4i)`, `arg(1+i)`,
+`sqrt(-4)`, `ln(-1)`. In LaTeX: `(1+2i)(3-i)`, `e^{i\pi}`, `\overline{3+4i}`.
+
+### Matrices and vectors
+
+`[[1,2],[3,4]]` is a matrix and `[1,2,3]` a vector: `det([[1,2],[3,4]])`, `inv(…)`, `transpose(…)`,
+`trace(…)`, `rank(…)`, `identity(3)`, `dot([1,2,3],[4,5,6])`, `cross([1,0,0],[0,1,0])`, `norm([3,4])`,
+`[[1,2],[3,4]]*[[0,1],[1,0]]`, `[[1,2],[3,4]]+[[1,1],[1,1]]`, `2*[[1,2],[3,4]]`, `[[1,2],[3,4]]^2`,
+`[[1,2],[3,4]]^-1`, `[[1,2],[3,4]]*[1,1]`. In LaTeX, `\begin{pmatrix} 1 & 2 \\ 3 & 4 \end{pmatrix}`
+(also `bmatrix`; `vmatrix` is its determinant), `\det`, `^{-1}`, `^T`, `\left\| v \right\|`.
+
+### Units and bases
+
+`5 km to miles`, `5 km in mi`, `100 F to C`, `72 kg to lb`, `60 mph to km/h`, `1 GiB to MB`,
+`1 atm to psi`: length, mass, volume, time, speed, area, data, energy, power, pressure, force, angle,
+frequency and temperature. `255 in hex` (FF), `3 in binary` (11), `255 to octal`, `255 in base 7`, `hex(255)`,
+`bin(10)`, `oct(64)`: the same number written in base 16, 2, 8 or another; the prefixes 0x, 0b, 0o are only
+added where the setting for them is on, and are always understood when typed (`0xFF + 1`). Sums of quantities, `5 km + 300 m`, `5 ft 10 in`, `1 h 30 min to s`. Other forms of a number,
+`0.75 to fraction`, `1/3 to decimal`, `12345 to scientific`, `0.25 to percent`, `2024 to roman`, `MCMXCIV to number`. In LaTeX, `5\,\mathrm{km} \text{ to } \mathrm{mi}`.
+
+### Algebra, asked for by name
+
+| Asked | Typed | LaTeX |
+| --- | --- | --- |
+| Multiply out | `expand((x+1)^2)`, `expand (x+1)(x-1)` | |
+| Factorise | `factor(x^2-5x+6)`, `factor 360` | |
+| Differentiate | `derivative(x^3+2x)`, `d/dx sin(x)`, `diff(x^2, 3)`, `derivative(x^3) at 2`; higher, `d2/dx2 x^3`, `second derivative of x^3` | `\frac{d}{dx}\left( x^3 \right)`, `\frac{\mathrm{d}}{\mathrm{d}x} \sin x` |
+| Integrate | `integrate(x^2)`, `integrate(x^2, 0, 1)`, `∫ x^2 dx`, `∫_0^1 x^2 dx` | `\int_0^1 x^2 \, dx`, `\int x^2 \, \mathrm{d}x` |
+| Limit | `limit(sin(x)/x, x, 0)`, `limit((1+1/x)^x, x, inf)`, `limit(1/x, x, 0+)` | `\lim_{x \to 0} \frac{\sin x}{x}`, `\lim_{x \to \infty}`, `\lim_{x \to 0^+}` |
+
+### Digests, paths
+
+`SHA256("hello")`, `SHA1`, `SHA384`, `SHA512`, `MD5`, and `sha256("hello", decimal)`, `sha256("hello", binary)`. An absolute path
+that exists, `/Users/me/Code/app.jar`, names the file and shows it in Finder.
+
+### LaTeX commands read
+
+`\frac \dfrac \tfrac \sqrt \sqrt[n] \binom \choose \sum \prod \int \lim \left \right \cdot \times \div \pi \theta
+(and the other Greek letters) \sin \cos \tan \sec \csc \cot \arcsin \arccos \arctan \sinh \cosh \tanh \ln \log
+\log_b \exp \lg \max \min \gcd \det \arg \lfloor \rfloor \lceil \rceil \lvert \rvert \| \overline \bar \vec \hat
+\mathrm \mathbf \operatorname \text (a unit, or to, in, of, off) \circ \% \le \ge \ne \approx \leqslant \geqslant
+\land \lor \lnot \bmod \pmod \infty \to \begin{cases} \begin{aligned} \begin{array} \begin{pmatrix}
+\begin{bmatrix} \begin{vmatrix}`, with `^{…}` and `_{…}` for powers and subscripts, and spacing
+commands (`\,` `\;` `\quad`) ignored.
+
 ## The panel
 
 The top of the panel is the card itself, so opening it moves nothing. Below it:
@@ -94,8 +240,9 @@ it, if it is not already running.)
 - **Answers**: angles in radians or degrees; how many significant figures a decimal is given to,
   from three to ten; and whether an answer is exact where it can be (5/2, √5, π/6) or always a
   decimal.
-- **What brings up a card**: arithmetic with no equals sign, and a number typed by itself, each
-  of which can be turned off.
+- **What brings up a card**: arithmetic with no equals sign, a number typed by itself, units and
+  number bases, inequalities, algebra by name, matrices and vectors, and a path to a file, each of
+  which can be turned off.
 - **Physical constants**: g, G and c each on or off, and their values as a data booklet
   rounds them (9.8, 6.67×10⁻¹¹, 3.00×10⁸) or as measured (9.80665, 6.6743×10⁻¹¹, 299 792 458).
 - **Copying**: whether the copy button gives a decimal or the answer as shown, and whether
