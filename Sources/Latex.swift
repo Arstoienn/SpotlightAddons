@@ -384,7 +384,16 @@ struct Evaluation {
             return Solution(exact: "\(lead)\(whole ? "=" : "≈") \(decimal(v))", approx: nil)
         }
         if isExact(v) { return Solution(exact: "\(lead)= \(decimal(v))", approx: nil) }
-        if let (p, q) = rational(v), p != 0 { return Solution(exact: "\(lead)= \(fraction(p, q))", approx: "≈ \(decimal(v))") }
+        if let (p, q) = rational(v), p != 0 {
+            // A decimal first, and the fraction beneath it, unless the fraction is asked to come first.
+            if Options.decimalFirst {
+                // = where the decimal is the whole of it, 2.5; ≈ where it is cut short, 0.333333.
+                let shown = decimal(v)
+                let whole = Double(shown.replacingOccurrences(of: "−", with: "-")).map { abs($0 - v) <= 1e-13 * max(1, abs(v)) } ?? false
+                return Solution(exact: "\(lead)\(whole ? "=" : "≈") \(shown)", approx: "= \(fraction(p, q))")
+            }
+            return Solution(exact: "\(lead)= \(fraction(p, q))", approx: "≈ \(decimal(v))")
+        }
         return Solution(exact: "\(lead)≈ \(decimal(v))", approx: nil)
     }
 }
@@ -412,7 +421,9 @@ enum Prose {
             spelled = spelled.replacingOccurrences(of: "\(name)[0-9]", with: " ", options: .regularExpression)
         }
         spelled = spelled.replacingOccurrences(of: "[0-9.][eE][-+]?[0-9]", with: " ", options: .regularExpression)
-        if spelled.range(of: "[A-Za-z][0-9]|[0-9][A-Za-z]+[0-9]", options: .regularExpression) != nil { return true }
+        // Beside a term written with a subscript, u_5 = 29, a u1 is a slip for u_1, and is the sequence's.
+        let sequence = input.contains("=") && input.range(of: "(?<![A-Za-z0-9_])[A-Za-z]_\\{?[0-9]+\\}?\\s*=", options: .regularExpression) != nil
+        if !sequence, spelled.range(of: "[A-Za-z][0-9]|[0-9][A-Za-z]+[0-9]", options: .regularExpression) != nil { return true }
 
         // Two things side by side with only a space between, one of them a word: 5 ft 10, wi-fi 6.
         // 2 x and sin x are not words, x being a letter and sin a name.
@@ -450,6 +461,7 @@ extension Prose {
         let input = halfwidth(input)
         if input.contains("\\") { return input }
         var s = input
+        s = balanced(s)
         // "solve 2x+3=7", "find x: 2x=6", "2x+3=7 solve for x", "what is 15% of 80".
         s = s.replacingOccurrences(of: "^\\s*(?:solve|find)\\s+(?:for\\s+)?([A-Za-z])\\s*[:,]\\s*(.+=.+)$", with: "$2, $1=?", options: [.regularExpression, .caseInsensitive])
         s = s.replacingOccurrences(of: "^\\s*(?:please\\s+)?(?:solve|find|calculate|calc|compute|evaluate|work\\s+out|what\\s+is|what's|whats)\\s*[:,]?\\s+(?=\\S)", with: "", options: [.regularExpression, .caseInsensitive])
@@ -625,5 +637,42 @@ extension Prose {
             }
         }
         return String(out)
+    }
+}
+
+extension Prose {
+    // 29-12)/5 is (29-12)/5: a bracket that closes what was never opened is taken to have been
+    // opened at the start of what is being typed, the thought having come after the number. One
+    // left open is not closed for the sake of a card: it is not finished. Text in quotation marks
+    // is left alone.
+    static func balanced(_ input: String) -> String {
+        guard input.contains("(") || input.contains(")") else { return input }
+        var chars = Array(input)
+        // Where each separator is, outside quotation marks, and each bracket.
+        func scan() -> (unmatched: Int?, open: Int) {
+            var stack: [Character] = [], quote: Character?
+            for (i, c) in chars.enumerated() {
+                if let q = quote { if c == q { quote = nil }; continue }
+                if c == "\"" || c == "“" { quote = c == "“" ? "”" : c; continue }
+                // [0, 2π) is an interval, whose ends are not alike: any closer closes any opener.
+                if "([{".contains(c) { stack.append(c) }
+                else if ")]}".contains(c) { if stack.isEmpty { return (i, 0) }; stack.removeLast() }
+            }
+            return (nil, stack.count)
+        }
+        var guardCount = 0
+        while let i = scan().unmatched, guardCount < 8 {
+            guardCount += 1
+            // The start of this part: after the last = , ; < > or && || before it, at the top level.
+            var start = 0, depth = 0
+            for j in 0..<i {
+                if "([{".contains(chars[j]) { depth += 1 } else if ")]}".contains(chars[j]) { depth -= 1 }
+                if depth == 0, "=,;<>".contains(chars[j]) { start = j + 1 }
+                if depth == 0, j > 0, (chars[j] == "&" && chars[j - 1] == "&") || (chars[j] == "|" && chars[j - 1] == "|") { start = j + 1 }
+            }
+            while start < i, chars[start] == " " { start += 1 }
+            chars.insert("(", at: start)
+        }
+        return String(chars)
     }
 }

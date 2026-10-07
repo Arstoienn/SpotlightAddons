@@ -98,7 +98,7 @@ letter with a subscript, `F_n` or `v_0`. Angles are in radians unless marked `de
 
 ## Syntax
 
-Everything is typed into Spotlight's search field. Spaces do not matter, capitals matter where a
+Everything is typed into Spotlight's search field. A bracket that closes what was never opened, `29-12)/5`, is read as if it had been opened at the start, `(29-12)/5`. Spaces do not matter, capitals matter where a
 letter stands for something (`G` is not `g`, `E` is not `e`), and the full-width characters a
 Chinese input method types, `（ｘ＋１）＾２`, are read as the ordinary ones. Each row gives what is
 typed, and the same in LaTeX.
@@ -146,12 +146,13 @@ as its primes, or as a fraction if it has a decimal point.
 | Trigonometric | `sin(x)=0.5`, `2sin(3x+1)=1`, `sin(x deg)=0.5`; answered from 0 to 2π, in radians and in degrees | `\sin x=\frac12` |
 | In a range | `sin(x)=sqrt(3)/2, 0°<=x<360°`, `cos(x)=1/2, x in [0,2π)`, `x^2=4, x>0`; degrees where the range is in them | `\sin x=\frac{\sqrt{3}}{2},\quad 0^\circ\le x<360^\circ`, `x\in[0,2\pi)` |
 | Systems | `x+y=3, x-y=1`; nonlinear ones too | `\begin{cases} x+y=3 \\ x-y=1 \end{cases}` |
+| A sequence from some terms | nothing is said until it is asked: `u_1=12, u_5=29, d` gives the common difference, `…, r` the common ratio (`±√2`, `±(29/12)^(1/4)`), and `u_1=12, u_5=29, u_10=?` or `S_5=?` a term or a sum; `u_1=2, d=3, u_10=?`, `u_1=2, r=3, S_5=?`. A slip for the subscript, `u+1`, `u1`, is read as `u_1` beside `u_5`. The panel draws the terms | `u_{1}=12, u_{5}=29, d` |
 | A formula with values given | `v=u+at, u=2, a=3, t=4`, `E=1/2*m*v^2, m=2, v=3`, `PV=nRT, P=2, V=3, n=1, R=8.314` | |
 | A formula turned round | `1/(7b)=11x/y`, `F=ma, a=?`, `F=kq/r^2, r=?` | `\frac{1}{7b}=\frac{11x}{y}, x=?` |
 | Which letter | the unknown is the one letter; `!c` reads c the other way round; Greek names, `theta`, `omega`, …, and subscripts, `F_n`, are letters | `\theta`, `F_{n}` |
 | Inequalities | `x^2>4`, `x^2-4<=0`, `x^3-x>0`, `x^2 != 4`, `\|2x+1\|<3`, `exp(x)>1`; together, `1<x<5`, `x>1 && x<5`, `x<1 or x>5`, `x^2>4 && x<10` | `x^2 \ge 4`, `x \ne 2`, `\left\| x \right\| < 3` |
 | Complex roots | `x^2+x+1=0` gives x = (−1 ± √3 i)/2 | |
-| Tidying | `2x+3x`, `xb+xc`, `(m^4q^4z^-1)(mq^5z^3)` | |
+| Tidying | `2x+3x`, `xb+xc`, `(m^4q^4z^-1)(mq^5z^3)`; a sum to a power, or sums multiplied, is multiplied out: `(a+b)^2`, `(x+1)(x-1)`, `(a+b)^1` | |
 | Trigonometric identities | `sin(x)^2+cos(x)^2` is 1, `sin(x)/cos(x)` is tan(x), `2sin(x)cos(x)` is sin(2x), `1-2sin(x)^2` is cos(2x), `1+tan(x)^2` is sec(x)² | `\sin^2 x + \cos^2 x`, `\frac{\sin x}{\cos x}` |
 
 ### Comparisons and logic
@@ -233,21 +234,22 @@ keyboard, so typing carries on going to Spotlight.
 
 ## Settings
 
-Choose Spotlight Plus Settings in Spotlight's list, or press the gear at the foot of the panel.
-Each setting has under it what it does, by example. (Choosing Spotlight Plus itself only starts
-it, if it is not already running.)
+Choosing **Spotlight Plus Settings** in Spotlight (or the gear at the foot of the panel) opens the settings, on
+five pages: **Answers**, **Cards**, **Constants**, **Copying** and **General**. Under each setting there is what
+it does, and an example with what it gives now: turning one off shows its card going ("no card"). The page last
+looked at is the one it opens on.
 
-- **Answers**: angles in radians or degrees; how many significant figures a decimal is given to,
-  from three to ten; and whether an answer is exact where it can be (5/2, √5, π/6) or always a
-  decimal.
-- **What brings up a card**: arithmetic with no equals sign, a number typed by itself, units and
-  number bases, inequalities, algebra by name, matrices and vectors, and a path to a file, each of
-  which can be turned off.
-- **Physical constants**: g, G and c each on or off, and their values as a data booklet
-  rounds them (9.8, 6.67×10⁻¹¹, 3.00×10⁸) or as measured (9.80665, 6.6743×10⁻¹¹, 299 792 458).
-- **Copying**: whether the copy button gives a decimal or the answer as shown, and whether
-  Return copies while the pointer is on the card.
-- **General**: opening at login, keeping the log, and a button to quit.
+- **Answers**: angles in radians or degrees; how many significant figures a decimal is given to, from three to
+  ten; whether an answer is exact where it can be (5/2, √5, π/6) or always a decimal; and whether a sum is
+  answered as a decimal first (`10/4` gives 2.5, with 5/2 beneath: the default) or as a fraction first.
+- **Cards**: what brings up a card: arithmetic with no equals sign, a number by itself, a path to a file, units
+  and number bases (and whether a base is marked 0x, 0b, 0o), inequalities, algebra by name, matrices and vectors.
+- **Constants**: g, G and c each on or off, and their values as a data booklet rounds them (9.8, 6.67×10⁻¹¹,
+  3.00×10⁸) or as measured (9.80665, 6.6743×10⁻¹¹, 299 792 458).
+- **Copying**: whether the copy button gives a decimal or the answer as shown, and whether Return copies while
+  the pointer is on the card.
+- **General**: opening at login, the note shown when it is opened, the log (and a button to show it in Finder),
+  resetting every setting, and a button to quit.
 
 ## How it reads Spotlight
 

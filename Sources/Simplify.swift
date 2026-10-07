@@ -13,6 +13,7 @@ struct Simplification {
     var expr: Expr
     var letters: [String]   // in the order they are first met, which is the order they are written in
     var terms: [Term]       // with like terms collected, in the order each is first met
+    var multiplied = false  // a sum raised to a power, or sums multiplied, which are written out
 
     // MARK: Reading
 
@@ -29,8 +30,35 @@ struct Simplification {
         var state = Parser.State(tokens: tokens, unknown: "", bound: letters)
         guard !letters.isEmpty, let expr = try? state.expression(), state.at == tokens.count,
               let terms = collected(expr) else { return nil }
-        let result = Simplification(expr: expr, letters: letters, terms: terms)
+        var result = Simplification(expr: expr, letters: letters, terms: terms)
+        // (a+b)^2 and (x+1)(x−1) are multiplied out: that is what they are typed for.
+        if multipliesSums(expr), terms.count >= 1 {
+            result.multiplied = true
+            result.terms = terms.sorted { a, b in
+                let (da, db) = (a.powers.values.reduce(0, +), b.powers.values.reduce(0, +))
+                if da != db { return da > db }
+                for letter in letters where a.powers[letter] != b.powers[letter] { return (a.powers[letter] ?? 0) > (b.powers[letter] ?? 0) }
+                return false
+            }
+            return result
+        }
         return result.isSimpler ? result : nil
+    }
+
+    // A sum to a power, nought and one included (which have little to write out), or two sums multiplied.
+    private static func multipliesSums(_ e: Expr) -> Bool {
+        func isSum(_ e: Expr) -> Bool {
+            if case .op(let o, _, _) = e, o == "+" || o == "-" { return true }
+            if case .neg(let a) = e { return isSum(a) }
+            return false
+        }
+        switch e {
+        case .op("^", let base, .num(let n)): return (isSum(base) && n == n.rounded() && n >= 0 && n <= 8) || multipliesSums(base)
+        case .op("*", let a, let b): return (isSum(a) && isSum(b)) || multipliesSums(a) || multipliesSums(b)
+        case .op(_, let a, let b): return multipliesSums(a) || multipliesSums(b)
+        case .neg(let a): return multipliesSums(a)
+        default: return false
+        }
     }
 
     // Whether there is a run of four letters or more in it that is not a name the parser knows:
@@ -195,7 +223,7 @@ struct Simplification {
 
     // The whole of it tidied: x(b + c), 5x, 2(x + 2).
     var result: Math {
-        guard let factor else { return math(terms) }
+        guard let factor, !multiplied else { return math(terms) }
         return row(math(factor), t("("), math(inside(factor)), t(")"))
     }
 
@@ -208,8 +236,8 @@ struct Simplification {
         // One term typed, m⁴z⁻¹·mz³, has its powers put together; several have their like terms collected.
         var single = true
         if case .op(let o, _, _) = expr, o == "+" || o == "-" { single = false }
-        if sum.plain != typed.plain { d.steps.append(Step(label: single ? "Combining the powers" : "Collecting like terms", math: row(t("= "), sum))) }
-        if factor != nil { d.steps.append(Step(label: "Taking out the common factor", math: row(t("= "), result))) }
+        if sum.plain != typed.plain { d.steps.append(Step(label: multiplied ? "Multiplying out and collecting like terms" : single ? "Combining the powers" : "Collecting like terms", math: row(t("= "), sum))) }
+        if factor != nil, !multiplied { d.steps.append(Step(label: "Taking out the common factor", math: row(t("= "), result))) }
         return d
     }
 }

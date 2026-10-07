@@ -43,6 +43,7 @@ extension Solver {
     static func details(_ typed: String) -> Details? {
         if let hash = Hash.parse(typed) { return hash.details }
         guard let typed = Hash.numbers(in: typed).map(Prose.tidy), !Prose.reads(typed) else { return nil }
+        if let sequence = Sequence.parse(Latex.plain(typed)) { return sequence.details }
         let asked = Rearrangement.asked(Latex.plain(typed))
         let input = asked?.equation ?? Latex.plain(typed)
         if let matrix = MatrixValue.parse(input) { return matrix.details }
@@ -542,6 +543,7 @@ extension Solver {
         }
         if let simplification = Simplification.parse(input) { return plain(simplification.result.plain) }
         if let trig = TrigSimplification.parse(input) { return trig.copyText }
+        if LinearSystem.parts(input).count >= 2, let sequence = Sequence.parse(input) { return sequence.copyText }
         if LinearSystem.parts(input).count >= 2, let given = Given.parse(input) { return given.copyText }
         guard let answer = solve(typed), let d = details(typed) else { return nil }
         return d.roots.isEmpty ? plain(answer.exact) : d.roots.map(number).joined(separator: ", ")
@@ -559,6 +561,7 @@ extension Solver {
         if let algebra = Algebra.parse(input) { return algebra.values }
         if let domain = Domain.parse(input) { return domain.roots }
         if let complex = ComplexValue.parse(input) { return complex.values }
+        if LinearSystem.parts(input).count >= 2, let sequence = Sequence.parse(input) { return sequence.values }
         if LinearSystem.parts(input).count >= 2, let given = Given.parse(input) { return given.values }
         guard LinearSystem.parts(input).count < 2, NumberFacts.parse(input) == nil, Comparison.parse(input) == nil, Logic.parse(input) == nil, Inequality.parse(input) == nil, InequalitySet.parse(input) == nil,
               Simplification.parse(input) == nil, TrigSimplification.parse(input) == nil else { return [] }
