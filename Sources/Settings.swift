@@ -30,6 +30,7 @@ enum Prefs {
 
     static var returnCopies: Bool { flag("returnCopies", true) }
     static var log: Bool { flag("log", false) }
+    static var welcome: Bool { flag("welcome", true) }
 
     // The app was com.arstoienn.spotlight-solve before it was Spotlight Plus. What was chosen
     // and remembered under that name is brought over, the once.
@@ -50,6 +51,12 @@ struct SettingsView: View {
     @AppStorage("exact") private var exact = true
     @AppStorage("arithmetic") private var arithmetic = true
     @AppStorage("numberFacts") private var numberFacts = true
+    @AppStorage("paths") private var paths = true
+    @AppStorage("conversions") private var conversions = true
+    @AppStorage("basePrefix") private var basePrefix = false
+    @AppStorage("inequalities") private var inequalities = true
+    @AppStorage("algebra") private var algebra = true
+    @AppStorage("matrices") private var matrices = true
     @AppStorage("constant.g") private var g = true
     @AppStorage("constant.G") private var bigG = true
     @AppStorage("constant.c") private var c = true
@@ -57,6 +64,7 @@ struct SettingsView: View {
     @AppStorage("copyAsShown") private var copyAsShown = false
     @AppStorage("returnCopies") private var returnCopies = true
     @AppStorage("log") private var log = false
+    @AppStorage("welcome") private var welcome = true
     @State private var atLogin = SMAppService.mainApp.status == .enabled
     @State private var loginProblem: String?
 
@@ -86,6 +94,24 @@ struct SettingsView: View {
 
                 Toggle("A number typed by itself", isOn: $numberFacts)
                 note("2048 gives 2¹¹, 97 is prime, 0.375 gives 3/8. Turned on, every number typed into Spotlight brings up a card, a year among them.")
+
+                Toggle("Units and number bases", isOn: $conversions)
+                note("5 km to miles, 100 F in C, 255 in hex, hex(255). Only a quantity and a unit known to the calculator, and a unit of the same kind to convert to.")
+
+                Toggle("Mark a base with its prefix", isOn: $basePrefix)
+                note("255 in hex is FF; with this on it is 0xFF, and 3 in binary is 0b11, not 11. The prefix is always understood when typed: 0xFF + 1 is 256.")
+
+                Toggle("Inequalities", isOn: $inequalities)
+                note("x^2>4 gives x < −2 or x > 2. Polynomials in one letter.")
+
+                Toggle("Algebra by name", isOn: $algebra)
+                note("expand((x+1)^2), factor(x^2-5x+6), derivative(x^3), integrate(x^2, 0, 1) and d/dx sin(x). Nothing is done to an expression unless it is asked for.")
+
+                Toggle("Matrices and vectors", isOn: $matrices)
+                note("det([[1,2],[3,4]]), inv, transpose, dot([1,2,3],[4,5,6]), cross, and products and sums of them.")
+
+                Toggle("A path to a file or folder", isOn: $paths)
+                note("/Users/shane/Code/App/app.jar names the file, and shows it in Finder when the card is clicked, or Return is pressed with the pointer on it. A folder is opened. Only a path that exists brings up a card.")
             }
 
             Section("Physical constants") {
@@ -129,6 +155,9 @@ struct SettingsView: View {
                         }
                     }
                 note(loginProblem ?? "Without this, Spotlight Plus has to be opened again after the Mac is restarted.")
+
+                Toggle("Show a note when it is opened", isOn: $welcome)
+                note("A moment's note at the top of the screen that Spotlight Plus is running, since it has no window. It says so too when the permission it needs has not been given.")
 
                 Toggle("Keep a log", isOn: $log)
                 note("When the card came and went, and why, in ~/Library/Logs/SpotlightPlus.log: for finding out why a card went missing. It has how many characters were typed and never what they were.")

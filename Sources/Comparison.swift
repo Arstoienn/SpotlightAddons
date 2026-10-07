@@ -23,7 +23,8 @@ struct Comparison {
     // One relation, with an expression of numbers alone on either side of it. A letter makes it
     // an equation to solve instead, so g = 9.8 is not a comparison. !g = 9.8 is: the mark makes
     // the g that would have been the unknown the constant.
-    static func parse(_ input: String) -> Comparison? {
+    // The one relation in the text, and where: nil for none, or for more than one.
+    static func relation(in input: String) -> (range: Range<String.Index>, relation: Relation)? {
         var found: (range: Range<String.Index>, relation: Relation)?
         var i = input.startIndex
         while i < input.endIndex {
@@ -41,7 +42,11 @@ struct Comparison {
             found = (i..<end, relation)
             i = end
         }
-        guard let found else { return nil }
+        return found
+    }
+
+    static func parse(_ input: String) -> Comparison? {
+        guard let found = relation(in: input) else { return nil }
         // With =, an e is still the unknown it has always been: 2e − 3 = 1 is solved for e.
         let sides = [String(input[..<found.range.lowerBound]), String(input[found.range.upperBound...])]
         guard var l = try? Parser.tokenize(sides[0]), var r = try? Parser.tokenize(sides[1]) else { return nil }

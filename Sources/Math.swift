@@ -19,13 +19,17 @@ indirect enum Math: Equatable {
         case .fraction(let n, let d):
             // On one line a product below the line needs brackets as much as a sum does: y/(77b).
             var below = Math.bracketed(d)
-            if case .row(let parts) = d, parts.filter({ !$0.plain.isEmpty }).count > 1, !below.hasPrefix("(") { below = "(\(below))" }
+            // cos(x) needs no brackets of its own.
+            let isCall = below.range(of: "^[A-Za-z]+\\([^()]*\\)$", options: .regularExpression) != nil
+            if case .row(let parts) = d, parts.filter({ !$0.plain.isEmpty }).count > 1, !below.hasPrefix("("), !isCall { below = "(\(below))" }
             return Math.bracketed(n) + "/" + below
         case .root(let x): return "√" + Math.bracketed(x)
         case .power(let base, let exponent):
             let e = exponent.plain
             // Plain digits only: ² is a whole number too, as far as Swift is concerned, and 2^3² is not 2 to the 32.
             if !e.isEmpty, e.allSatisfy({ $0.isASCII && $0.isNumber }), let k = Int(e) { return base.plain + superscript(k) }
+            // 2x in an exponent is a product, as much as 2·x is: e^(2x).
+            if let first = e.first, first.isNumber, e.dropFirst().contains(where: { $0.isLetter }) { return base.plain + "^(" + e + ")" }
             return base.plain + "^" + Math.bracketed(exponent)
         case .bigOperator(let symbol, let lower, let upper):
             return "\(symbol)(\(lower.plain)…\(upper.plain)) "

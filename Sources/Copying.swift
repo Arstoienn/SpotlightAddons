@@ -9,11 +9,15 @@ import SwiftUI
 
     var available = false   // there is something to copy for what is typed
     var done = false        // it has just been copied, and the card says so for a moment
+    var symbol = "function" // the card's sign: f(x) for an answer, a folder or a page for a path
+    var isPlace = false     // what is typed is a path: the button and Return go there instead
+    @ObservationIgnored var go: () -> Void = {}
     @ObservationIgnored var text: () -> String? = { nil }
     @ObservationIgnored var copied: () -> Void = {}
     @ObservationIgnored private var generation = 0
 
     @discardableResult func copy() -> Bool {
+        if isPlace { go(); return true }
         guard let text = text() else { return false }
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString(text, forType: .string)
@@ -36,7 +40,7 @@ struct CopyButton: View {
     var body: some View {
         if copying.available {
             HStack(spacing: 5) {
-                Image(systemName: copying.done ? "checkmark" : "doc.on.doc")
+                Image(systemName: copying.isPlace ? "folder" : copying.done ? "checkmark" : "doc.on.doc")
                     .font(.system(size: 13, weight: .medium))
                 if copying.done { Text("Copied").font(.system(size: 12, weight: .medium)) }
             }
@@ -45,7 +49,7 @@ struct CopyButton: View {
             .padding(.horizontal, 6)
             .contentShape(Rectangle())
             .overlay(ClickTarget { copying.copy() })
-            .help("Copy the answer")
+            .help(copying.isPlace ? "Show in Finder" : "Copy the answer")
             .padding(.trailing, 12)
         }
     }
@@ -103,5 +107,12 @@ final class ReturnKey {
         guard let tap else { return Log.note("Return could not be watched: no event tap") }
         CFRunLoopAddSource(CFRunLoopGetMain(), CFMachPortCreateRunLoopSource(nil, tap, 0), .commonModes)
         Log.note("watching for Return while the card is up")
+    }
+}
+
+extension Location {
+    // A file is shown selected in its folder; a folder is opened.
+    func show() {
+        if isFolder { NSWorkspace.shared.open(url) } else { NSWorkspace.shared.activateFileViewerSelecting([url]) }
     }
 }

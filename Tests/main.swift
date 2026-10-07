@@ -20,8 +20,8 @@ expect("x^2-5x+6=0", "x = 2, 3")
 expect("x^2=2x+1", "x = 1 ± √2", "≈ −0.414214, 2.41421")
 expect("2x^2+3x-1=0", "x = (−3 ± √17)/4", "≈ −1.78078, 0.280776")
 expect("4x^2=9", "x = ±3/2", "≈ ±1.5")
-expect("x^2+1=0", "No real solutions", "Complex solutions: x ≈ ±i")
-expect("x^2+2x+5=0", "No real solutions", "Complex solutions: x ≈ −1 ± 2i")
+expect("x^2+1=0", "x = ±i", "No real solutions; the roots are complex")
+expect("x^2+2x+5=0", "x = −1 ± 2i", "No real solutions; the roots are complex")
 expect("x^2-2x+1=0", "x = 1")
 expect("(x+1)(x-1)=3", "x = ±2")
 expect("x^2/2=8", "x = ±4")
@@ -47,7 +47,7 @@ expect("sqrt(x)=3", "x = 9")
 expect("√x=3", "x = 9")
 expect("ln x=1", "x ≈ 2.71828")
 expect("sin(x rad)=0.5", "x = π/6, 5π/6", "≈ 0.524, 2.618 = 30°, 150°, for 0 ≤ x ≤ 2π")
-expect("1/x=4", "x ≈ 0.25")
+expect("1/x=4", "x = 1/4", "≈ 0.25")
 expect("tan(x rad)=x", "x ≈ −7.72525, −4.49341, 0, 4.49341, 7.72525, …", approxAny: true)
 expect("sin(x rad)^2=0", "x = 0, π, 2π", "≈ 0, 3.142, 6.283 = 0°, 180°, 360°, for 0 ≤ x ≤ 2π")
 expect("sin(x^2 rad)=0", "x ≈ −2.50663, −1.77245, 0, 1.77245, 2.50663, …", approxAny: true)
@@ -226,7 +226,7 @@ expect("x=2^3!", "x = 64")
 expect("x=-3!", "x = −6")
 expect("n!=120", "n = 5")
 expect("n!=1", "n = 0, 1")
-expect("x=(-2)!", nil)
+expect("x=(-2)!", "Undefined", "It has no real value.")
 
 // Repeated roots
 expect("x^3-3x^2+3x-1=0", "x = 1")
@@ -339,7 +339,7 @@ expect("0.375", "0.375 = 3/8")
 expect("2.50", "2.50 = 5/2")
 expect("3.0", nil)
 expect("-5", nil)
-expect("1e6", nil)
+expect("1e6", "= 1000000")
 
 // Arithmetic with no = is worked out as it stands
 expect("2+2", "= 4")
@@ -526,7 +526,7 @@ expectDetails("2x^2+3x-1=0", "2x² + 3x − 1 = 0",
               ["x = (−3 − √17)/4 ≈ −1.78078", "x = (−3 + √17)/4 ≈ 0.280776"])
 expectDetails("x^2+2x+5=0", "x² + 2x + 5 = 0",
               [("Evaluating the discriminant", "b² − 4ac = 2² − 4·1·5 = −16"), ("Hence", "b² − 4ac < 0")],
-              ["No real solutions", "Complex solutions: x = −1 ± 2i"])
+              ["x = −1 ± 2i", "No real solutions"])
 expectDetails("x^2-2x+1=0", "x² − 2x + 1 = 0", [("Factorising", "(x − 1)² = 0"), ("Hence", "x = 1")], ["x = 1"])
 expectDetails("(x+1)(x-1)=3", "(x + 1)(x − 1) = 3", [("Writing in standard form", "x² − 4 = 0"), ("Factorising", "(x + 2)(x − 2) = 0"), ("Hence", "x = −2 or x = 2")])
 expectDetails("x^3-6x^2+11x-6=0", "x³ − 6x² + 11x − 6 = 0", [("Factorising", "(x − 1)(x − 2)(x − 3) = 0")], ["x = 1", "x = 2", "x = 3"])
@@ -558,7 +558,7 @@ expectDetails("10=0.1^x", "10 = 0.1^x",
               [("Interchanging the sides", "0.1^x = 10"), ("Expressing both sides as powers of 10", "(10^−1)^x = 10¹"),
                ("Multiplying the exponents", "10^−x = 10¹"), ("Equating the exponents", "−x = 1"), ("Hence", "x = −1")], ["x = −1"])
 expectDetails("4^x=8", "4^x = 8",
-              [("Expressing both sides as powers of 2", "(2²)^x = 2³"), ("Multiplying the exponents", "2^2x = 2³"),
+              [("Expressing both sides as powers of 2", "(2²)^x = 2³"), ("Multiplying the exponents", "2^(2x) = 2³"),
                ("Equating the exponents", "2x = 3"), ("Hence", "x = 3/2")])
 expectDetails("3^x=10", "3^x = 10",
               [("Taking the logarithm of both sides", "ln(3^x) = ln 10"), ("Applying the power rule for logarithms", "x·ln 3 = ln 10"),
@@ -715,6 +715,123 @@ for (typed, want) in [("3+1=4 || 3=1", "True"), ("3=1 || 2=5", "False"), ("3=1 &
     if got != want { failures += 1; print("FAIL \(typed)\n  want \(want ?? "nil")\n  got  \(got ?? "nil")") }
 }
 expect("x=2 && 3=3", nil)
+
+// A path that exists is named, and is shown in Finder
+expect("/bin/ls", "ls", "In /bin, shown in Finder")
+expect("'/bin/ls'", "ls", "In /bin, shown in Finder")
+expect("/usr/bin", "bin", "A folder, opened in Finder: /usr/bin")
+expect("/usr/bin/", "bin", "A folder, opened in Finder: /usr/bin")
+expect("file:///bin/ls", "ls", "In /bin, shown in Finder")
+expect("/no/such/place.jar", nil)
+expect("/", nil)
+expect("/2", nil)
+expect("~", nil)
+expect("~/Code", nil)
+with("paths", false) { expect("/bin/ls", nil) }
+
+// What a calculator is for
+for (typed, want) in [("mean(1,2,3,4)", "= 5/2"), ("median(3,1,2)", "= 2"), ("mode(1,2,2,3)", "= 2"), ("stdevp(2,4,4,4,5,5,7,9)", "= 2"),
+                      ("var(1,2,3,4)", "= 5/3"), ("geomean(1,2,4)", "= 2"), ("binompdf(10,0.5,3)", "= 15/128"), ("binomcdf(10,0.5,3)", "= 11/64"),
+                      ("gcd(12,18)", "= 6"), ("lcm(4,6)", "= 12"), ("nCr(5,2)", "= 10"), ("5C2", "= 10"), ("nPr(5,2)", "= 20"), ("5P3", "= 60"),
+                      ("17 mod 5", "= 2"), ("mod(17,5)", "= 2"), ("floor(3.7)", "= 3"), ("ceil(3.2)", "= 4"), ("round(79.695,2)", "= 797/10"),
+                      ("max(3,5,9)", "= 9"), ("min(3,5)", "= 3"), ("|3-7|+2", "= 6"), ("$5*3", "= 15"), ("20% off 80", "= 64"),
+                      ("1<<4", "= 16"), ("256>>2", "= 64"), ("12&10", "= 8"), ("xor(12,10)", "= 6"), ("log(8,2)", "= 3"), ("log2(8)", "= 3"),
+                      ("sec(0)", "= 1"), ("cbrt(27)", "= 3"), ("root(-8,3)", "= −2"), ("fib(10)", "= 55"), ("totient(36)", "= 12"),
+                      ("nextprime(100)", "= 101"), ("hypot(3,4)", "= 5"), ("sqrt(-4)", "= 2i"), ("1/0", "Undefined"), ("200!", "Too large"),
+                      ("5 km to miles", nil), ("255 in hex", "FF"), ("hex(255)", "FF"), ("bin(10)", "1010"), ("3 in binary", "11"), ("5 in base 1", "11111"), ("3 in unary", "111"), ("0xFF in decimal", "255"),
+                      ("x^2>4", "x < −2 or x > 2"), ("x^2<4", "−2 < x < 2"), ("x^2>=0", "x ∈ ℝ"), ("x^2<0", "No solution"), ("x^2 != 4", "x ≠ −2, 2"),
+                      ("x^3-x>0", "−1 < x < 0 or x > 1"), ("2x+3<7", "x < 2"), ("x^2-5x+6>0", "x < 2 or x > 3"),
+                      ("expand((x+1)^2)", "x² + 2x + 1"), ("factor(x^2-5x+6)", "(x − 2)(x − 3)"), ("factor(2x^2-8)", "2(x + 2)(x − 2)"),
+                      ("factor(x^3-x)", "x(x + 1)(x − 1)"), ("derivative(x^3+2x)", "3x² + 2"), ("d/dx sin(x)", "cos(x)"), ("expand ((x+1)^2)", "x² + 2x + 1"), ("expand (x+1)^2", "x² + 2x + 1"), ("expand 3(x+2)", "3x + 6"), ("factor x^2-5x+6", "(x − 2)(x − 3)"), ("derivative x^3", "3x²"), ("integrate x^2, 0, 1", "= 1/3"),
+                      ("derivative(x^2, 3)", "= 6"), ("integrate(x^2)", "x³/3 + C"), ("integrate(x^2, 0, 1)", "= 1/3"), ("∫_0^1 x^2 dx", "= 1/3"),
+                      ("integrate(1/x)", "ln|x| + C"), ("x^2+x+1=0", "x = (−1 ± √3 i)/2")] as [(String, String?)] {
+    let got = Solver.solve(typed)?.exact
+    if let want, got != want { failures += 1; print("FAIL \(typed)\n  want \(want)\n  got  \(got ?? "nil")") }
+    if want == nil, got == nil { failures += 1; print("FAIL \(typed) shows nothing") }
+}
+expect("5 km to miles", "= 3.10686 miles", "5 km")
+expect("100 F to C", "= 37.7778 °C", "100 °F")
+expect("12 in to cm", "= 30.48 cm", "12 in")
+expect("2.5e-3", "= 1/400", "≈ 0.0025")
+expect("pi", "≈ 3.14159")
+with("basePrefix", true) { expect("3 in binary", "0b11", approxAny: true); expect("255 in hex", "0xFF", approxAny: true) }
+if Solver.copy("5 km to miles") != "3.10685596119" { failures += 1; print("FAIL copy of a conversion: \(Solver.copy("5 km to miles") ?? "nil")") }
+if Solver.copy("255 to hex") != "FF" { failures += 1; print("FAIL copy of a base") }
+if Solver.copy("mean(1,2,3,4)") != "2.5" { failures += 1; print("FAIL copy of a mean") }
+
+// Complex numbers, matrices, limits, LaTeX, and roots that are repeated
+for (typed, want) in [("(1+2i)*(3-i)", "= 5 + 5i"), ("i^2", "= −1"), ("e^(i*pi)", "= −1"), ("|3+4i|", "= 5"), ("sqrt(-1)*sqrt(-1)", "= −1"),
+                      ("(2+3i)/(1-i)", "= −1/2 + 5i/2"), ("3i+2i", "= 5i"), ("conj(3+4i)", "= 3 − 4i"), ("ln(-1)", "= 3.14159i"),
+                      ("det([[1,2],[3,4]])", "= −2"), ("inv([[1,2],[3,4]])", "[[−2, 1], [3/2, −1/2]]"), ("transpose([[1,2,3],[4,5,6]])", "[[1, 4], [2, 5], [3, 6]]"),
+                      ("rank([[1,2],[2,4]])", "= 1"), ("dot([1,2,3],[4,5,6])", "= 32"), ("cross([1,2,3],[4,5,6])", "[−3, 6, −3]"), ("norm([3,4])", "= 5"),
+                      ("[[1,2],[3,4]]*[[0,1],[1,0]]", "[[2, 1], [4, 3]]"), ("[[1,2],[3,4]]^2", "[[7, 10], [15, 22]]"), ("[[1,2],[3,4]]*[1,1]", "[3, 7]"),
+                      ("inv([[1,2],[2,4]])", "Undefined"), ("limit(sin(x)/x, x, 0)", "= 1"), ("limit((1-cos(x))/x^2, x, 0)", "= 1/2"),
+                      ("limit(1/x, x, 0)", "Does not exist"), ("limit(1/x, x, inf)", "= 0"), ("limit(x^2, x, inf)", "∞"), ("lim(x*ln(x), x, 0)", "= 0"),
+                      ("|2x+1|<3", "−2 < x < 1"), ("|x|>2", "x < −2 or x > 2"), ("exp(x)>1", "x > 0"),
+                      (#"\binom{5}{2}"#, "= 10"), (#"\log_2 8"#, "= 3"), (#"\log_{2}{8}"#, "= 3"), (#"\left|-5\right|"#, "= 5"), (#"\int_0^1 x^2 dx"#, "= 1/3"),
+                      (#"\lim_{x\to 0}\frac{\sin x}{x}"#, "= 1"), (#"\frac{d}{dx}(x^3)"#, "3x²"),
+                      ("x^4-12x^3+37x^2+30x-200=0", "x = −2, 4, 5"), ("x^6+30x^5+375x^4+2500x^3+9375x^2+18750x+15625=0", "x = −5"),
+                      ("(x-5)^2(x+1)(x-4)=0", "x = −1, 4, 5"), ("-x^4+12x^3-37x^2-30x+200>=0", "−2 ≤ x ≤ 4 or x = 5"),
+                      ("mean([1,2,3,4])", "= 5/2"), ("2⁵", "= 32"), ("x⁴-1=0", "x = ±1")] as [(String, String?)] {
+    let got = Solver.solve(typed)?.exact
+    if let want, got != want { failures += 1; print("FAIL \(typed)\n  want \(want)\n  got  \(got ?? "nil")") }
+}
+if Solver.copy("(1+2i)*(3-i)") != "5+5i" { failures += 1; print("FAIL copy of a complex number: \(Solver.copy("(1+2i)*(3-i)") ?? "nil")") }
+if Solver.copy("det([[1,2],[3,4]])") != "-2" { failures += 1; print("FAIL copy of a determinant") }
+
+// LaTeX, for what can be asked
+for (typed, want) in [(#"15\% \text{ of } 80"#, "= 12"), (#"20\% \text{ off } 80"#, "= 64"), (#"\sin 30^\circ"#, "= 1/2"), (#"\sec 0"#, "= 1"), (#"\sec^2 0"#, "= 1"),
+                      (#"\lfloor 3.7 \rfloor"#, "= 3"), (#"\left\lceil 3.2 \right\rceil"#, "= 4"), (#"\gcd(12,18)"#, "= 6"), (#"17 \bmod 5"#, "= 2"),
+                      (#"{5 \choose 2}"#, "= 10"), (#"\operatorname{mean}(1,2,3,4)"#, "= 5/2"), (#"\mathrm{e}^{i\pi}"#, "= −1"), (#"\overline{3+4i}"#, "= 3 − 4i"),
+                      (#"5\,\mathrm{km} \text{ to } \mathrm{mi}"#, "= 3.10686 mi"), (#"\det \begin{pmatrix} 1 & 2 \\ 3 & 4 \end{pmatrix}"#, "= −2"),
+                      (#"\begin{vmatrix} 1 & 2 \\ 3 & 4 \end{vmatrix}"#, "= −2"), (#"\begin{bmatrix} 1 & 2 \\ 3 & 4 \end{bmatrix}^{-1}"#, "[[−2, 1], [3/2, −1/2]]"),
+                      (#"\begin{pmatrix} 1 & 2 \\ 3 & 4 \end{pmatrix}^T"#, "[[1, 3], [2, 4]]"),
+                      (#"\begin{pmatrix} 1 & 2 \\ 3 & 4 \end{pmatrix}\begin{pmatrix} 1 \\ 1 \end{pmatrix}"#, "[3, 7]"),
+                      (#"\left\| \begin{pmatrix}3\\4\end{pmatrix} \right\|"#, "= 5"), (#"\int_0^1 x^2 \, \mathrm{d}x"#, "= 1/3"), (#"\int x^2 \, dx"#, "x³/3 + C"),
+                      (#"\frac{d}{dx}\left( x^3 + 2x \right)"#, "3x² + 2"), (#"\lim_{x \to 0^+} \frac{\sin x}{x}"#, "= 1"), (#"\lim_{x \to \infty} \frac{1}{x}"#, "= 0"),
+                      (#"\sum\limits_{k=1}^{5} k^2"#, "= 55"), (#"x \ne 2"#, "x ≠ 2"), (#"3=1 \lor 2=2"#, "True"), (#"\lnot (3=1)"#, "True"),
+                      (#"\left\{ \begin{array}{l} x+y=10 \\ x-y=2 \end{array} \right."#, "x = 6, y = 4"), (#"\log_2 8"#, "= 3"), (#"\tan^{-1} 1"#, "= π/4")] as [(String, String?)] {
+    let got = Solver.solve(typed)?.exact
+    if let want, got != want { failures += 1; print("FAIL \(typed)\n  want \(want)\n  got  \(got ?? "nil")") }
+}
+expect("（x＋1）＾2=4", "x = −3, 1")
+expect(#"\sin x=\frac{\sqrt{3}}{2},\quad 0^\circ\le x<360^\circ"#, "x = 60°, 120°", "= π/3, 2π/3 rad, for 0° ≤ x < 360°")
+expect("sin(x)=sqrt(3)/2, 0<=x<=2pi", "x = π/3, 2π/3", approxAny: true)
+expect(#"\cos x=\frac12,\quad x\in[0,2\pi)"#, "x = π/3, 5π/3", approxAny: true)
+expect("cos(x)=1/2, x in [0, 2π)", "x = π/3, 5π/3", approxAny: true)
+expect("2sin(x)=1, 0°<x<720°", "x = 30°, 150°, 390°, 510°", approxAny: true)
+expect("x^2=4, x>0", "x = 2", "for x > 0")
+expect("x^2=4, x<0", "x = −2", "for x < 0")
+expect("sin(x)=2, 0<=x<=360", "No solution", approxAny: true)
+expect("expand （（x＋1）＾2）", "x² + 2x + 1")
+
+// What a user would also try
+for (typed, want) in [("v=u+at, u=2, a=3, t=4", "v = 14"), ("s=ut+1/2at^2, u=0, a=9.8, t=2", "s = 98/5"), ("v=u+at, v=14, u=2, a=3", "t = 4"), ("F=ma, m=2, a=3", "F = 6"),
+                      ("2^64", "= 18446744073709551616"), ("20!", "= 2432902008176640000"), ("2^100", "= 1267650600228229401496703205376"), ("(2^64)/2", "= 9223372036854775808"),
+                      ("1 1/2 + 2 3/4", "= 17/4"), ("1+2+...+100", "= 5050"), ("2+4+6+…+20", "= 110"), ("1*2*...*5", "= 120"), ("sum of 1 to 100", "= 5050"),
+                      ("5 km + 300 m", "= 5300 m"), ("5 ft 10 in to cm", "= 177.8 cm"), ("1 h 30 min", "= 90 min"),
+                      ("md5(\"hello\")", "5d41402abc4b2a76b9719d911017c592"), ("d2/dx2 x^3", "6x"), ("second derivative of x^3", "6x"),
+                      ("0.75 to fraction", "= 3/4"), ("12345 to scientific", "= 1.2345×10⁴"), ("0.25 to percent", "= 25%"), ("2024 to roman", "MMXXIV"), ("MCMXCIV to number", "= 1994"),
+                      ("quartile([1,2,3,4,5,6,7,8],1)", "= 11/4"), ("percentile([1,2,3,4,5],50)", "= 3"), ("corr([1,2,3],[2,4,6])", "= 1"), ("linreg([1,2,3],[2,4,6])", "y = 2x"),
+                      ("1<x<5", "1 < x < 5"), ("x>1 && x<5", "1 < x < 5"), ("x<1 or x>5", "x < 1 or x > 5"), ("x^2>4 && x<10", "x < −2 or 2 < x < 10"), ("x>5 && x<1", "No solution"),
+                      ("SIN(30°)", "= 1/2"), ("Sqrt(16)", "= 4"), ("NCR(5,2)", "= 10"), ("solve 2x+3=7", "x = 2"), ("2x+3=7 solve for x", "x = 2"), ("find x: 2x=6", "x = 3"),
+                      ("what is 15% of 80", "= 12"), ("2^(x+1)=3^x", "x ≈ 1.70951"), ("1/x+1/(x+1)=1", "x = (1 ± √5)/2"), ("1/x=2", "x = 1/2"), ("(x+1)/(x-1)=2", "x = 3"), ("2/(x-1)=x", "x = −1, 2"), ("x+1/x=3", "x = (3 ± √5)/2"), ("(x^2-1)/(x-1)=2", "No solution"), ("x/x=1", "x ∈ ℝ, x ≠ 0"), ("1/(x-2)+1/(x+2)=1/3", "x = 3 ± √13"), ("e^x=0", "No real solutions found")] as [(String, String?)] {
+    let got = Solver.solve(typed)?.exact
+    if let want, got != want { failures += 1; print("FAIL \(typed)\n  want \(want)\n  got  \(got ?? "nil")") }
+}
+if Solver.copy("2^64") != "18446744073709551616" { failures += 1; print("FAIL copy of a big integer: \(Solver.copy("2^64") ?? "nil")") }
+
+// Trigonometric identities
+for (typed, want) in [("sin(x)^2+cos(x)^2", "= 1"), ("1-sin(x)^2", "= cos(x)²"), ("sin(x)/cos(x)", "= tan(x)"), ("2sin(x)cos(x)", "= sin(2x)"), ("sin(x)cos(x)", "= sin(2x)/2"),
+                      ("cos(x)^2-sin(x)^2", "= cos(2x)"), ("1-2sin(x)^2", "= cos(2x)"), ("(1-cos(2x))/2", "= sin(x)²"), ("tan(x)cos(x)", "= sin(x)"), ("1+tan(x)^2", "= sec(x)²"),
+                      ("sin(x+pi/2)", "= cos(x)"), ("1-sin(x)^2-cos(x)^2", "= 0"), ("3sin(x)^2+3cos(x)^2", "= 3"), ("2sin(3x)cos(3x)", "= sin(6x)"),
+                      (#"\sin^2 x + \cos^2 x"#, "= 1"), (#"\frac{\sin x}{\cos x}"#, "= tan(x)"), ("sin(x°)^2+cos(x°)^2", "= 1"), ("sin(0.3)*sin(x)/cos(x)", "= sin(0.3)·tan(x)"), ("sin(0.3)/cos(x)", "≈ 0.29552/cos(x)"), ("2*sin(0.3)/cos(x)", "≈ 0.59104/cos(x)")] as [(String, String?)] {
+    let got = Solver.solve(typed)?.exact
+    if let want, got != want { failures += 1; print("FAIL \(typed)\n  want \(want)\n  got  \(got ?? "nil")") }
+}
+for typed in ["sin(x)", "tan(x)", "sin(x)+cos(x)", "sin(x)^2", "x+sin(x)", "sin x^2 + cos x^2"] {
+    if let got = Solver.solve(typed) { failures += 1; print("FAIL \(typed) should show nothing, shows \(got.exact)") }
+}
 
 print(failures == 0 ? "all passed" : "\(failures) failed")
 exit(failures == 0 ? 0 : 1)

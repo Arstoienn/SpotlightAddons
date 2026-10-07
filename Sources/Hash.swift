@@ -1,13 +1,13 @@
 import CryptoKit
 import Foundation
 
-// SHA256("hello") and SHA1("hello"), in capitals or not: the digest of the text, which is taken
+// SHA256("hello"), SHA1, SHA384, SHA512 and MD5, in capitals or not: the digest of the text, which is taken
 // as it is typed, with or without quotation marks, and hashed as UTF-8. It is written in
 // hexadecimal, which is not a number to do sums with; asked for as decimal or binary,
 // sha256("hello", decimal), it is the same digest as a whole number, and can be.
 struct Hash {
     enum Algorithm: String {
-        case sha256 = "SHA-256", sha1 = "SHA-1"
+        case sha256 = "SHA-256", sha1 = "SHA-1", sha512 = "SHA-512", sha384 = "SHA-384", md5 = "MD5"
     }
     enum Format: String {
         case hexadecimal, decimal, binary
@@ -23,6 +23,9 @@ struct Hash {
         switch algorithm {
         case .sha256: return Array(SHA256.hash(data: Data(bytes)))
         case .sha1: return Array(Insecure.SHA1.hash(data: Data(bytes)))
+        case .sha512: return Array(SHA512.hash(data: Data(bytes)))
+        case .sha384: return Array(SHA384.hash(data: Data(bytes)))
+        case .md5: return Array(Insecure.MD5.hash(data: Data(bytes)))
         }
     }
 
@@ -51,7 +54,8 @@ struct Hash {
     // Every sha256(…) and sha1(…) in the text, with where it is. The bracket that closes one is
     // looked for outside quotation marks, so that the text hashed may have brackets in it.
     static func calls(in text: String) -> [(range: Range<String.Index>, hash: Hash)] {
-        let names: [(String, Algorithm)] = [("sha-256", .sha256), ("sha256", .sha256), ("sha-1", .sha1), ("sha1", .sha1)]
+        let names: [(String, Algorithm)] = [("sha-256", .sha256), ("sha256", .sha256), ("sha-512", .sha512), ("sha512", .sha512), ("sha-384", .sha384),
+                                           ("sha384", .sha384), ("sha-1", .sha1), ("sha1", .sha1), ("md5", .md5)]
         let pairs: [Character: Character] = ["\"": "\"", "'": "'", "“": "”", "‘": "’"]
         var found: [(range: Range<String.Index>, hash: Hash)] = []
         var i = text.startIndex

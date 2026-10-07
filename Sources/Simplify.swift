@@ -50,7 +50,7 @@ struct Simplification {
             return v == 0 ? [] : [(v, [:])]
         case .index(let name):
             return [(1, [name: 1])]
-        case .unknown, .sum, .call:
+        case .unknown, .sum, .call, .apply:
             return nil
         case .neg(let a):
             return collected(a).map { $0.map { (-$0.coefficient, $0.powers) } }
@@ -63,7 +63,7 @@ struct Simplification {
             case "/":
                 guard r.count == 1, r[0].coefficient != 0 else { return nil }
                 return product(l, [(1 / r[0].coefficient, r[0].powers.mapValues { -$0 })])
-            case "%": return nil
+            case _ where Binary.table[o] != nil: return nil
             default:
                 let k = r.isEmpty ? 0 : r[0].coefficient
                 guard r.count <= 1, r.first?.powers.isEmpty ?? true, abs(k) <= 8, k == k.rounded() else { return nil }
@@ -143,6 +143,7 @@ struct Simplification {
             case .neg(let a), .call(_, let a): return parts(a)
             case .op(_, let a, let b): return parts(a) + parts(b)
             case .sum: return 1
+            case .apply(_, let args): return args.reduce(0) { $0 + parts($1) }
             }
         }
         func parts(_ term: Term) -> Int {

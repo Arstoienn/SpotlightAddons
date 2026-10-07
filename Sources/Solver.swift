@@ -11,6 +11,7 @@ struct Solution: Equatable {
 
 enum Solver {
     static func solve(_ typed: String) -> Solution? {
+        if let place = Location.parse(typed) { return place.solution }
         // A digest is of the text exactly as typed. One asked for as a number, inside a sum, is
         // written in as that number first; one in hexadecimal inside a sum is nothing to work out.
         if let hash = Hash.parse(typed) { return hash.solution }
@@ -24,14 +25,24 @@ enum Solver {
             let named = Memory.answers.prefix(4).enumerated().map { "ans\($0 + 1) = \(decimal($1))" }.joined(separator: ", ")
             return Solution(exact: "ans has \(Memory.answers.count) values", approx: "Write \(named)\(Memory.answers.count > 4 ? ", …" : "").")
         }
-        if LinearSystem.parts(input).count >= 2 { return LinearSystem.parse(input)?.solution ?? NonlinearSystem.parse(input)?.solution }
+        if let matrix = MatrixValue.parse(input) { return matrix.solution }
+        if let algebra = Algebra.parse(input) { return algebra.solution }
+        if let domain = Domain.parse(input) { return domain.solution }
+        if LinearSystem.parts(input).count >= 2 {
+            return Given.parse(input)?.solution ?? LinearSystem.parse(input)?.solution ?? NonlinearSystem.parse(input)?.solution
+        }
+        if let conversion = Conversion.parse(input) { return conversion.solution }
+        if let complex = ComplexValue.parse(input) { return complex.solution }
         if Options.numberFacts, let number = NumberFacts.parse(input) { return number.solution }
         if let logic = Logic.parse(input) { return logic.solution }
         if let comparison = Comparison.parse(input) { return comparison.solution }
+        if let inequality = Inequality.parse(input) { return inequality.solution }
+        if let inequalities = InequalitySet.parse(input) { return inequalities.solution }
         if let evaluation = Evaluation.parse(input, hadLatex: typed.contains("\\")) { return evaluation.solution }
         // cost = 90 gives a name a number, and there is nothing to work out: it is not cos t = 90.
         if Evaluation.namesNumber(input) { return nil }
         if let simplification = Simplification.parse(input) { return simplification.solution }
+        if let trig = TrigSimplification.parse(input) { return trig.solution }
         guard let equation = try? Parser.parse(input) else { return Rearrangement.parse(input, for: asked?.letter)?.solution }
         // "x = 5" is already its own answer. "x_1 = 10" and "theta = 30" are not quite: the card
         // has the name as it is written, x with its subscript and θ.
@@ -45,6 +56,8 @@ enum Solver {
         var solution: Solution?
         if let left = poly(equation.left), let right = poly(equation.right) {
             solution = solvePolynomial(trim(sub(left, right)), name, exact: constants.isEmpty && Options.exact)
+        } else if let rational = RationalEquation.parse(equation), let found = rational.solution {
+            solution = found
         } else {
             solution = solveNumerically(equation, name)
         }
@@ -64,6 +77,7 @@ indirect enum Expr {
     case index(String)                                       // the k of a sum, not the unknown
     case constant(String, Double)                            // g, read as 9.8
     case sum(String, from: Expr, to: Expr, Expr, product: Bool)
+    case apply(String, [Expr])                               // a function of several numbers: mean(2, 4, 9)
 
     // indices: the value of each sum's k while its terms are being worked out.
     func eval(_ x: Double, _ indices: [String: Double] = [:]) -> Double {
@@ -79,10 +93,10 @@ indirect enum Expr {
             case "-": return added(l, -r)
             case "*": return l * r
             case "/": return l / r
-            case "%": return r == 0 ? .nan : l - r * (l / r).rounded(.down)
-            default: return pow(l, r)
+            default: return Binary.table[o]?.apply(l, r) ?? pow(l, r)
             }
         case .call(let f, let e): return Functions.apply(f, e.eval(x, indices))
+        case .apply(let f, let args): return Lists.apply(f, args.map { $0.eval(x, indices) })
         case .sum(let k, let from, let to, let body, let product):
             guard let range = Expr.range(from.eval(x, indices), to.eval(x, indices)) else { return .nan }
             var total: Double = product ? 1 : 0
@@ -111,9 +125,47 @@ indirect enum Expr {
         case .neg(let a): return .neg(a.setting(k, to: v))
         case .op(let o, let a, let b): return .op(o, a.setting(k, to: v), b.setting(k, to: v))
         case .call(let f, let a): return .call(f, a.setting(k, to: v))
+        case .apply(let f, let args): return .apply(f, args.map { $0.setting(k, to: v) })
         case .sum(let name, let from, let to, let body, let product):
             return .sum(name, from: from.setting(k, to: v), to: to.setting(k, to: v),
                         name == k ? body : body.setting(k, to: v), product: product)
+        }
+    }
+
+    // A number in it that is not a number: what came of dividing by nought, or of a root of −4.
+    var hasNonFinite: Bool {
+        switch self {
+        case .num(let v), .constant(_, let v): return !v.isFinite
+        case .unknown, .index: return false
+        case .neg(let a), .call(_, let a): return a.hasNonFinite
+        case .op(_, let a, let b): return a.hasNonFinite || b.hasNonFinite
+        case .apply(_, let args): return args.contains { $0.hasNonFinite }
+        case .sum(_, let from, let to, let body, _): return from.hasNonFinite || to.hasNonFinite || body.hasNonFinite
+        }
+    }
+
+    // Why it has no value, where that is a division by nought, or the logarithm of nought.
+    var undefinedReason: String? {
+        switch self {
+        case .num, .constant, .unknown, .index: return nil
+        case .neg(let a): return a.undefinedReason
+        case .call(let f, let a):
+            if f == "log" || f == "ln", a.eval(0) == 0 { return "The logarithm of zero is not defined." }
+            return a.undefinedReason
+        case .op(let o, let a, let b):
+            if o == "/", b.eval(0) == 0 { return "It is divided by zero." }
+            if o == "^", a.eval(0) == 0, b.eval(0) < 0 { return "Zero has no power below zero." }
+            return a.undefinedReason ?? b.undefinedReason
+        case .apply(let f, let args):
+            if let why = args.lazy.compactMap(\.undefinedReason).first { return why }
+            guard eval(0).isNaN else { return nil }
+            switch f {
+            case "mode": return "No value occurs more than once."
+            case "invnorm": return "A probability is between 0 and 1, neither included."
+            case "binompdf", "binomcdf": return "The trials and the successes are whole numbers, and the chance between 0 and 1."
+            default: return nil
+            }
+        case .sum(_, let from, let to, let body, _): return from.undefinedReason ?? to.undefinedReason ?? body.undefinedReason
         }
     }
 
@@ -123,6 +175,7 @@ indirect enum Expr {
         case .num, .index, .constant: return false
         case .neg(let a), .call(_, let a): return a.hasUnknown
         case .op(_, let a, let b): return a.hasUnknown || b.hasUnknown
+        case .apply(_, let args): return args.contains { $0.hasUnknown }
         case .sum(_, let from, let to, let body, _): return from.hasUnknown || to.hasUnknown || body.hasUnknown
         }
     }
@@ -133,6 +186,7 @@ indirect enum Expr {
         case .num, .unknown, .index, .constant: return false
         case .neg(let a), .call(_, let a): return a.hasSum
         case .op(_, let a, let b): return a.hasSum || b.hasSum
+        case .apply(_, let args): return args.contains { $0.hasSum }
         }
     }
 
@@ -143,6 +197,7 @@ indirect enum Expr {
         case .num, .unknown, .index: return []
         case .neg(let a), .call(_, let a): return a.constants
         case .op(_, let a, let b): return unique(a.constants + b.constants)
+        case .apply(_, let args): return unique(args.flatMap(\.constants))
         case .sum(_, let from, let to, let body, _): return unique(from.constants + to.constants + body.constants)
         }
     }
@@ -155,6 +210,7 @@ indirect enum Expr {
         case .neg(let a): return .neg(a.withValues)
         case .op(let o, let a, let b): return .op(o, a.withValues, b.withValues)
         case .call(let f, let a): return .call(f, a.withValues)
+        case .apply(let f, let args): return .apply(f, args.map(\.withValues))
         case .sum(let k, let from, let to, let body, let product):
             return .sum(k, from: from.withValues, to: to.withValues, body.withValues, product: product)
         }
@@ -170,11 +226,186 @@ func unique(_ names: [String]) -> [String] {
 // is not taken for noise.
 func added(_ a: Double, _ b: Double) -> Double {
     let sum = a + b
-    return sum.isFinite && abs(sum) <= 1e-12 * max(abs(a), abs(b)) ? 0 : sum
+    return snapsToZero && sum.isFinite && abs(sum) <= 1e-12 * max(abs(a), abs(b)) ? 0 : sum
+}
+
+// Off while a limit is sampled, where 1 − cos x is as small as it is, and not noise.
+nonisolated(unsafe) var snapsToZero = true
+
+// The functions of two numbers, each written between its two bracketed arguments: gcd(12, 18) is
+// (12)⊓(18) once tidied. The remainder, %, is the one that is written as it is typed.
+enum Binary {
+    static let table: [Character: (name: String, apply: (Double, Double) -> Double)] = [
+        "%": ("mod", { r, m in m == 0 ? .nan : r - m * (r / m).rounded(.down) }),
+        "⊓": ("gcd", { a, b in whole(a, b).map { Double(gcd($0, $1)) } ?? .nan }),
+        "⊔": ("lcm", { a, b in whole(a, b).map { $0 == 0 || $1 == 0 ? 0 : Double(abs($0 / gcd($0, $1) * $1)) } ?? .nan }),
+        "⒞": ("C", { n, k in
+            guard let (n, k) = whole(n, k), k >= 0, n >= k, n <= 1000 else { return .nan }
+            return (0..<min(k, n - k)).reduce(1.0) { $0 * Double(n - $1) / Double($1 + 1) }.rounded()
+        }),
+        "⒫": ("P", { n, k in
+            guard let (n, k) = whole(n, k), k >= 0, n >= k, n <= 1000 else { return .nan }
+            return (0..<k).reduce(1.0) { $0 * Double(n - $1) }
+        }),
+        "⇇": ("shl", { a, b in bits(a, b).map { $1 < 0 || $1 > 62 ? .nan : Double($0 << $1) } ?? .nan }),
+        "⇉": ("shr", { a, b in bits(a, b).map { $1 < 0 || $1 > 62 ? .nan : Double($0 >> $1) } ?? .nan }),
+        "⋀": ("and", { a, b in bits(a, b).map { Double($0 & $1) } ?? .nan }),
+        "⋁": ("or", { a, b in bits(a, b).map { Double($0 | $1) } ?? .nan }),
+        "⊻": ("xor", { a, b in bits(a, b).map { Double($0 ^ $1) } ?? .nan }),
+        "⒜": ("atan2", { atan2($0, $1) }),
+        "↓": ("min", { min($0, $1) }),
+        "↑": ("max", { max($0, $1) }),
+        "⌖": ("round", { x, places in
+            // Rounded as it is written, 79.695 to 79.70, and not as the computer holds it, a little
+            // under that.
+            guard places == places.rounded(), abs(places) <= 15, x.isFinite,
+                  var written = Decimal(string: String(format: "%.15g", x)) else { return .nan }
+            var rounded = Decimal()
+            NSDecimalRound(&rounded, &written, Int(places), .plain)
+            return NSDecimalNumber(decimal: rounded).doubleValue
+        }),
+        "⒧": ("log", { x, base in
+            let v = log(x) / log(base)
+            return pow(base, v.rounded()) == x ? v.rounded() : v
+        }),
+    ]
+
+    private static func whole(_ a: Double, _ b: Double) -> (Int, Int)? {
+        guard a.isFinite, b.isFinite, a == a.rounded(), b == b.rounded(), abs(a) < 1e15, abs(b) < 1e15 else { return nil }
+        return (Int(a), Int(b))
+    }
+
+    // Two whole numbers small enough to be bits.
+    private static func bits(_ a: Double, _ b: Double) -> (Int, Int)? {
+        guard a.isFinite, b.isFinite, a == a.rounded(), b == b.rounded(), abs(a) < 9e15, abs(b) < 9e15 else { return nil }
+        return (Int(a), Int(b))
+    }
+}
+
+// Functions of any number of numbers: the mean of a list, the chance of a number of successes.
+enum Lists {
+    static let names = ["mean", "average", "avg", "median", "mode", "stdevp", "stdev", "variance", "varp", "var", "geomean", "rms", "range",
+                        "total", "binompdf", "binomcdf", "normpdf", "normcdf", "normalcdf", "invnorm", "poissonpdf", "poissoncdf",
+                        "hypot", "root", "zscore"]
+
+    // How many arguments each takes: nil for any number from one.
+    static func accepts(_ f: String, _ n: Int) -> Bool {
+        switch f {
+        case "binompdf", "binomcdf": return n == 3
+        case "poissonpdf", "poissoncdf", "root": return n == 2
+        case "zscore": return n == 3
+        case "normpdf", "normcdf", "invnorm": return n == 1 || n == 3
+        case "normalcdf": return n == 2 || n == 4
+        default: return n >= 1
+        }
+    }
+
+    static func apply(_ f: String, _ v: [Double]) -> Double {
+        let n = Double(v.count)
+        let mean = v.reduce(0, +) / n
+        func variance(_ divisor: Double) -> Double {
+            guard divisor > 0 else { return .nan }
+            return v.reduce(0) { $0 + ($1 - mean) * ($1 - mean) } / divisor
+        }
+        switch f {
+        case "mean", "average", "avg": return mean
+        case "total": return v.reduce(0, +)
+        case "median":
+            let s = v.sorted()
+            return v.count % 2 == 1 ? s[v.count / 2] : (s[v.count / 2 - 1] + s[v.count / 2]) / 2
+        case "mode":
+            let counts = Dictionary(grouping: v, by: { $0 }).mapValues(\.count)
+            let best = counts.values.max() ?? 0
+            return best < 2 ? .nan : counts.filter { $0.value == best }.keys.min() ?? .nan
+        case "stdev": return variance(n - 1).squareRoot()
+        case "stdevp": return variance(n).squareRoot()
+        case "variance", "var": return variance(n - 1)
+        case "varp": return variance(n)
+        case "geomean": return v.contains { $0 <= 0 } ? .nan : exp(v.reduce(0) { $0 + log($1) } / n)
+        case "rms": return (v.reduce(0) { $0 + $1 * $1 } / n).squareRoot()
+        case "range": return (v.max() ?? .nan) - (v.min() ?? .nan)
+        case "hypot": return v.reduce(0) { $0 + $1 * $1 }.squareRoot()
+        case "zscore": return v[2] > 0 ? (v[0] - v[1]) / v[2] : .nan
+        case "root":
+            let (x, k) = (v[0], v[1])
+            guard k != 0 else { return .nan }
+            if x < 0, k == k.rounded(), Int(k) % 2 != 0 { return -pow(-x, 1 / k) }
+            let r = pow(x, 1 / k)
+            if k == k.rounded(), abs(k) < 1e6, pow(r.rounded(), k) == x { return r.rounded() }
+            return r
+        case "binompdf":
+            guard let (k, trials) = whole(v[2], v[0]), v[1] >= 0, v[1] <= 1, k >= 0, k <= trials else { return .nan }
+            return binomial(trials, k, v[1])
+        case "binomcdf":
+            guard let (k, trials) = whole(v[2], v[0]), v[1] >= 0, v[1] <= 1, trials >= 0 else { return .nan }
+            return k < 0 ? 0 : (0...min(k, trials)).reduce(0.0) { $0 + binomial(trials, $1, v[1]) }
+        case "poissonpdf":
+            guard let (k, _) = whole(v[1], 0), v[0] >= 0, k >= 0 else { return .nan }
+            return exp(-v[0] + Double(k) * log(v[0]) - lgamma(Double(k) + 1))
+        case "poissoncdf":
+            guard let (k, _) = whole(v[1], 0), v[0] >= 0 else { return .nan }
+            return k < 0 ? 0 : (0...k).reduce(0.0) { $0 + exp(-v[0] + Double($1) * log(v[0]) - lgamma(Double($1) + 1)) }
+        case "normpdf":
+            let (mu, sigma) = v.count == 3 ? (v[1], v[2]) : (0, 1)
+            guard sigma > 0 else { return .nan }
+            return exp(-0.5 * pow((v[0] - mu) / sigma, 2)) / (sigma * (2 * Double.pi).squareRoot())
+        case "normcdf":
+            let (mu, sigma) = v.count == 3 ? (v[1], v[2]) : (0, 1)
+            return sigma > 0 ? cdf((v[0] - mu) / sigma) : .nan
+        case "normalcdf":
+            let (mu, sigma) = v.count == 4 ? (v[2], v[3]) : (0, 1)
+            return sigma > 0 ? cdf((v[1] - mu) / sigma) - cdf((v[0] - mu) / sigma) : .nan
+        case "invnorm":
+            let (mu, sigma) = v.count == 3 ? (v[1], v[2]) : (0, 1)
+            return sigma > 0 && v[0] > 0 && v[0] < 1 ? mu + sigma * quantile(v[0]) : .nan
+        default: return .nan
+        }
+    }
+
+    private static func whole(_ a: Double, _ b: Double) -> (Int, Int)? {
+        guard a.isFinite, b.isFinite, a == a.rounded(), b == b.rounded(), abs(a) < 1e9, abs(b) < 1e9 else { return nil }
+        return (Int(a), Int(b))
+    }
+
+    private static func binomial(_ n: Int, _ k: Int, _ p: Double) -> Double {
+        if p == 0 { return k == 0 ? 1 : 0 }
+        if p == 1 { return k == n ? 1 : 0 }
+        return exp(lgamma(Double(n) + 1) - lgamma(Double(k) + 1) - lgamma(Double(n - k) + 1) + Double(k) * log(p) + Double(n - k) * log(1 - p))
+    }
+
+    // The standard normal curve's area to the left of z.
+    static func cdf(_ z: Double) -> Double { 0.5 * erfc(-z / 2.0.squareRoot()) }
+
+    // The z with that area to its left, by Acklam's rational approximation, then two steps of
+    // Newton's method on the area to take it to full precision.
+    static func quantile(_ p: Double) -> Double {
+        let a = [-3.969683028665376e+01, 2.209460984245205e+02, -2.759285104469687e+02, 1.383577518672690e+02, -3.066479806614716e+01, 2.506628277459239e+00]
+        let b = [-5.447609879822406e+01, 1.615858368580409e+02, -1.556989798598866e+02, 6.680131188771972e+01, -1.328068155288572e+01]
+        let c = [-7.784894002430293e-03, -3.223964580411365e-01, -2.400758277161838e+00, -2.549732539343734e+00, 4.374664141464968e+00, 2.938163982698783e+00]
+        let d = [7.784695709041462e-03, 3.224671290700398e-01, 2.445134137142996e+00, 3.754408661907416e+00]
+        var x: Double
+        if p < 0.02425 {
+            let q = (-2 * log(p)).squareRoot()
+            x = (((((c[0] * q + c[1]) * q + c[2]) * q + c[3]) * q + c[4]) * q + c[5]) / ((((d[0] * q + d[1]) * q + d[2]) * q + d[3]) * q + 1)
+        } else if p <= 1 - 0.02425 {
+            let q = p - 0.5, r = q * q
+            x = (((((a[0] * r + a[1]) * r + a[2]) * r + a[3]) * r + a[4]) * r + a[5]) * q / (((((b[0] * r + b[1]) * r + b[2]) * r + b[3]) * r + b[4]) * r + 1)
+        } else {
+            let q = (-2 * log(1 - p)).squareRoot()
+            x = -(((((c[0] * q + c[1]) * q + c[2]) * q + c[3]) * q + c[4]) * q + c[5]) / ((((d[0] * q + d[1]) * q + d[2]) * q + d[3]) * q + 1)
+        }
+        for _ in 0..<2 {
+            let e = cdf(x) - p, u = e * (2 * Double.pi).squareRoot() * exp(x * x / 2)
+            x -= u / (1 + x * u / 2)
+        }
+        return x
+    }
 }
 
 enum Functions {
-    static let names = ["sqrt", "asin", "acos", "atan", "sin", "cos", "tan", "exp", "abs", "log", "ln"]
+    static let names = ["sqrt", "asin", "acos", "atan", "sin", "cos", "tan", "exp", "abs", "log", "ln",
+                        "sinh", "cosh", "tanh", "asinh", "acosh", "atanh", "cbrt", "floor", "ceil", "round", "trunc", "sign",
+                        "frac", "fib", "totient", "nextprime", "lg", "lb", "conj", "arg", "real", "imag", "sec", "csc", "cot"] + Lists.names
 
     static func apply(_ f: String, _ v: Double) -> Double {
         // sin° takes degrees and asin° gives them.
@@ -192,6 +423,30 @@ enum Functions {
         case "atan": return atan(v)
         case "exp": return exp(v)
         case "abs": return abs(v)
+        case "asinh": return asinh(v)
+        case "acosh": return acosh(v)
+        case "atanh": return atanh(v)
+        case "frac": return v - v.rounded(.towardZero)
+        case "sec": return 1 / apply("cos", v)
+        case "csc": return 1 / apply("sin", v)
+        case "cot": return 1 / apply("tan", v)
+        case "conj", "real": return v
+        case "arg": return v >= 0 ? 0 : .pi
+        case "imag": return 0
+        case "lg": return log10(v)
+        case "lb": return log2(v)
+        case "fib": return fibonacci(v)
+        case "totient": return totient(v)
+        case "nextprime": return nextPrime(v)
+        case "sinh": return sinh(v)
+        case "cosh": return cosh(v)
+        case "tanh": return tanh(v)
+        case "cbrt": return cbrt(v)
+        case "floor": return v.rounded(.down)
+        case "ceil": return v.rounded(.up)
+        case "round": return v.rounded(.toNearestOrAwayFromZero)
+        case "trunc": return v.rounded(.towardZero)
+        case "sign": return v > 0 ? 1 : v < 0 ? -1 : 0
         case "log": return log10(v)
         case "fact": return factorial(v)
         case "deg": return v * .pi / 180
@@ -245,6 +500,7 @@ enum Angle {
         case .unknown, .index, .constant: return false
         case .neg(let a): return says(mark, a)
         case .op(_, let a, let b): return says(mark, a) || says(mark, b)
+        case .apply(_, let args): return args.contains { says(mark, $0) }
         case .call(let f, let a): return f == mark || says(mark, a)
         case .sum(_, let from, let to, let body, _): return says(mark, from) || says(mark, to) || says(mark, body)
         }
@@ -256,6 +512,7 @@ enum Angle {
         case .neg(let a): return .neg(unmarked(a))
         case .op(let o, let a, let b): return .op(o, unmarked(a), unmarked(b))
         case .call(let f, let a): return f == "deg" || f == "rad" ? unmarked(a) : .call(f, unmarked(a))
+        case .apply(let f, let args): return .apply(f, args.map(unmarked))
         }
     }
 }
@@ -308,6 +565,12 @@ enum Options {
     static var degrees: Bool { flag("degrees", false) }          // angles in degrees unless marked rad
     static var exact: Bool { flag("exact", true) }               // 5/2, √5 and π/6 where there are such, not only decimals
     static var numberFacts: Bool { flag("numberFacts", true) }   // 2048 = 2¹¹ for a number by itself
+    static var matrices: Bool { flag("matrices", true) }            // det([[1,2],[3,4]]), dot, cross
+    static var algebra: Bool { flag("algebra", true) }              // expand(), factor(), derivative(), integrate()
+    static var inequalities: Bool { flag("inequalities", true) }   // x^2 > 4 solved for the numbers that satisfy it
+    static var basePrefix: Bool { flag("basePrefix", false) }       // 0xFF and 0b11 where it is FF and 11
+    static var conversions: Bool { flag("conversions", true) }   // 5 km to miles, 255 in hex
+    static var paths: Bool { flag("paths", true) }               // /Users/me/file.txt named, and shown in Finder
     static var arithmetic: Bool { flag("arithmetic", true) }     // 12*3+4 answered with no = in it
     static var precise: Bool { flag("precise", false) }          // constants as they are known, not as the booklet rounds them
     static var copyAsShown: Bool { flag("copyAsShown", false) }  // 5/2 on the pasteboard, where it would have been 2.5
@@ -471,11 +734,22 @@ enum Parser {
 
     static func tokenize(_ input: String) throws -> [Token] {
         let replacements: [(String, String)] = [
-            ("×", "*"), ("·", "*"), ("÷", "/"), ("−", "-"), ("⁻¹", "^-1"), ("²", "^2"), ("³", "^3"), ("π", "pi"), ("√", "sqrt"),
+            ("×", "*"), ("·", "*"), ("÷", "/"), ("−", "-"), ("⁻¹", "^-1"), ("²", "^2"), ("³", "^3"), ("π", "pi"), ("√", "sqrt"), ("∛", "cbrt"),
+            ("arcsin", "asin"), ("arccos", "acos"), ("arctan", "atan"),
         ]
         // Capitals are kept: G is not g, and E is a letter where e is Euler's number.
         var s = input
+        // x⁴ and 10⁻³: a run of raised digits is a power.
+        let raised: [Character: Character] = ["⁰": "0", "¹": "1", "²": "2", "³": "3", "⁴": "4", "⁵": "5", "⁶": "6", "⁷": "7", "⁸": "8", "⁹": "9", "⁻": "-"]
+        if s.contains(where: { raised[$0] != nil }) {
+            var out = "", inPower = false
+            for c in s {
+                if let plain = raised[c] { if !inPower { out += "^"; inPower = true }; out.append(plain) } else { inPower = false; out.append(c) }
+            }
+            s = out
+        }
         for (from, to) in replacements { s = s.replacingOccurrences(of: from, with: to) }
+
         // 15% of 80 is 15% times 80.
         s = s.replacingOccurrences(of: "%\\s*of\\s+", with: "%*", options: [.regularExpression, .caseInsensitive])
 
@@ -521,7 +795,7 @@ enum Parser {
                 // is about the speed of light, where 9e16 = c^2 would be solved for c.
                 tokens.append(.marked(String(next)))
                 i = s.index(i, offsetBy: 2)
-            } else if "+-*/^()=,!%".contains(c) {
+            } else if "+-*/^()=,!%".contains(c) || Binary.table[c] != nil {
                 tokens.append(.symbol(c))
                 i = s.index(after: i)
             } else {
@@ -556,11 +830,14 @@ enum Parser {
     // "sinx" is sin x and "2nx" would be n times x: known names first, then single letters.
     // digits are what follows the letters; numbered says they were used up, as the 2 of ans2.
     static func splitLetters(_ run: String, then digits: String = "") throws -> (tokens: [Token], numbered: Bool) {
+        var run = run
+        // SIN, Sqrt and NCR are the functions all the same; Mean(1,2,3) too.
+        if run.contains(where: \.isUppercase), run.count > 1, (["sum", "prod", "pi"] + Functions.names).contains(run.lowercased()) { run = run.lowercased() }
         var out: [Token] = []
         var rest = Substring(run)
         var numbered = false
         while !rest.isEmpty {
-            if let f = (["sum", "prod"] + Functions.names).first(where: { rest.hasPrefix($0) }) {
+            if let f = (["sum", "prod"] + Functions.names.sorted { $0.count > $1.count }).first(where: { rest.hasPrefix($0) }) {
                 out.append(.function(f))
                 rest = rest.dropFirst(f.count)
             } else if rest.hasPrefix("pi") {
@@ -632,6 +909,7 @@ enum Parser {
                 if take("*") { e = .op("*", e, try unary()) }
                 else if take("/") { e = .op("/", e, try unary()) }
                 else if take("%") { e = .op("%", e, try unary()) }
+                else if case .symbol(let c)? = next, Binary.table[c] != nil { at += 1; e = .op(c, e, try unary()) }
                 else if startsOperand { e = .op("*", e, try power()) }
                 else { return e }
             }
@@ -678,7 +956,9 @@ enum Parser {
         // is written straight after taken in, and tan⁻¹ 24/21 is of the fraction. It stops at
         // another function, so that sin x cos x is two; and sin x/2 is half of sin x.
         mutating func bare() throws -> Expr {
+            let negative = take("-")
             var e = try power()
+            if negative { e = .neg(e) }
             if case .num = e, next == .symbol("/"), at + 1 < tokens.count, case .number(let below) = tokens[at + 1] {
                 at += 2
                 e = .op("/", e, .num(below))
@@ -715,6 +995,13 @@ enum Parser {
                 bound.removeLast()
                 guard take(")") else { throw Failure() }
                 return .sum(k, from: from, to: to, body, product: f == "prod")
+            // mean(2, 4, 9): any number of arguments, in brackets.
+            case .function(let f) where Lists.names.contains(f):
+                guard take("(") else { throw Failure() }
+                var args = [try expression()]
+                while take(",") { args.append(try expression()) }
+                guard take(")"), Lists.accepts(f, args.count) else { throw Failure() }
+                return .apply(f, args)
             // sin(x)^2 is (sin x)², as written on paper; sin x^2 is sin(x²).
             case .function(let f):
                 // A power written on the function itself: sin^2 x is (sin x)², and tan^-1 x, as
@@ -726,6 +1013,11 @@ enum Parser {
                     guard take(")") else { throw Failure() }
                 } else {
                     argument = try bare()
+                }
+                // sec, csc and cot are one over cos, sin and tan, and so are in degrees where they are.
+                if let base = ["sec": "cos", "csc": "sin", "cot": "tan"][f] {
+                    let reciprocal = Expr.op("/", .num(1), Angle.call(base, argument))
+                    return raised.map { .op("^", reciprocal, $0) } ?? reciprocal
                 }
                 guard let raised else { return Angle.call(f, argument) }
                 var inverse = false
@@ -751,6 +1043,9 @@ func poly(_ e: Expr) -> Poly? {
     case .num(let v), .constant(_, let v): return [v]
     case .unknown: return [0, 1]
     case .index: return nil
+    case .apply(_, let args):
+        guard args.allSatisfy({ !$0.hasUnknown }) else { return nil }
+        return [e.eval(0)]
     // A sum of polynomials is one, term by term, as long as it has a fixed, modest number of terms.
     case .sum(let k, let from, let to, let body, let product):
         guard let a = poly(from).map(trim), a.count <= 1, let b = poly(to).map(trim), b.count <= 1,
@@ -775,9 +1070,9 @@ func poly(_ e: Expr) -> Poly? {
         case "/":
             guard r.count == 1, r[0] != 0 else { return nil }
             return l.map { $0 / r[0] }
-        case "%":
+        case _ where Binary.table[o] != nil:
             guard l.count <= 1, r.count <= 1 else { return nil }
-            return [Expr.op("%", .num(l.first ?? 0), .num(r.first ?? 0)).eval(0)]
+            return [Expr.op(o, .num(l.first ?? 0), .num(r.first ?? 0)).eval(0)]
         default:
             guard r.count <= 1 else { return nil }
             let k = r.first ?? 0
@@ -845,9 +1140,9 @@ func exactSolution(_ c: [Int], _ name: String) -> Solution {
     let (a, b, cc) = (c[2], c[1], c[0])
     let d = b * b - 4 * a * cc
     if d < 0 {
-        let re = -Double(b) / Double(2 * a), im = Double(-d).squareRoot() / Double(2 * abs(a))
-        let imText = (im == 1 ? "" : decimal(im)) + "i"
-        return Solution(exact: "No real solutions", approx: "Complex solutions: \(name) ≈ " + (re == 0 ? "±\(imText)" : "\(decimal(re)) ± \(imText)"))
+        let (exact, decimals) = complexQuadratic(a, b, d)
+        let needsDecimals = exact.contains("√") || exact.contains("/")
+        return Solution(exact: "\(name) = \(exact)", approx: needsDecimals ? "≈ \(decimals); no real solutions" : "No real solutions; the roots are complex")
     }
     if d == 0 {
         let root = fraction(-b, 2 * a)
@@ -876,6 +1171,20 @@ func exactSolution(_ c: [Int], _ name: String) -> Solution {
     }
     let approx = bb == 0 ? "≈ ±\(decimal(abs(roots[0])))" : "≈ \(roots.map(decimal).joined(separator: ", "))"
     return Solution(exact: "\(name) = \(exact)", approx: approx)
+}
+
+// The roots of ax² + bx + c with discriminant d < 0, as (−1 ± √3 i)/2: written exactly, and as decimals.
+func complexQuadratic(_ a: Int, _ b: Int, _ d: Int) -> (exact: String, decimals: String) {
+    let (bb, kk, m, den) = radicalForm(a, b, -d)
+    let re = Double(bb) / Double(den), im = Double(kk) * Double(m).squareRoot() / Double(den)
+    let decimals = re == 0 ? "±\(im == 1 ? "" : decimal(im))i" : "\(decimal(re)) ± \(im == 1 ? "" : decimal(im))i"
+    if m == 1 {
+        let imaginary = den == 1 ? (kk == 1 ? "i" : "\(kk)i") : (kk == 1 ? "i/\(den)" : "\(kk)i/\(den)")
+        return (bb == 0 ? "±\(imaginary)" : "\(fraction(bb, den)) ± \(imaginary)", decimals)
+    }
+    let radical = (kk == 1 ? "" : "\(kk)") + "√\(m) i"
+    if bb == 0 { return ("±" + radical + (den == 1 ? "" : "/\(den)"), decimals) }
+    return (den == 1 ? "\(minus(bb)) ± \(radical)" : "(\(minus(bb)) ± \(radical))/\(den)", decimals)
 }
 
 // The roots of ax² + bx + c with discriminant d > 0 as (bb ± kk√m)/den: d = k²m with m
@@ -916,9 +1225,22 @@ func numericRoots(_ eq: Equation) -> [Double]? {
     var roots: [Double] = []
     var sawValue = false
 
-    func accept(_ x: Double) {
+    func accept(_ x: Double, touching: Bool = false) {
         let y = f(x)
+        // A curve that only touches zero is at its lowest there: on both sides it is higher. One
+        // that merely dies away, as 3ˣ does to the left, is not at a root anywhere.
+        if touching, y.isFinite {
+            let h = 1e-3 * max(1, abs(x))
+            let (a, b) = (abs(f(x - h)), abs(f(x + h)))
+            guard a.isFinite, b.isFinite, a > abs(y), b > abs(y) else { return }
+        }
         guard y.isFinite, abs(y) <= 1e-7 * max(1, abs(eq.left.eval(x))) else { return }
+        // Both sides gone to nothing, far out (2^(x+1) = 3^x at x = −1000): they are equal to the
+        // machine only because neither can be told from zero.
+        if abs(x) > 1, max(abs(eq.left.eval(x)), abs(eq.right.eval(x))) < 1e-100 {
+            let h = 1e-3 * abs(x)
+            if abs(f(x - h)) < 1e-100, abs(f(x + h)) < 1e-100 { return }
+        }
         if !roots.contains(where: { abs($0 - x) <= 1e-7 * max(1, abs(x)) }) { roots.append(x) }
     }
 
@@ -935,7 +1257,7 @@ func numericRoots(_ eq: Equation) -> [Double]? {
             if y0.isFinite { sawValue = true }
             if y0 == 0 { accept(x0) }
             else if y0.isFinite, y1.isFinite, y0.sign != y1.sign { accept(bisect(f, x0, x1)) }
-            if y0.isFinite, abs(y0) < prevAbs, y1.isFinite, abs(y1) > abs(y0), abs(y0) < 1e-2 { accept(newton(f, x0)) }
+            if y0.isFinite, abs(y0) < prevAbs, y1.isFinite, abs(y1) > abs(y0), abs(y0) < 1e-2 { accept(newton(f, x0), touching: true) }
             prevAbs = y0.isFinite ? abs(y0) : .infinity
             x0 = x1; y0 = y1
         }
@@ -1024,6 +1346,35 @@ func realRoots(_ p: Poly) -> [Double] {
         }
         if moved < 1e-14 { break }
     }
+    // A root of multiplicity m comes out as m roots in a ring round it, wider the more there are
+    // (a sixth power's are a thousandth of its size apart). Their mean is the root, to the last
+    // figure; it is taken for one where the polynomial is nothing there.
+    var clustered = Set<Int>()
+    for i in 0..<n where !clustered.contains(i) {
+        let tolerance = 0.03 * max(abs(z[i].0) + abs(z[i].1), 1e-2)
+        let near = (0..<n).filter { abs(z[$0].0 - z[i].0) + abs(z[$0].1 - z[i].1) <= tolerance }
+        guard near.count >= 2 else { continue }
+        let centre = (near.reduce(0.0) { $0 + z[$1].0 } / Double(near.count), near.reduce(0.0) { $0 + z[$1].1 } / Double(near.count))
+        // The ring is not quite symmetrical, but its mean is on the line to within what it is wide.
+        let (re, im) = eval((centre.0, 0))
+        guard abs(centre.1) <= 1e-2 * (abs(centre.0) + 1e-3), abs(re) + abs(im) <= 1e-9 else { continue }
+        // The m-fold root of p is a simple root of its (m − 1)th derivative: Newton's method there
+        // takes the mean to the root itself.
+        var q = Array(p)
+        for _ in 0..<(near.count - 1) { q = q.enumerated().dropFirst().map { Double($0.offset) * $0.element } }
+        let dq = q.enumerated().dropFirst().map { Double($0.offset) * $0.element }
+        var x = scalbn(centre.0, shift)
+        func horner(_ c: [Double], _ x: Double) -> Double { c.reversed().reduce(0) { $0 * x + $1 } }
+        for _ in 0..<40 {
+            let slope = horner(dq, x)
+            guard slope != 0, slope.isFinite else { break }
+            let step = horner(q, x) / slope
+            guard abs(step) <= 1e-2 * max(abs(x), 1e-3) else { break }
+            x -= step
+            if abs(step) <= 1e-15 * abs(x) { break }
+        }
+        for j in near { z[j] = (scalbn(x, -shift), 0); clustered.insert(j) }
+    }
     // Each real root is taken back to its own size and polished there, by Newton's method on
     // the polynomial as given and its derivative, both by Horner's rule. A whole number that is
     // exactly a root is that root: a repeated one, the 1 of (x − 1)³, is otherwise only found
@@ -1040,9 +1391,13 @@ func realRoots(_ p: Poly) -> [Double] {
     for r in z where abs(r.1) <= 1e-3 * (abs(r.0) + abs(r.1)) {
         let real = abs(r.1) <= 1e-6 * (abs(r.0) + abs(r.1))
         var x = scalbn(r.0, shift)
+        let start = x
         for _ in 0..<(real ? 50 : 0) {
             let (y, slope) = value(x)
             guard slope.isFinite, slope != 0 else { break }
+            // At a repeated root the slope is nothing and the step wild: it must not carry the
+            // estimate off to another root.
+            guard abs(y / slope) <= 1e-4 * max(abs(start), .leastNormalMagnitude) else { break }
             x -= y / slope
             if abs(y / slope) <= 1e-15 * abs(x) { break }
         }
@@ -1120,4 +1475,41 @@ func decimal(_ x: Double) -> String {
     }
     if s == "-0" { s = "0" }
     return s.replacingOccurrences(of: "-", with: "−")
+}
+
+// The nth Fibonacci number, from 0: 0, 1, 1, 2, 3, 5.
+func fibonacci(_ v: Double) -> Double {
+    guard v == v.rounded(), v >= 0, v <= 1476 else { return .nan }
+    var (a, b) = (0.0, 1.0)
+    for _ in 0..<Int(v) { (a, b) = (b, a + b) }
+    return a
+}
+
+// How many of 1…n have no factor in common with it.
+func totient(_ v: Double) -> Double {
+    guard v == v.rounded(), v >= 1, v <= 1e12 else { return .nan }
+    var n = Int(v), result = n, p = 2
+    while p * p <= n {
+        if n % p == 0 {
+            while n % p == 0 { n /= p }
+            result -= result / p
+        }
+        p += 1
+    }
+    if n > 1 { result -= result / n }
+    return Double(result)
+}
+
+// The least prime greater than n.
+func nextPrime(_ v: Double) -> Double {
+    guard v == v.rounded(), v >= 0, v <= 1e12 else { return .nan }
+    func isPrime(_ n: Int) -> Bool {
+        guard n >= 2 else { return false }
+        var p = 2
+        while p * p <= n { if n % p == 0 { return false }; p += 1 }
+        return true
+    }
+    var n = Int(v) + 1
+    while !isPrime(n) { n += 1 }
+    return Double(n)
 }
