@@ -12,6 +12,8 @@ struct Solution: Equatable {
 enum Solver {
     static func solve(_ typed: String) -> Solution? {
         if let place = Location.parse(typed) { return place.solution }
+        // Money is read as typed: a $ before the amount is no mark of mathematics.
+        if let money = Currency.conversion(typed) { return money.solution }
         // A digest is of the text exactly as typed. One asked for as a number, inside a sum, is
         // written in as that number first; one in hexadecimal inside a sum is nothing to work out.
         if let hash = Hash.parse(typed) { return hash.solution }

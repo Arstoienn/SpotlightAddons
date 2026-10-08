@@ -19,6 +19,7 @@ struct Conversion {
         guard Options.conversions else { return nil }
         let text = input.trimmingCharacters(in: .whitespaces)
         if let base = Bases.parse(text) { return base }
+        if let money = Currency.parse(text) { return money }
         if let form = NumberForms.parse(text) { return form }
         if let units = Units.parse(text) { return units }
         return Units.parseSum(text, target: nil)

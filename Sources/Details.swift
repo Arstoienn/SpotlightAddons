@@ -39,8 +39,32 @@ struct Graph {
     var points: [CGPoint]
 }
 
+extension Expr {
+    // π or e on its own, or a physical constant: a value with a name and nothing to work out.
+    var isNamedConstant: Bool {
+        switch self {
+        case .constant: return true
+        case .num(let v): return v == Double.pi || v == M_E
+        default: return false
+        }
+    }
+}
+
 extension Solver {
+    // The working is never left empty where there is an answer: a number written in scientific
+    // notation is written out, and the rest have a step of their own, below. An answer that is
+    // only a name given to a number (x = 5) has nothing to work, and none is made up.
     static func details(_ typed: String) -> Details? {
+        guard var d = workings(typed) else { return nil }
+        if d.steps.isEmpty, typed.trimmingCharacters(in: .whitespaces).range(of: "^[+-]?[0-9.]+[eE][+-]?[0-9]+$", options: .regularExpression) != nil,
+           let line = solve(typed) {
+            d.steps.append(Step(label: "Writing out the power of ten", math: t(line.exact)))
+        }
+        return d
+    }
+
+    private static func workings(_ typed: String) -> Details? {
+        if let money = Currency.conversion(typed) { return money.details }
         if let hash = Hash.parse(typed) { return hash.details }
         guard let typed = Hash.numbers(in: typed).map(Prose.tidy), !Prose.reads(typed) else { return nil }
         if let sequence = Sequence.parse(Latex.plain(typed)) { return sequence.details }
@@ -142,12 +166,27 @@ func evaluationDetails(_ ev: Evaluation) -> Details {
         e = e.withValues
         d.steps.append(Step(label: "Substituting " + Constants.values(constants), math: row(t(lead), typeset(e, ""))))
     }
+    var folds = 0
     while true {
         let factorials = readyFactorials(e)
+        let before = String(describing: e)
         let (next, done) = reduceOnce(e)
         e = next
+        // A minus on a number is folded in without a step of its own, and the round after it may
+        // have an operation to do: -11-50 is -11 less 50, not a sum with nothing in it to do.
+        if done.isEmpty, folds < 8, String(describing: e) != before { folds += 1; continue }
         guard !done.isEmpty, !e.hasNonFinite else { break }
         d.steps.append(Step(label: reductionLabel(done, factorials: factorials), math: row(t(lead), typeset(e, ""))))
+    }
+    // Where nothing was left to do on paper, what the value is, or why there is none.
+    if d.steps.isEmpty, let line = ev.solution {
+        if line.exact == "Undefined" || line.exact == "Too large" {
+            d.steps.append(Step(label: line.exact == "Undefined" ? "Why there is no value" : "Why it is not shown", math: nil, note: line.approx))
+        } else if !ev.value.isFinite {
+            d.steps.append(Step(label: "Using i² = −1", math: t(line.exact), note: line.approx))
+        } else if ev.expr.isNamedConstant {
+            d.steps.append(Step(label: "Evaluating the constant", math: t(line.exact)))
+        }
     }
     d.solutions = evaluationSolutions(ev)
     return d
@@ -513,6 +552,7 @@ extension Solver {
     static func copy(_ typed: String) -> String? {
         func number(_ x: Double) -> String { x == 0 ? "0" : String(format: "%.12g", x) }
         func plain(_ s: String) -> String { s.replacingOccurrences(of: "−", with: "-") }
+        if let money = Currency.conversion(typed) { return money.copyText }
         if let hash = Hash.parse(typed) { return hash.written }
         // As shown, where that is asked for: the card's own line, without the "x = " before a
         // single answer.
@@ -554,6 +594,7 @@ extension Solver {
 // equation, as many as it has and in the order they are given. None for anything else.
 extension Solver {
     static func values(_ typed: String) -> [Double] {
+        if let money = Currency.conversion(typed) { return money.value.isFinite ? [money.value] : [] }
         guard Hash.parse(typed) == nil, let numbered = Hash.numbers(in: typed).map(Prose.tidy), !Prose.reads(numbered) else { return [] }
         let input = Latex.plain(numbered)
         if let matrix = MatrixValue.parse(input) { return matrix.values }

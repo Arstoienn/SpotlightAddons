@@ -417,22 +417,132 @@ struct MatrixValue {
 
     var details: Details {
         var d = Details(name: "", equation: t(source.trimmingCharacters(in: .whitespaces)), steps: [], solutions: [], note: nil, f: { _ in .nan }, roots: [])
+        let worked = working()
         switch value {
         case .scalar:
             let line = solution
             d.solutions = [t(line.exact)] + (line.approx.map { [t($0)] } ?? [])
+            d.steps = worked
         case .vector(let v):
             d.solutions = [t(text)]
-            d.steps.append(Step(label: "Working component by component", math: t(text), note: "The vector has \(v.count) components."))
+            d.steps = worked.isEmpty ? [Step(label: "Working component by component", math: t(text), note: "The vector has \(v.count) components.")] : worked
         case .matrix(let m):
             d.solutions = m.map { t("[ " + $0.map(MatrixValue.entry).joined(separator: "   ") + " ]") }
-            d.steps.append(Step(label: "Working entry by entry", math: t(text), note: "The result has \(m.count) rows and \(m[0].count) columns."))
+            d.steps = worked.isEmpty ? [Step(label: "Working entry by entry", math: t(text), note: "The result has \(m.count) rows and \(m[0].count) columns.")] : worked
         case .undefined(let why):
             d.solutions = [t("Undefined"), t(why)]
+            d.steps = [Step(label: "Why there is no value", math: nil, note: why)]
         case .text(let line, _):
             d.solutions = [t(line)]
-            d.steps.append(Step(label: "Fitting the least-squares line", math: t(line)))
+            d.steps.append(Step(label: "Fitting the least-squares line", math: t(line),
+                                note: "The slope is the sum of (x − x̄)(y − ȳ) over the sum of (x − x̄)², and the line passes through (x̄, ȳ)."))
         }
         return d
+    }
+
+    // The call as typed, name(a, b): the name and what each argument comes to, where the whole of
+    // it is one call.
+    private func call() -> (name: String, args: [Value])? {
+        let chars = Array(source.filter { $0 != " " })
+        guard let open = chars.firstIndex(of: "("), open > 0, chars.last == ")", chars[..<open].allSatisfy(\.isLetter) else { return nil }
+        var depth = 0, parts: [String] = [], current = ""
+        for (i, c) in chars[(open + 1)...].enumerated() {
+            if c == "(" || c == "[" { depth += 1 }
+            if c == ")" || c == "]" {
+                depth -= 1
+                if depth < 0 { guard open + 1 + i == chars.count - 1 else { return nil }; break }
+            }
+            if c == ",", depth == 0 { parts.append(current); current = "" } else { current.append(c) }
+        }
+        parts.append(current)
+        var args: [Value] = []
+        for part in parts {
+            var reader = Reader(chars: Array(part))
+            guard let v = try? reader.expression(), reader.at == reader.chars.count else { return nil }
+            args.append(v)
+        }
+        return (String(chars[..<open]).lowercased(), args)
+    }
+
+    // The working of a determinant, a norm, a dot product and the like, as it would be written out
+    // by hand; empty where the result is a matter of entry-by-entry arithmetic, which says so.
+    private func working() -> [Step] {
+        guard let (name, args) = call() else { return [] }
+        func n(_ x: Double) -> String { MatrixValue.entry(x) }
+        func p(_ x: Double) -> String { x < 0 ? "(\(n(x)))" : n(x) }
+        func result(_ prefix: String = "= ") -> Math { t(prefix + text.replacingOccurrences(of: "= ", with: "")) }
+        switch (name, args.first) {
+        case ("det", .matrix(let m)?), ("determinant", .matrix(let m)?):
+            guard m.count == m[0].count, args.count == 1 else { return [] }
+            if m.count == 2 {
+                let (a, b, c, d) = (m[0][0], m[0][1], m[1][0], m[1][1])
+                return [Step(label: "Applying ad − bc", math: t("= \(p(a))×\(p(d)) − \(p(b))×\(p(c))")),
+                        Step(label: "Multiplying", math: t("= \(p(a * d)) − \(p(b * c))")),
+                        Step(label: "Subtracting", math: result())]
+            }
+            if m.count == 3 {
+                func minor(_ j: Int) -> Double {
+                    let cols = (0..<3).filter { $0 != j }
+                    return m[1][cols[0]] * m[2][cols[1]] - m[1][cols[1]] * m[2][cols[0]]
+                }
+                let signs = ["", " − ", " + "]
+                _ = signs
+                let expansion = (0..<3).map { j in "\(j == 0 ? "" : j == 1 ? " − " : " + ")\(p(m[0][j]))×\(p(minor(j)))" }.joined()
+                let terms = (0..<3).map { j in "\(j == 0 ? "" : j == 1 ? " − " : " + ")\(p(m[0][j] * minor(j)))" }.joined()
+                return [Step(label: "Expanding along the first row", math: t("= " + (0..<3).map { j in
+                            let cols = (0..<3).filter { $0 != j }
+                            return "\(j == 0 ? "" : j == 1 ? " − " : " + ")\(p(m[0][j]))(\(p(m[1][cols[0]]))×\(p(m[2][cols[1]])) − \(p(m[1][cols[1]]))×\(p(m[2][cols[0]])))"
+                        }.joined()), note: "Each entry of the row is multiplied by the determinant of what is left when its row and column are crossed out, with the signs alternating."),
+                        Step(label: "Working out each minor", math: t("= " + expansion)),
+                        Step(label: "Multiplying and adding", math: t("= " + terms + " = " + n({ if case .scalar(let x) = value { x } else { 0 } }()))),]
+            }
+            return [Step(label: "Reducing to triangular form", math: result(),
+                         note: "Row operations turn the matrix into one with zeros below the diagonal. The determinant is the product of the diagonal, with the sign changed for each swap of two rows.")]
+        case ("inv", .matrix(let m)?), ("inverse", .matrix(let m)?):
+            guard m.count == m[0].count, args.count == 1 else { return [] }
+            if m.count == 2 {
+                let (a, b, c, d) = (m[0][0], m[0][1], m[1][0], m[1][1])
+                let det = a * d - b * c
+                return [Step(label: "Finding the determinant", math: t("det = \(p(a))×\(p(d)) − \(p(b))×\(p(c)) = \(n(det))")),
+                        Step(label: "Swapping the diagonal and changing the signs of the others", math: t("[[\(n(d)), \(n(-b))], [\(n(-c)), \(n(a))]]")),
+                        Step(label: "Dividing every entry by the determinant", math: t(text))]
+            }
+            return [Step(label: "Row-reducing [A | I]", math: t(text),
+                         note: "The same row operations that turn A into the identity matrix turn the identity into the inverse of A.")]
+        case ("trace", .matrix(let m)?):
+            guard m.count == m[0].count else { return [] }
+            return [Step(label: "Adding the diagonal", math: t("= " + m.indices.map { p(m[$0][$0]) }.joined(separator: " + ") + " " + text))]
+        case ("rank", .matrix?):
+            return [Step(label: "Reducing to row echelon form", math: result(),
+                         note: "The rank is the number of rows that are not all zeros once the matrix has been row-reduced.")]
+        case ("dot", .vector(let u)?):
+            guard args.count == 2, case .vector(let v) = args[1], u.count == v.count else { return [] }
+            return [Step(label: "Multiplying the components", math: t("= " + zip(u, v).map { "\(p($0))×\(p($1))" }.joined(separator: " + "))),
+                    Step(label: "Adding", math: t("= " + zip(u, v).map { p($0 * $1) }.joined(separator: " + ") + " " + text))]
+        case ("cross", .vector(let u)?):
+            guard args.count == 2, case .vector(let v) = args[1], u.count == 3, v.count == 3 else { return [] }
+            return [Step(label: "Applying the cross product formula",
+                         math: t("[\(p(u[1]))×\(p(v[2])) − \(p(u[2]))×\(p(v[1])), \(p(u[2]))×\(p(v[0])) − \(p(u[0]))×\(p(v[2])), \(p(u[0]))×\(p(v[1])) − \(p(u[1]))×\(p(v[0]))]"),
+                         note: "(u₂v₃ − u₃v₂, u₃v₁ − u₁v₃, u₁v₂ − u₂v₁)"),
+                    Step(label: "Working out each component", math: t(text))]
+        case ("norm", .vector?), ("magnitude", .vector?), ("norm", .matrix?):
+            let entries: [Double]
+            switch args[0] { case .vector(let v): entries = v; case .matrix(let m): entries = m.flatMap { $0 }; default: return [] }
+            let squares = entries.map { $0 * $0 }
+            let sum = squares.reduce(0, +)
+            return [Step(label: "Squaring each component", math: t("= √(" + entries.map { "\(p($0))²" }.joined(separator: " + ") + ")")),
+                    Step(label: "Adding", math: t("= √(" + squares.map(n).joined(separator: " + ") + ") = √\(n(sum))")),
+                    Step(label: "Taking the square root", math: result())]
+        case ("quartile", _), ("percentile", _), ("iqr", _):
+            return [Step(label: "Ordering the values and interpolating", math: result(),
+                         note: "The values are put in order, and the percentile read at its position between two of them, linearly.")]
+        case ("corr", _), ("correlation", _), ("cov", _), ("covariance", _):
+            return [Step(label: name.hasPrefix("cor") ? "Dividing the covariance by both spreads" : "Summing the products of the deviations", math: result(),
+                         note: "Each pair is taken as its distance from the two means, (x − x̄)(y − ȳ); these are added, and divided by n − 1 for the covariance, or by √(Σ(x − x̄)² Σ(y − ȳ)²) for the correlation.")]
+        case ("transpose", _):
+            return [Step(label: "Swapping rows and columns", math: t(text), note: "Entry (i, j) of the result is entry (j, i) of the matrix.")]
+        default:
+            return []
+        }
     }
 }

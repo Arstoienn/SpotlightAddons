@@ -9,11 +9,11 @@ enum Entry: String, CaseIterable {
     case clipboardHistory = "clipboard-history"
     case settings = "settings"
 
-    private var title: String { self == .settings ? "Spotlight Plus Settings" : "Clipboard History" }
+    private var title: String { self == .settings ? "Spotlight Plus Preferences" : "Clipboard History" }
     private var summary: String { self == .settings ? "Change how Spotlight Plus answers" : "Open Spotlight's clipboard history" }
     private var symbol: String { self == .settings ? "gearshape" : "clipboard" }
     private var words: [String] {
-        self == .settings ? ["settings", "preferences", "spotlight plus", "plus"] : ["clipboard", "history", "pasteboard", "clip"]
+        self == .settings ? ["preferences", "settings", "spotlight plus", "plus"] : ["clipboard", "history", "pasteboard", "clip"]
     }
 
     // Said again at every launch, and when one is chosen: it costs nothing, puts right an index
@@ -39,7 +39,7 @@ enum Entry: String, CaseIterable {
         }
         CSSearchableIndex.default().indexSearchableItems(items) { error in
             Log.note(error.map { "the entries could not be put in Spotlight's list: \($0.localizedDescription)" }
-                          ?? "Clipboard History and Spotlight Plus Settings are in Spotlight's list")
+                          ?? "Clipboard History and Spotlight Plus Preferences are in Spotlight's list")
         }
     }
 
