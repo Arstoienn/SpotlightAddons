@@ -7,101 +7,30 @@ panel with the working, every solution and a graph; move the pointer off and it 
 Type `clipboard` or `history`, choose Clipboard History in Spotlight's list and press Return, and
 Spotlight comes back open on its clipboard history, the view that ⌘Space and then ⌘4 gives.
 Clipboard History is an entry Spotlight Plus puts in Spotlight's list itself, through Core
-Spotlight; there is no second app. Spotlight Plus Settings is another, and opens the settings.
+Spotlight; there is no second app. Spotlight Plus Preferences is another, and opens the preferences.
 
-## What it solves
+## What it does
 
-- **One equation, one unknown**: `2n^2=10` gives `n = ±√5`. Linear and quadratic equations are
-  solved exactly; higher degrees, exponentials, logarithms and trigonometry numerically, with the
-  general solution where there is one (`sin(n)=1` gives `n = π/2 + 2kπ`). An angle, an unknown
-  that is only inside sin, cos and tan, is answered for one turn from zero, in radians and in
-  degrees: `sin(x)=0.5` gives `x = π/6, 5π/6`, and 30°, 150° beneath.
-- **Working it out**: arithmetic, `12*3+4`, or a name and arithmetic, `PES = ...`, is evaluated
-  stage by stage. Factorials are worked out too: `5!/(3!2!)`.
-- **As arithmetic is typed**: percentages, `10*10%` as 1, `15% of 80` as 12, and `200+10%` as 220
-  where the percentage is of what it is added to; the remainder, `17%5` as 2; thousands
-  separators, `1,000+250`; `2**8`; `3x4` or `3 x 4` as a product; `0xFF` and `0b1010`;
-  `log2(8)`; and a leading or trailing `=`, as `2+2=`.
-- **A path**: an absolute path that exists, `/Users/me/Code/App/build/app.jar`, brings
-  up a card with the name and where it is. Clicking the card's folder sign, or Return with the
-  pointer on it, shows the file selected in Finder; a folder is opened. It can be turned off in
-  the settings. A path from the home folder, `~/Code`, is left to Spotlight, which finds it. macOS may ask once for access to Desktop, Documents or Downloads.
-- **Functions of a calculator**: `floor`, `ceil`, `round(x, 2)`, `trunc`, `frac`, `sign`, `min`, `max`,
-  `gcd`, `lcm`, `mod` (or `17 mod 5`), `nCr` and `nPr` (or `5C2`, `5P2`), `fib`, `totient`, `nextprime`,
-  `cbrt`, `root(27, 3)`, `hypot`, `atan2`, `sinh`, `cosh`, `tanh` and their inverses, `sec`, `csc`,
-  `cot`, `log(8, 2)`, `lg`, `lb`, `|x|`, and `1<<4`, `256>>2`, `12&10`, `xor(12, 10)`.
-- **Statistics**: `mean`, `median`, `mode`, `stdev` and `stdevp`, `var` and `varp`, `geomean`, `rms`,
-  `range`, `total`, and the distributions `binompdf`, `binomcdf`, `normpdf`, `normcdf`, `normalcdf`,
-  `invnorm`, `poissonpdf`, `poissoncdf`. Lists are written `mean(1,2,3)` or `mean([1,2,3])`.
-- **Division by nought and the like** are said to be undefined, with the reason, and a number past
-  1.8×10³⁰⁸ is "Too large". The square root of a negative number is imaginary.
-- **Complex numbers**: with `i` in a sum, `(1+2i)(3-i)`, `i^2`, `e^(i*pi)`, `|3+4i|`, `conj`, `arg`.
-  A quadratic with no real root gives its complex roots: `x^2+x+1=0` is x = (−1 ± √3 i)/2.
-- **Units**: `5 km to miles`, `100 F in C`, `72 kg to lb`, `60 mph to km/h`, `1 GiB to MB`, `1 atm to psi`
-  and the like, for length, mass, volume, time, speed, area, data, energy, power, pressure, force,
-  angle, frequency and temperature. **Bases**: `255 in hex`, `hex(255)`, `bin(10)`, `255 in base 7`,
-  and `0xFF`, `0b1010` as numbers.
-- **Inequalities** in one letter: `x^2>4` is x < −2 or x > 2; `x^3-x<=0`; `|2x+1|<3`; `x^2 != 4`.
-- **Algebra, when asked for by name**: `expand((x+1)^2)`, `factor(x^2-5x+6)`, `derivative(x^3+2x)`,
-  `d/dx sin(x)`, `derivative(x^2, 3)`, `integrate(x^2)`, `integrate(x^2, 0, 1)`, `∫_0^1 x^2 dx`,
-  `limit(sin(x)/x, x, 0)` and `limit((1+1/x)^x, x, inf)`.
-- **Matrices and vectors**: `det([[1,2],[3,4]])`, `inv`, `transpose`, `trace`, `rank`, `dot`, `cross`,
-  `norm`, and `[[1,2],[3,4]]*[[0,1],[1,0]]`, sums and powers of them.
-- **LaTeX** is read for all of this too: `\binom{5}{2}`, `\log_2 8`, `\left|x\right|`, `\int_0^1 x^2\,dx`,
-  `\lim_{x\to 0}`, `\frac{d}{dx}`.
-- **What it leaves alone**: words, prices and dates are no mathematics. `r2d2`, `wi-fi 6`,
-  `5 ft 10`, `$100`, `2026-10-06` and `007` bring up no card.
-- **Letters with no equals sign** are tidied: like terms are collected, `2x+3x` to 5x, and what
-  every term has in common is taken out, `xb+xc` to x(b + c). Nothing is multiplied out, and a
-  quadratic is not factorised: `x^2-5x+6=0` does that in its working.
-- **A formula turned round**: with several letters in it, an equation is rearranged to give x,
-  `1/(7b)=11x/y` as x = y/(77b), or the letter asked for after it, `F=ma, a=?` as a = F/m and
-  `1/f=1/u+1/v, f=?` as f = uv/(v + u), `F=kq/r^2, r=?` as r = ±√(kq/F). A formula already written for one letter, `y=mx+b`, is
-  left alone unless another is asked for.
-- **A number by itself** is given as its primes, `2048` as 2¹¹ and `360` as 2³·3²·5, or said to
-  be prime; a decimal is given as a fraction, `0.375` as 3/8.
-- **Digests**: `SHA256("hello")` and `SHA1("hello")`, in capitals or not, give the digest of
-  the text in hexadecimal. `sha256("hello", decimal)` and `sha256("hello", binary)` give it as
-  a whole number, which, unlike the hexadecimal, can go into a sum.
-- **The answer before, and the clipboard**: `ans` is the last answer, once it has been copied or
-  Spotlight closed on it, so `ans*2` carries on from it. After an equation with several answers
-  they are `ans1`, `ans2` and so on. `clip` is the number on the clipboard, as in `20*clip`.
-- **True or false**: with numbers alone on both sides, the two are compared. `2^2=4` is True
-  and `1/3=0.3333` is False; `1/3~=0.3333` is True, `~=` or `≈` allowing a tenth of a percent.
-  Also `!=`, `<`, `>`, `<=`, `>=` and their signs `≠`, `≤`, `≥`. (`5!=120` is five factorial;
-  not equal is written with a space before it, `5 != 120`.) `==` is the same as `=`. `===` is
-  exact: `0.5===1/2` is True, and `1/3===0.3333333333333333` is False however many threes are
-  written. Statements join with `&&` or `and`, `||` or `or`, and are negated with `!( )` or `not`,
-  with brackets to group: `3+1=4 || 3=1` is True, `&&` going first, and `not (1=1 and 2=3)` is True.
-- **Physics**: `g`, `G` and `c` are the physical constants (9.8, 6.67×10⁻¹¹ and
-  3.00×10⁸) whenever the equation has another letter to solve for. `h=0.5g*3^2` gives `h ≈ 44.1`
-  and `x=2g` gives 19.6, while `2g=10` is still solved for `g`. The card says what was taken, and
-  the working writes it in. Large and small numbers are typed as `5.97e24` and `1.6e-19`.
-  A `!` before one of these letters reads it the other way round: `9e16=!c^2` is True, where
-  `9e16=c^2` is solved for `c`; and `c=2*!g` is solved for `g`, where `c=2g` takes `g` as 9.8.
-- **Greek letters**: `theta`, `omega`, `lambda`, `alpha`, `beta`, `phi`, `rho` and `tau` are
-  each one unknown, shown as θ, ω and so on; pasted as themselves or as `\theta` they are too.
-  `mu` is μ as well.
-- **Systems**: equations separated by commas, `2x+y=5, x-y=1`. Linear ones are solved by
-  elimination, written out as by hand; nonlinear ones (`x^2+y^2=25, x+y=7`) numerically, with
-  simple values written exactly (`1 − √2`).
-- **Sums and products**: `\sum_{k=0}^{10} 20k`.
-- **LaTeX** as it is usually copied: `\frac`, `\sqrt`, `^{}`, `\cdot`, `\left( \right)`, `\[ \]`,
-  `\begin{cases}`, `\quad`.
+- **Equations**: one unknown or several, exactly where that can be done, with the working and a graph:
+  linear, quadratic and higher, exponential, logarithmic and trigonometric (in radians and in degrees, over
+  one turn or a range you give), rational (`1/x+1/(x+1)=1`), systems, and formulas turned round or with
+  values given. A quadratic with no real root gives its complex roots.
+- **Inequalities** in one letter, alone or together: `x^2>4`, `1<x<5`, `x>1 && x<5`.
+- **Arithmetic**, with the functions of a calculator, percentages, whole numbers written out in full,
+  complex numbers, statistics and distributions, matrices and vectors, and sequences.
+- **Units, bases and money**: `5 km to miles`, `255 in hex`, `0.75 to fraction`, `2024 to roman`, `750 USD to NTD`.
+- **Algebra by name**: `expand`, `factor`, `derivative`, `integrate`, `limit`; and trigonometric
+  identities, `sin(x)^2+cos(x)^2` as 1. A sum to a power is multiplied out as it is typed: `(a+b)^2`.
+- **True or false** for statements with numbers alone, joined with `&&`, `||` and `not`.
+- **Digests**, a **path** to a file, `ans` for the last answer and `clip` for the clipboard.
+- **LaTeX** is read for all of it, as it is usually copied.
+- What is no mathematics is left alone: `r2d2`, `wi-fi 6`, `5 ft 10`, `$100`, `2026-10-06`, `007`.
 
-Implicit multiplication reads as on paper: `2n`, `2(x+1)`, `(x+1)(x-1)`, `3sin x`. A function
-written without brackets is of what follows it, `sin 2x` of 2x; `sin^2 x` is its square, and
-`tan^-1 x`, as `\tan^{-1}` comes from LaTeX, is the angle whose tangent is x. Capitals are
-letters of their own: `G` is not `g`, and `E` is a letter where `e` is Euler's number. So is a
-letter with a subscript, `F_n` or `v_0`. Angles are in radians unless marked `deg` or `°`:
-`cos(35°)` is of 35 degrees, and `sin(x deg)=0.5` is answered in degrees, `x = 30°, 150°`.
+The next section is every syntax there is, each with its LaTeX where it has one.
 
 ## Syntax
 
-Everything is typed into Spotlight's search field. A bracket that closes what was never opened, `29-12)/5`, is read as if it had been opened at the start, `(29-12)/5`. Spaces do not matter, capitals matter where a
-letter stands for something (`G` is not `g`, `E` is not `e`), and the full-width characters a
-Chinese input method types, `（ｘ＋１）＾２`, are read as the ordinary ones. Each row gives what is
-typed, and the same in LaTeX.
+Everything is typed into Spotlight's search field. Each row gives what is typed, and the same in LaTeX.
 
 ### Numbers and arithmetic
 
@@ -135,16 +64,13 @@ typed, and the same in LaTeX.
 | Function names | `SIN(30°)`, `Sqrt(16)`, `NCR(5,2)` are the same in capitals | |
 | The last answer, the clipboard | `ans`, `ans1`, `ans2`, `clip` | |
 
-A name given a value, `cost = 12*3+4`, is worked out and not solved. A number by itself is given
-as its primes, or as a fraction if it has a decimal point.
-
 ### Equations and inequalities
 
 | Asked | Typed | LaTeX |
 | --- | --- | --- |
 | One unknown | `2n^2=10`, `x^2-5x+6=0`, `2^x=8`, `log(n)=2`, `sqrt(x)=3`, `20=0.5g*t^2`; with the unknown in a denominator, `1/x+1/(x+1)=1` (exact, and what makes a denominator zero struck out) | `\frac{x}{2}+1=3`, `x^{2}-5x+6=0` |
 | Trigonometric | `sin(x)=0.5`, `2sin(3x+1)=1`, `sin(x deg)=0.5`; answered from 0 to 2π, in radians and in degrees | `\sin x=\frac12` |
-| In a range | `sin(x)=sqrt(3)/2, 0°<=x<360°`, `cos(x)=1/2, x in [0,2π)`, `x^2=4, x>0`; degrees where the range is in them | `\sin x=\frac{\sqrt{3}}{2},\quad 0^\circ\le x<360^\circ`, `x\in[0,2\pi)` |
+| In a range | `sin(x)=sqrt(3)/2, 0°<=x<360°`, `cos(x)=1/2, x in [0,2π)` (or `x∈[0,2π)`), `x^2=4, x>0`; degrees where the range is in them | `\sin x=\frac{\sqrt{3}}{2},\quad 0^\circ\le x<360^\circ`, `x\in[0,2\pi)` |
 | Systems | `x+y=3, x-y=1`; nonlinear ones too | `\begin{cases} x+y=3 \\ x-y=1 \end{cases}` |
 | A sequence from some terms | nothing is said until it is asked: `u_1=12, u_5=29, d` gives the common difference, `…, r` the common ratio (`±√2`, `±(29/12)^(1/4)`), and `u_1=12, u_5=29, u_10=?` or `S_5=?` a term or a sum; `u_1=2, d=3, u_10=?`, `u_1=2, r=3, S_5=?`. A slip for the subscript, `u+1`, `u1`, is read as `u_1` beside `u_5`. The panel draws the terms | `u_{1}=12, u_{5}=29, d` |
 | A formula with values given | `v=u+at, u=2, a=3, t=4`, `E=1/2*m*v^2, m=2, v=3`, `PV=nRT, P=2, V=3, n=1, R=8.314` | |
@@ -154,12 +80,6 @@ as its primes, or as a fraction if it has a decimal point.
 | Complex roots | `x^2+x+1=0` gives x = (−1 ± √3 i)/2 | |
 | Tidying | `2x+3x`, `xb+xc`, `(m^4q^4z^-1)(mq^5z^3)`; a sum to a power, or sums multiplied, is multiplied out: `(a+b)^2`, `(x+1)(x-1)`, `(a+b)^1` | |
 | Trigonometric identities | `sin(x)^2+cos(x)^2` is 1, `sin(x)/cos(x)` is tan(x), `2sin(x)cos(x)` is sin(2x), `1-2sin(x)^2` is cos(2x), `1+tan(x)^2` is sec(x)² | `\sin^2 x + \cos^2 x`, `\frac{\sin x}{\cos x}` |
-
-### Comparisons and logic
-
-`2^2=4`, `1/3=0.333` (within rounding), `1/3~=0.3333` (within 0.1%), `1/3===1/3` (exactly), `5 != 120`,
-`<`, `>`, `<=`, `>=`; joined with `&&` or `and`, `||` or `or`, `!(…)` or `not`, as in
-`3+1=4 || 3=1`. In LaTeX: `\approx`, `\ne`, `\le`, `\ge`, `\land`, `\lor`, `\lnot`.
 
 ### Statistics
 
@@ -191,6 +111,26 @@ frequency and temperature. `255 in hex` (FF), `3 in binary` (11), `255 to octal`
 added where the setting for them is on, and are always understood when typed (`0xFF + 1`). Sums of quantities, `5 km + 300 m`, `5 ft 10 in`, `1 h 30 min to s`. Other forms of a number,
 `0.75 to fraction`, `1/3 to decimal`, `12345 to scientific`, `0.25 to percent`, `2024 to roman`, `MCMXCIV to number`. In LaTeX, `5\,\mathrm{km} \text{ to } \mathrm{mi}`.
 
+### Money
+
+`750 USD to NTD`, `750USD=NTD?`, `jpy 10 to ntd`, `$20 in yen`, `100 euro to gbp`, `usd to twd` (one dollar): an amount in
+another currency. Every currency the source has (about 160) may be named by its code, in any case (`usd`, `Usd`, `USD`,
+since a currency has one name whatever the case), before the amount or after it, or by a symbol (`$`, `€`, `£`, `¥`, `₩`,
+`₹`, `NT$`, `R$` and the like) or a name (`yen`, `sterling`, `ntd`). The amount may be a sum, `750*2 usd to ntd`, with
+commas between the thousands. `=` is read as "to" only between an amount of money and a currency.
+
+Coins and metals are the same: `0.5 btc to usd`, `1 eth to btc`, `₿1 to ntd`, `100 usd to btc`; `2 oz gold to usd`,
+`1 xau to jpy`, `10 g gold to ntd`, `1 kg of silver to usd`. A metal (gold, silver, platinum, palladium; XAU, XAG, XPT,
+XPD) is priced by the troy ounce, of 31.1035 g; the coins are the thirty or so best known (BTC, ETH, USDT, USDC, BNB, XRP,
+SOL, ADA, DOGE, DOT, LTC, and so on).
+
+The rates are fetched as the card is made, in the background, each against the US dollar, and the card is made again
+when they arrive: currencies from open.er-api.com (they are those of the day, as that is the finest it gives), coins from
+api.coinbase.com and metals from api.gold-api.com (as they trade). The last rates had are kept, and with no connection they
+are used, and the card then says when they were recorded: `1 BTC = 82645.1 USD · offline, rates of 8 Oct 2026, 14:01`.
+With a connection it says nothing of the time. With neither a connection nor rates saved, there is no value to give, and
+the card says so.
+
 ### Algebra, asked for by name
 
 | Asked | Typed | LaTeX |
@@ -201,10 +141,88 @@ added where the setting for them is on, and are always understood when typed (`0
 | Integrate | `integrate(x^2)`, `integrate(x^2, 0, 1)`, `∫ x^2 dx`, `∫_0^1 x^2 dx` | `\int_0^1 x^2 \, dx`, `\int x^2 \, \mathrm{d}x` |
 | Limit | `limit(sin(x)/x, x, 0)`, `limit((1+1/x)^x, x, inf)`, `limit(1/x, x, 0+)` | `\lim_{x \to 0} \frac{\sin x}{x}`, `\lim_{x \to \infty}`, `\lim_{x \to 0^+}` |
 
-### Digests, paths
+### Letters and constants
 
-`SHA256("hello")`, `SHA1`, `SHA384`, `SHA512`, `MD5`, and `sha256("hello", decimal)`, `sha256("hello", binary)`. An absolute path
-that exists, `/Users/me/Code/app.jar`, names the file and shows it in Finder.
+- The unknown is the one letter in an equation. Capitals are letters of their own: `G` is not `g`, and `E`
+  is a letter where `e` is Euler's number. So is a letter with a subscript, `F_n` or `v_0`.
+- `theta`, `omega`, `lambda`, `alpha`, `beta`, `phi`, `rho`, `tau` and `mu` are each one unknown, shown as θ, ω
+  and so on; pasted as themselves or as `\theta` they are too.
+- `g`, `G` and `c` are the physical constants (9.8, 6.67×10⁻¹¹ and 3.00×10⁸) whenever the equation has
+  another letter to solve for: `h=0.5g*3^2` gives `h ≈ 44.1` and `x=2g` gives 19.6, while `2g=10` is still solved
+  for `g`. The card says what was taken, and the working writes it in.
+- A `!` before one of these letters reads it the other way round: `9e16=!c^2` is True, where `9e16=c^2` is
+  solved for `c`; and `c=2*!g` is solved for `g`, where `c=2g` takes `g` as 9.8.
+- Implicit multiplication reads as on paper: `2n`, `2(x+1)`, `(x+1)(x-1)`, `3sin x`. A function written
+  without brackets is of what follows it, `sin 2x` of 2x; `sin^2 x` is its square, and `tan^-1 x`, as
+  `\tan^{-1}` comes from LaTeX, is the angle whose tangent is x.
+- Angles are in radians unless marked `deg` or `°`: `cos(35°)` is of 35 degrees, and `sin(x deg)=0.5` is
+  answered in degrees, `x = 30°, 150°`.
+
+### Reading what is typed
+
+- A bracket that closes what was never opened, `29-12)/5`, is read as if it had been opened at the start,
+  `(29-12)/5`. One left open is not closed: it is not finished.
+- Spaces do not matter, and the full-width characters a Chinese input method types, `（ｘ＋１）＾２`, are read as
+  the ordinary ones.
+- A name given a value, `cost = 12*3+4`, is worked out and not solved. A number by itself is given as its primes,
+  or as a fraction if it has a decimal point.
+- Words, prices and dates are left alone.
+
+### Notations of its own
+
+Some of what is typed is not standard mathematics, but short to type. All of it is listed here, and each is
+explained where it belongs above.
+
+| Typed | Means |
+| --- | --- |
+| `1/3~=0.3333`, `≈` | approximately equal: within a tenth of a percent |
+| `1/3===1/3` | exactly equal, as fractions; `1/3===0.3333333333333333` is False |
+| `==` | the same as `=` |
+| `5 != 120`, `≠` | not equal; with a space before it, since `5!=120` is five factorial |
+| `<=`, `>=`, `≤`, `≥` | at most, at least |
+| `&&` or `and`, `\|\|` or `or`, `!( )` or `not` | both, either, not, for statements |
+| `x=?`, `F=ma, a=?` | the letter asked for, after a formula |
+| `!c` | read the letter c the other way round: the unknown, not the speed of light |
+| `x deg`, `35°`, `x rad` | an angle in degrees, or in radians |
+| `5C2`, `5P2` | the ways of choosing, and of arranging |
+| `1+2+...+100`, `1*2*...*5`, `sum of 1 to 100` | a run of terms, written with dots |
+| `20% off 80`, `15% of 80`, `200+10%` | percentages as people say them; the last is of the 200 |
+| `17 mod 5`, `17%5` | the remainder |
+| `d/dx x^3`, `d2/dx2 x^3`, `second derivative of x^3` | the derivative, and higher ones |
+| `limit(1/x, x, 0+)` | a limit from the right; `0-` from the left; `inf` for infinity |
+| `u_1=12, u_5=29, d` | the common difference of a sequence; `r` its ratio; `u+1` and `u1` slips for `u_1` |
+| `x in [0,2π)`, `x∈[0,2π)` | how far x goes, with `[` including the end and `(` leaving it out |
+| `u_5`, `F_n`, `v_0` | one letter with a subscript |
+| `29-12)/5` | a bracket that closes what was never opened: `(29-12)/5` |
+| `solve …`, `find x: …`, `what is …` | words in front, which are ignored |
+| `ans`, `ans1`, `clip` | the last answer, the several answers of the last, the clipboard |
+
+### True or false
+
+`2^2=4` is True and `1/3=0.3333` is False (equal to within rounding); `1/3~=0.3333` or `≈` is True, allowing a
+tenth of a percent; `1/3===0.3333333333333333` is False however many threes are written, `===` being
+exact, and `0.5===1/2` is True. `==` is the same as `=`. Also `!=`, `<`, `>`, `<=`, `>=` and `≠`, `≤`, `≥`.
+(`5!=120` is five factorial; not equal is written with a space before it, `5 != 120`.) Statements join with
+`&&` or `and`, `||` or `or`, and are negated with `!( )` or `not`, with brackets to group: `3+1=4 || 3=1` is
+True, `&&` going first, and `not (1=1 and 2=3)` is True. In LaTeX: `\approx`, `\ne`, `\le`, `\ge`, `\land`, `\lor`, `\lnot`.
+
+### Systems
+
+Equations separated by commas, `2x+y=5, x-y=1`. Linear ones are solved by elimination, written out as by
+hand; nonlinear ones (`x^2+y^2=25, x+y=7`) numerically, with simple values written exactly (`1 − √2`).
+
+### Digests, paths, the answer before
+
+- `SHA256("hello")`, `SHA1`, `SHA384`, `SHA512`, `MD5`, in capitals or not, give the digest of the text in
+  hexadecimal; `sha256("hello", decimal)` and `sha256("hello", binary)` give it as a whole number, which,
+  unlike the hexadecimal, can go into a sum.
+- An absolute path that exists, `/Users/me/Code/app.jar`, brings up a card with the name and where it is.
+  Clicking the card's folder sign, or Return with the pointer on it, shows the file selected in Finder; a
+  folder is opened. A path from the home folder, `~/Code`, is left to Spotlight. macOS may ask once for
+  access to Desktop, Documents or Downloads.
+- `ans` is the last answer, once it has been copied or Spotlight closed on it, so `ans*2` carries on from it.
+  After an equation with several answers they are `ans1`, `ans2` and so on. `clip` is the number on the
+  clipboard, as in `20*clip`.
 
 ### LaTeX commands read
 
@@ -232,24 +250,26 @@ The top of the panel is the card itself, so opening it moves nothing. Below it:
 The card follows Spotlight when it is dragged, and goes when Spotlight closes. Nothing takes the
 keyboard, so typing carries on going to Spotlight.
 
-## Settings
+## Preferences
 
-Choosing **Spotlight Plus Settings** in Spotlight (or the gear at the foot of the panel) opens the settings, on
-five pages: **Answers**, **Cards**, **Constants**, **Copying** and **General**. Under each setting there is what
-it does, and an example with what it gives now: turning one off shows its card going ("no card"). The page last
+Choosing **Spotlight Plus Preferences** in Spotlight (or the gear at the foot of the panel) opens the preferences,
+with the five pages in a sidebar: **General**, **Calculation**, **Cards**, **Constants** and **Clipboard**. Under
+each setting there is what it does, and a card at the top of the page shows the examples for the one the pointer is
+on, or that was last changed, with what it gives now: turning one off shows its card going ("No card"). A
+trackpad with haptics gives a tap for each switch or choice, and a firmer one for a change of page. The page last
 looked at is the one it opens on.
 
-- **Answers**: angles in radians or degrees; how many significant figures a decimal is given to, from three to
+- **General**: opening at login, the note shown when it is opened, the log (and a button to show it in Finder),
+  resetting every setting, and a button to quit.
+- **Calculation**: angles in radians or degrees; how many significant figures a decimal is given to, from three to
   ten; whether an answer is exact where it can be (5/2, √5, π/6) or always a decimal; and whether a sum is
   answered as a decimal first (`10/4` gives 2.5, with 5/2 beneath: the default) or as a fraction first.
 - **Cards**: what brings up a card: arithmetic with no equals sign, a number by itself, a path to a file, units
   and number bases (and whether a base is marked 0x, 0b, 0o), inequalities, algebra by name, matrices and vectors.
 - **Constants**: g, G and c each on or off, and their values as a data booklet rounds them (9.8, 6.67×10⁻¹¹,
   3.00×10⁸) or as measured (9.80665, 6.6743×10⁻¹¹, 299 792 458).
-- **Copying**: whether the copy button gives a decimal or the answer as shown, and whether Return copies while
+- **Clipboard**: whether the copy button gives a decimal or the answer as shown, and whether Return copies while
   the pointer is on the card.
-- **General**: opening at login, the note shown when it is opened, the log (and a button to show it in Finder),
-  resetting every setting, and a button to quit.
 
 ## How it reads Spotlight
 

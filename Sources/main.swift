@@ -81,6 +81,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             guard Prefs.returnCopies, detail.isOpen || panel.frame.contains(NSEvent.mouseLocation) else { return false }
             return Copying.shared.copy()
         }
+        // Rates come in after the card was made from the last had, or the connection is found
+        // lost: the card is made again, if it is money that is showing.
+        NotificationCenter.default.addObserver(forName: Rates.changed, object: nil, queue: .main) { [weak self] _ in
+            guard let self, panel.isVisible, !detail.isOpen, Currency.conversion(text) != nil else { return }
+            _ = present()
+        }
         watcher.start()
     }
 
