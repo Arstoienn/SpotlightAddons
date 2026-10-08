@@ -158,10 +158,10 @@ private func frame(_ e: AXUIElement) -> CGRect {
     return CGRect(origin: origin, size: size)
 }
 
-// What the card did and why, for finding out when it goes missing: ~/Library/Logs/SpotlightPlus.log.
+// What the card did and why, for finding out when it goes missing: ~/Library/Logs/SpotlightAddons.log.
 // Never what was typed, only how long it was.
 enum Log {
-    private static let url = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Library/Logs/SpotlightPlus.log")
+    private static let url = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Library/Logs/SpotlightAddons.log")
     private static let stamp: DateFormatter = {
         let f = DateFormatter()
         f.dateFormat = "HH:mm:ss.SSS"

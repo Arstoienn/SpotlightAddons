@@ -1,4 +1,4 @@
-# Spotlight Plus
+# Spotlight Add-ons
 
 Type an equation into Spotlight and the answer appears on a glass card just above it, as you type,
 the way Spotlight's own calculator answers 2+2. Rest the pointer on the card and it grows into a
@@ -6,8 +6,8 @@ panel with the working, every solution and a graph; move the pointer off and it 
 
 Type `clipboard` or `history`, choose Clipboard History in Spotlight's list and press Return, and
 Spotlight comes back open on its clipboard history, the view that ⌘Space and then ⌘4 gives.
-Clipboard History is an entry Spotlight Plus puts in Spotlight's list itself, through Core
-Spotlight; there is no second app. Spotlight Plus Preferences is another, and opens the preferences.
+Clipboard History is an entry Spotlight Add-ons puts in Spotlight's list itself, through Core
+Spotlight; there is no second app. Spotlight Add-ons Preferences is another, and opens the preferences.
 
 ## What it does
 
@@ -252,7 +252,7 @@ keyboard, so typing carries on going to Spotlight.
 
 ## Preferences
 
-Choosing **Spotlight Plus Preferences** in Spotlight (or the gear at the foot of the panel) opens the preferences,
+Choosing **Spotlight Add-ons Preferences** in Spotlight (or the gear at the foot of the panel) opens the preferences,
 with the five pages in a sidebar: **General**, **Calculation**, **Cards**, **Constants** and **Clipboard**. Under
 each setting there is what it does, and a card at the top of the page shows the examples for the one the pointer is
 on, or that was last changed, with what it gives now: turning one off shows its card going ("No card"). A
@@ -273,7 +273,7 @@ looked at is the one it opens on.
 
 ## How it reads Spotlight
 
-There is no public way to give Spotlight an answer that changes with each key. Spotlight Plus runs
+There is no public way to give Spotlight an answer that changes with each key. Spotlight Add-ons runs
 in the background and reads Spotlight's search field through Accessibility, so it needs that
 permission: System Settings ›
 Privacy & Security › Accessibility. It never types into Spotlight or changes what is in it. The

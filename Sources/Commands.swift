@@ -4,13 +4,13 @@ import UniformTypeIdentifiers
 
 // The app's own entries in Spotlight's list. Core Spotlight lets an app put its things there;
 // these are not documents but things to do. One chosen comes back to the app as an activity.
-// (Spotlight Plus itself is in the list too, as any app is: choosing that only starts it.)
+// (Spotlight Add-ons itself is in the list too, as any app is: choosing that only starts it.)
 enum Entry: String, CaseIterable {
     case clipboardHistory = "clipboard-history"
     case settings = "settings"
 
-    private var title: String { self == .settings ? "Spotlight Plus Preferences" : "Clipboard History" }
-    private var summary: String { self == .settings ? "Change how Spotlight Plus answers" : "Open Spotlight's clipboard history" }
+    private var title: String { self == .settings ? "Spotlight Add-ons Preferences" : "Clipboard History" }
+    private var summary: String { self == .settings ? "Change how Spotlight Add-ons answers" : "Open Spotlight's clipboard history" }
     private var symbol: String { self == .settings ? "gearshape" : "clipboard" }
     private var words: [String] {
         self == .settings ? ["preferences", "settings", "spotlight plus", "plus"] : ["clipboard", "history", "pasteboard", "clip"]
@@ -39,7 +39,7 @@ enum Entry: String, CaseIterable {
         }
         CSSearchableIndex.default().indexSearchableItems(items) { error in
             Log.note(error.map { "the entries could not be put in Spotlight's list: \($0.localizedDescription)" }
-                          ?? "Clipboard History and Spotlight Plus Preferences are in Spotlight's list")
+                          ?? "Clipboard History and Spotlight Add-ons Preferences are in Spotlight's list")
         }
     }
 
@@ -47,7 +47,7 @@ enum Entry: String, CaseIterable {
     static func forget() -> Never {
         let done = DispatchSemaphore(value: 0)
         CSSearchableIndex.default().deleteAllSearchableItems { error in
-            print(error.map { "They could not be taken out: \($0.localizedDescription)" } ?? "Spotlight Plus's entries are out of Spotlight's list.")
+            print(error.map { "They could not be taken out: \($0.localizedDescription)" } ?? "Spotlight Add-ons' entries are out of Spotlight's list.")
             done.signal()
         }
         done.wait()

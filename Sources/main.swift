@@ -1,7 +1,7 @@
 import AppKit
 import ApplicationServices
 
-// Spotlight Plus: type an equation into Spotlight, like "2n^2=10", and the answer appears on a
+// Spotlight Add-ons: type an equation into Spotlight, like "2n^2=10", and the answer appears on a
 // card above it as you type, the way Spotlight's own calculator answers "2+2". It runs in the
 // background with no window or Dock icon, and reads Spotlight's search field through
 // Accessibility.
@@ -31,7 +31,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     var ansNow: [Double] = (UserDefaults.standard.array(forKey: "answers") as? [Double])
         ?? (UserDefaults.standard.object(forKey: "ans") as? Double).map { [$0] } ?? []   // "ans" is where the one answer was kept before there could be several
 
-    // Opened while already running, which is what choosing Spotlight Plus in Spotlight does:
+    // Opened while already running, which is what choosing Spotlight Add-ons in Spotlight does:
     // it is running, and there is nothing more to do. The settings have an entry of their own.
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows: Bool) -> Bool {
         welcome.show(AXIsProcessTrusted() ? .running : .waitingForPermission)
@@ -234,7 +234,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 }
 
 // Its entries taken out of Spotlight's list again, for when the app is to be removed:
-//     "/Applications/Spotlight Plus.app/Contents/MacOS/SpotlightPlus" --forget-entries
+//     "/Applications/Spotlight Add-ons.app/Contents/MacOS/SpotlightAddons" --forget-entries
 if CommandLine.arguments.contains("--forget-entries") { Entry.forget() }
 
 Prefs.bringOver()

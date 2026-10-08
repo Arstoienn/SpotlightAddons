@@ -25,7 +25,7 @@ enum Rates {
     }
 
     // Said when new rates have been had, or the connection has been found to be lost.
-    static let changed = Notification.Name("SpotlightPlusRatesChanged")
+    static let changed = Notification.Name("SpotlightAddonsRatesChanged")
 
     private static var saved: Saved? = {
         guard let data = UserDefaults.standard.data(forKey: "rates") else { return nil }
