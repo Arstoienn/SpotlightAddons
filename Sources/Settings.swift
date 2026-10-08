@@ -5,7 +5,7 @@ import SwiftUI
 // The settings window: the pages in a sidebar of glass on the left, as in System Settings, and on
 // the right the page, under a card that is the real thing in small. The card answers the setting
 // the pointer is on or that was last changed, so that what a switch does is seen as it is turned.
-// It is opened by Spotlight Plus Preferences, the app's entry for it in Spotlight's list, or by the
+// It is opened by Spotlight Add-ons Preferences, the app's entry for it in Spotlight's list, or by the
 // gear at the foot of the panel. Each setting is kept in the defaults under the name the solver
 // reads it by (Options), or the app (Prefs).
 final class SettingsWindow {
@@ -15,7 +15,7 @@ final class SettingsWindow {
         if window == nil {
             let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 780, height: 560),
                                   styleMask: [.titled, .closable, .fullSizeContentView], backing: .buffered, defer: false)
-            window.title = "Spotlight Plus Preferences"
+            window.title = "Spotlight Add-ons Preferences"
             window.isReleasedWhenClosed = false
             window.contentView = NSHostingView(rootView: SettingsView())
             window.center()
@@ -125,7 +125,7 @@ struct SettingsView: View {
     }
 }
 
-// The card: what is typed, and what Spotlight Plus puts above Spotlight for it, with the settings
+// The card: what is typed, and what Spotlight Add-ons puts above Spotlight for it, with the settings
 // as they stand. It is made again when any of them changes, so that turning one off is seen to take
 // the card away.
 private struct LiveCard: View {
@@ -174,13 +174,16 @@ enum Prefs {
     static var log: Bool { flag("log", false) }
     static var welcome: Bool { flag("welcome", true) }
 
-    // The app was com.arstoienn.spotlight-solve before it was Spotlight Plus. What was chosen
-    // and remembered under that name is brought over, the once.
+    // The app was Spotlight Solve (com.arstoienn.spotlight-solve) and then Spotlight Plus
+    // (com.arstoienn.spotlight-plus) before it was Spotlight Add-ons. What was chosen and
+    // remembered under those names is brought over, the once, the later name's first.
     static func bringOver() {
-        let before = "com.arstoienn.spotlight-solve", defaults = UserDefaults.standard
-        guard Bundle.main.bundleIdentifier != before, defaults.object(forKey: "broughtOver") == nil else { return }
-        for (key, value) in defaults.persistentDomain(forName: before) ?? [:] where defaults.object(forKey: key) == nil {
-            defaults.set(value, forKey: key)
+        let before = ["com.arstoienn.spotlight-plus", "com.arstoienn.spotlight-solve"], defaults = UserDefaults.standard
+        guard defaults.object(forKey: "broughtOver") == nil else { return }
+        for id in before where id != Bundle.main.bundleIdentifier {
+            for (key, value) in defaults.persistentDomain(forName: id) ?? [:] where defaults.object(forKey: key) == nil {
+                defaults.set(value, forKey: key)
+            }
         }
         defaults.set(true, forKey: "broughtOver")
     }
@@ -389,26 +392,26 @@ struct GeneralSettings: View {
                             atLogin = SMAppService.mainApp.status == .enabled
                         }
                     }
-                note(loginProblem ?? "Without this, Spotlight Plus has to be opened again after the Mac is restarted.")
+                note(loginProblem ?? "Without this, Spotlight Add-ons has to be opened again after the Mac is restarted.")
 
                 Toggle("Show a note when it is opened", isOn: $welcome)
                     .feel(welcome)
-                note("A moment's note at the top of the screen that Spotlight Plus is running, since it has no window. It says so too when the permission it needs has not been given.")
+                note("A moment's note at the top of the screen that Spotlight Add-ons is running, since it has no window. It says so too when the permission it needs has not been given.")
             }
             Section("Troubleshooting") {
                 Toggle("Keep a log", isOn: $log)
                     .feel(log)
-                note("When the card came and went, and why, in ~/Library/Logs/SpotlightPlus.log: for finding out why a card went missing. It has how many characters were typed and never what they were.")
+                note("When the card came and went, and why, in ~/Library/Logs/SpotlightAddons.log: for finding out why a card went missing. It has how many characters were typed and never what they were.")
                 Button("Show the log in Finder") {
-                    NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: NSHomeDirectory() + "/Library/Logs/SpotlightPlus.log")])
+                    NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: NSHomeDirectory() + "/Library/Logs/SpotlightAddons.log")])
                 }
-                .disabled(!FileManager.default.fileExists(atPath: NSHomeDirectory() + "/Library/Logs/SpotlightPlus.log"))
+                .disabled(!FileManager.default.fileExists(atPath: NSHomeDirectory() + "/Library/Logs/SpotlightAddons.log"))
             }
-            Section("Spotlight Plus \(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "")") {
+            Section("Spotlight Add-ons \(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "")") {
                 HStack {
                     Button("Reset every setting…") { resetting = true }
                     Spacer()
-                    Button("Quit Spotlight Plus") { NSApp.terminate(nil) }
+                    Button("Quit Spotlight Add-ons") { NSApp.terminate(nil) }
                 }
             }
         }
@@ -417,7 +420,7 @@ struct GeneralSettings: View {
             Button("Reset", role: .destructive) { for key in defaultSettings.keys { UserDefaults.standard.removeObject(forKey: key) } }
             Button("Cancel", role: .cancel) {}
         } message: {
-            Text("The choices on every page go back to what they were when Spotlight Plus was first opened. Nothing else is touched.")
+            Text("The choices on every page go back to what they were when Spotlight Add-ons was first opened. Nothing else is touched.")
         }
     }
 }

@@ -1,6 +1,6 @@
 import AppKit
 
-// Draws Spotlight Plus's icon, a magnifying glass with a plus in it, black on white, into
+// Draws Spotlight Add-ons's icon, a magnifying glass with a plus in it, black on white, into
 // AppIcon.icns beside this file:
 //     swift icon.swift
 // The result is kept in the repository, so this is only run again to change the icon. The entry

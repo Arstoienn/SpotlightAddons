@@ -1,7 +1,7 @@
 import AppKit
 import SwiftUI
 
-// A note on the screen, for a moment, when the app is opened: Spotlight Plus has no window and
+// A note on the screen, for a moment, when the app is opened: Spotlight Add-ons has no window and
 // no Dock icon, so without it nothing says that opening it did anything. It says too when the
 // permission it needs has not been given, and stays until it has.
 final class Welcome {
@@ -72,7 +72,7 @@ struct WelcomeView: View {
                 .foregroundStyle(.secondary)
                 .frame(width: 36)
             VStack(alignment: .leading, spacing: 2) {
-                Text(model.state == .running ? "Spotlight Plus is running" : "Spotlight Plus needs permission")
+                Text(model.state == .running ? "Spotlight Add-ons is running" : "Spotlight Add-ons needs permission")
                     .font(.system(size: 15, weight: .semibold))
                 Text(model.state == .running
                      ? "Type into Spotlight, and the answer appears above it."
