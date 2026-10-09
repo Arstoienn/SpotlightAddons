@@ -305,6 +305,15 @@ struct Evaluation {
            let expr = try? Parser.constant(input, physical: !plain), isWork(expr) {
             return Evaluation(name: nil, expr: expr)
         }
+        // 50*c^2: a sum with nothing but constants of physics for letters, and an operator written out,
+        // is worked out with them. 5g, with none, is left alone, as it may be five grams.
+        if plain, parts.count == 1, input.contains(where: { "*/^×÷+".contains($0) }),
+           let tokens = try? Parser.tokenize(input),
+           case let letters = tokens.compactMap({ t -> String? in if case .letter(let l) = t { l } else { nil } }),
+           !letters.isEmpty, letters.allSatisfy({ ["c", "g", "G"].contains($0) }),
+           let expr = try? Parser.constant(input, physical: true), !expr.constants.isEmpty, isWork(expr) {
+            return Evaluation(name: nil, expr: expr)
+        }
         // A number written in scientific notation, 2.5e-3, is given as it is: the one number worth
         // a card by itself.
         if plain, parts.count == 1, input.range(of: "^\\s*[0-9.]+[eE][-+]?[0-9]+\\s*$", options: .regularExpression) != nil,
@@ -457,11 +466,24 @@ extension Prose {
     // What people type for arithmetic, said the way the parser reads it: 1,000 + 250, 2**8, 3 x 4,
     // 0xFF, log2(8), and =2+2 or 2+2= as a calculator would show it. Left alone where it means
     // something else: x+y=3, x-y=1 has a comma, and x=? is a question.
+    // e = mc^2, typed small: e is the energy there, as it is on paper, and no Euler's number. It is
+    // so only where what it is equal to has a c in it, the speed of light, so that e = 2^x is
+    // still 2.718 = 2^x, and e = 2g is still that too.
+    private static func energy(_ s: String) -> String {
+        guard let m = s.range(of: "^\\s*e\\s*=(?!=)", options: .regularExpression) else { return s }
+        let rest = String(s[m.upperBound...])
+        let words = "(?i)arcsin|arccos|arctan|asin|acos|atan|sinh|cosh|tanh|sin|cos|tan|sec|csc|cot|log|ln|exp|sqrt|cbrt|abs|floor|ceil|round|min|max|gcd|lcm|mod|root|fact|deg|rad|pi|ans|clip"
+        let letters = rest.replacingOccurrences(of: words, with: "", options: .regularExpression)
+        guard letters.range(of: "c", options: .regularExpression) != nil else { return s }
+        return "E =" + rest
+    }
+
     static func tidy(_ input: String) -> String {
         let input = halfwidth(input)
         if input.contains("\\") { return input }
         var s = input
         s = balanced(s)
+        s = energy(s)
         // "solve 2x+3=7", "find x: 2x=6", "2x+3=7 solve for x", "what is 15% of 80".
         s = s.replacingOccurrences(of: "^\\s*(?:solve|find)\\s+(?:for\\s+)?([A-Za-z])\\s*[:,]\\s*(.+=.+)$", with: "$2, $1=?", options: [.regularExpression, .caseInsensitive])
         s = s.replacingOccurrences(of: "^\\s*(?:please\\s+)?(?:solve|find|calculate|calc|compute|evaluate|work\\s+out|what\\s+is|what's|whats)\\s*[:,]?\\s+(?=\\S)", with: "", options: [.regularExpression, .caseInsensitive])
