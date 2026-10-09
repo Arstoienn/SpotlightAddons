@@ -11,7 +11,9 @@ import SwiftUI
 final class SettingsWindow {
     private var window: NSWindow?
 
-    func show() {
+    // `status` opens it on the page that says how things stand, as opening the app itself does.
+    func show(status: Bool = false) {
+        if status { UserDefaults.standard.set("status", forKey: "settingsPage") }
         if window == nil {
             let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 780, height: 560),
                                   styleMask: [.titled, .closable, .fullSizeContentView], backing: .buffered, defer: false)
@@ -74,6 +76,7 @@ private struct SettingsPage: Identifiable {
 
 struct SettingsView: View {
     private static let pages = [
+        SettingsPage(id: "status", title: "Status", symbol: "checkmark.seal", examples: []),
         SettingsPage(id: "general", title: "General", symbol: "gearshape", examples: []),
         SettingsPage(id: "answers", title: "Calculation", symbol: "equal.square", examples: ["sin(x)=0.5", "1/3+0.5*sqrt(2)", "10/4"]),
         SettingsPage(id: "cards", title: "Cards", symbol: "rectangle.stack", examples: ["12*3+4", "5 km to miles", "x^2>4"]),
@@ -81,7 +84,7 @@ struct SettingsView: View {
         SettingsPage(id: "copying", title: "Clipboard", symbol: "doc.on.clipboard", examples: ["10/4"]),
     ]
     // The page last looked at, kept for the next time.
-    @AppStorage("settingsPage") private var page = "general"
+    @AppStorage("settingsPage") private var page = "status"
     @State private var preview = CardPreview()
 
     var body: some View {
@@ -103,11 +106,12 @@ struct SettingsView: View {
                 }
                 Group {
                     switch page {
+                    case "general": GeneralSettings()
                     case "cards": CardsSettings()
                     case "constants": ConstantsSettings()
                     case "copying": CopyingSettings()
-                    case "general": GeneralSettings()
-                    default: AnswersSettings()
+                    case "answers": AnswersSettings()
+                    default: StatusSettings()
                     }
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -214,6 +218,60 @@ private struct CardToggle: View {
             note(detail)
         }
         .padding(.vertical, 2)
+    }
+}
+
+// How things stand now: whether it can read Spotlight, whether it opens at login, and where the
+// rates of money, coins and metals are. It is made again every two seconds, so that granting the
+// permission in System Settings is seen to take.
+struct StatusSettings: View {
+    var body: some View {
+        TimelineView(.periodic(from: .now, by: 2)) { _ in
+            Form {
+                Section("Spotlight Add-ons \(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "")") {
+                    let allowed = AXIsProcessTrusted()
+                    row(allowed ? .good : .bad, "Reading Spotlight",
+                        allowed ? "Allowed: the card comes up as it is typed." : "Not allowed: without Accessibility, nothing can be read of what is typed.")
+                    if !allowed {
+                        Button("Open Accessibility in System Settings") {
+                            NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")!)
+                        }
+                    }
+                    let login = SMAppService.mainApp.status == .enabled
+                    row(login ? .good : .neutral, "Open at login", login ? "On: it is running after the Mac is restarted." : "Off: it has to be opened again after the Mac is restarted.")
+                }
+                Section("Rates") {
+                    ForEach(Rates.Group.allCases, id: \.self) { group in
+                        let state = Rates.state(group)
+                        let when = state.recorded.map(Currency.stamp)
+                        row(state.offline ? .bad : state.recorded == nil ? .neutral : .good,
+                            group == .fiat ? "Currencies" : group == .crypto ? "Coins" : "Metals",
+                            state.offline ? (when.map { "No connection: the rates of \($0) are used." } ?? "No connection, and none saved.")
+                                          : (when.map { "Live. Recorded \($0), from \(group.source)." } ?? "Not fetched yet: they are asked for when money is typed."))
+                    }
+                }
+            }
+            .formStyle(.grouped)
+        }
+        .onAppear { Rates.refresh() }
+    }
+
+    private enum Mark { case good, bad, neutral }
+
+    private func row(_ mark: Mark, _ title: String, _ detail: String) -> some View {
+        HStack(alignment: .top, spacing: 10) {
+            Image(systemName: mark == .good ? "checkmark.circle.fill" : mark == .bad ? "exclamationmark.triangle.fill" : "circle.dashed")
+                .foregroundStyle(mark == .good ? Color.green : mark == .bad ? Color.orange : Color.secondary)
+                .font(.system(size: 16))
+                .frame(width: 20)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                Text(detail).font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(.vertical, 2)
+        .accessibilityElement(children: .combine)
     }
 }
 

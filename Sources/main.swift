@@ -32,9 +32,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         ?? (UserDefaults.standard.object(forKey: "ans") as? Double).map { [$0] } ?? []   // "ans" is where the one answer was kept before there could be several
 
     // Opened while already running, which is what choosing Spotlight Add-ons in Spotlight does:
-    // it is running, and there is nothing more to do. The settings have an entry of their own.
+    // the preferences come up, on the page that says how things stand, as an app with no Dock icon
+    // would otherwise seem not to have opened at all.
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows: Bool) -> Bool {
-        welcome.show(AXIsProcessTrusted() ? .running : .waitingForPermission)
+        settings.show(status: true)
         return false
     }
 
@@ -52,6 +53,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         SettingsButton.open = { [weak self] in self?.settings.show() }
+        // Opened by hand, it shows its preferences; opened by the login, it keeps quiet but for its note.
+        let launch = NSAppleEventManager.shared().currentAppleEvent?.paramDescriptor(forKeyword: 0x70726474)   // 'prdt'
+        let atLogin = launch?.enumCodeValue == 0x6C676974                                                   // 'lgit'
+        if !atLogin { DispatchQueue.main.async { [weak self] in self?.settings.show(status: true) } }
         Entry.index()
         let prompt = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true] as CFDictionary
         if AXIsProcessTrustedWithOptions(prompt) {

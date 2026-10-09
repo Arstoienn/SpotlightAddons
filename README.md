@@ -257,12 +257,16 @@ keyboard, so typing carries on going to Spotlight.
 ## Preferences
 
 Choosing **Spotlight Add-ons Preferences** in Spotlight (or the gear at the foot of the panel) opens the preferences,
-with the five pages in a sidebar: **General**, **Calculation**, **Cards**, **Constants** and **Clipboard**. Under
+with the pages in a sidebar: **Status**, **General**, **Calculation**, **Cards**, **Constants** and **Clipboard**. Under
 each setting there is what it does, and a card at the top of the page shows the examples for the one the pointer is
-on, or that was last changed, with what it gives now: turning one off shows its card going ("No card"). A
+on, or that was last changed, with what it gives now: turning one off shows its card going ("No card"). Opening the app itself, from Spotlight or Finder, opens the preferences on the Status page (it has no Dock icon, and would
+otherwise seem not to have opened); opened by the login it keeps quiet. A
 trackpad with haptics gives a tap for each switch or choice, and a firmer one for a change of page. The page last
 looked at is the one it opens on.
 
+- **Status**: how things stand now, updated as you look: whether it may read Spotlight (with a button to the
+  Accessibility pane of System Settings when it may not), whether it opens at login, and for money, coins and metals
+  whether their rates are live, and when they were recorded.
 - **General**: opening at login, the note shown when it is opened, the log (and a button to show it in Finder),
   resetting every setting, and a button to quit.
 - **Calculation**: angles in radians or degrees; how many significant figures a decimal is given to, from three to
