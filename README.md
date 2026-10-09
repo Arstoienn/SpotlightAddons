@@ -125,11 +125,15 @@ XPD) is priced by the troy ounce, of 31.1035 g; the coins are the thirty or so b
 SOL, ADA, DOGE, DOT, LTC, and so on).
 
 The rates are fetched as the card is made, in the background, each against the US dollar, and the card is made again
-when they arrive: currencies from open.er-api.com (they are those of the day, as that is the finest it gives), coins from
+when they arrive: currencies from open.er-api.com (they are those of the day, as that is the finest it gives, and are asked for no oftener than once an hour, which is what the source asks), coins from
 api.coinbase.com and metals from api.gold-api.com (as they trade). The last rates had are kept, and with no connection they
 are used, and the card then says when they were recorded: `1 BTC = 82645.1 USD · offline, rates of 8 Oct 2026, 14:01`.
 With a connection it says nothing of the time. With neither a connection nor rates saved, there is no value to give, and
 the card says so.
+
+Currency rates are [Rates By Exchange Rate API](https://www.exchangerate-api.com), used under its terms for the open access
+endpoint, which require this credit; the card's panel says so too. Coins are from Coinbase's public exchange-rates endpoint and metals from
+gold-api.com. Nothing is sent to them but the request: no part of what is typed.
 
 ### Algebra, asked for by name
 

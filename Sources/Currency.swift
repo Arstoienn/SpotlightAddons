@@ -32,7 +32,7 @@ enum Rates {
         return try? JSONDecoder().decode(Saved.self, from: data)
     }()
     private static var failed: Set<Group> = []
-    private static var lastTry = Date.distantPast
+    private static var lastTry: [Group: Date] = [:]
     private static var fetching = false
     // Set by the tests, which are to ask nothing of the network.
     static var fixed = false
@@ -69,11 +69,25 @@ enum Rates {
     }
     static func installNothing(offline: Bool) { fixed = true; saved = nil; failed = offline ? Set(Group.allCases) : [] }
 
-    // Asks for fresh rates, if they have not been asked for lately. Never waits for them.
+    // How long before a group is asked for again. The currencies come from a source that has them
+    // once a day and asks to be asked no oftener than once an hour (a request too soon is refused for
+    // twenty minutes); coins and metals move all the time and their sources do not limit it. After a
+    // failure the wait is shorter, but not for the currencies' source, which would only refuse again.
+    private static func wait(_ g: Group) -> TimeInterval {
+        let failedNow = failed.contains(g)
+        switch g {
+        case .fiat: return failedNow ? (saved?.recorded[g.rawValue] == nil ? 30 : 300) : 3600
+        case .crypto, .metals: return failedNow ? 15 : 30
+        }
+    }
+
+    // Asks for fresh rates, those of each group that have not been asked for lately. Never waits for them.
     static func refresh() {
-        guard !fixed, !fetching, Date().timeIntervalSince(lastTry) > (failed.isEmpty ? 60 : 15) else { return }
+        let now = Date()
+        let due = Group.allCases.filter { now.timeIntervalSince(lastTry[$0] ?? .distantPast) > wait($0) }
+        guard !fixed, !fetching, !due.isEmpty else { return }
         fetching = true
-        lastTry = Date()
+        for g in due { lastTry[g] = now }
         let lock = NSLock(), done = DispatchGroup()
         var got: [Group: [String: Double]] = [:]
 
@@ -89,19 +103,19 @@ enum Rates {
                 lock.lock(); got[group, default: [:]].merge(rates) { $1 }; lock.unlock()
             }.resume()
         }
-        ask("https://open.er-api.com/v6/latest/USD", { object in
+        if due.contains(.fiat) { ask("https://open.er-api.com/v6/latest/USD", { object in
             guard let o = object as? [String: Any], o["result"] as? String == "success", let r = o["rates"] as? [String: Double], r["USD"] == 1 else { return nil }
             return r
-        }, group: .fiat)
-        ask("https://api.coinbase.com/v2/exchange-rates?currency=USD", { object in
+        }, group: .fiat) }
+        if due.contains(.crypto) { ask("https://api.coinbase.com/v2/exchange-rates?currency=USD", { object in
             guard let o = (object as? [String: Any])?["data"] as? [String: Any], let r = o["rates"] as? [String: String] else { return nil }
             let found = r.compactMap { key, value -> (String, Double)? in
                 guard Currency.coins.contains(key), let v = Double(value), v > 0 else { return nil }
                 return (key, v)
             }
             return found.isEmpty ? nil : Dictionary(uniqueKeysWithValues: found)
-        }, group: .crypto)
-        for metal in Currency.metals.sorted() {
+        }, group: .crypto) }
+        for metal in Currency.metals.sorted() where due.contains(.metals) {
             ask("https://api.gold-api.com/price/\(metal)", { object in
                 guard let o = object as? [String: Any], let price = o["price"] as? Double, price > 0 else { return nil }
                 return [metal: 1 / price]
@@ -111,7 +125,7 @@ enum Rates {
             fetching = false
             let before = (failed, saved?.recorded)
             var next = saved ?? Saved(recorded: [:], perDollar: [:])
-            for g in Group.allCases {
+            for g in due {
                 // Metals are had only if every one of them has come.
                 let complete = g == .metals ? (got[g]?.count == Currency.metals.count) : got[g] != nil
                 if complete, let rates = got[g] {
@@ -389,7 +403,7 @@ enum Currency {
         let offline = Rates.isOffline(involved)
         let since = Rates.recorded(involved).map(stamp)
         let offlineNote = offline ? since.map { "No connection: the rates recorded on \($0) are used." } : nil
-        let sources = Rates.sources(involved).joined(separator: " and ")
+        let sources = Rates.sources(involved).map { $0 == Rates.Group.fiat.source ? "\($0) (Rates By Exchange Rate API, exchangerate-api.com)" : $0 }.joined(separator: " and ")
         let perOunce = Currency.metals.contains(from) || Currency.metals.contains(to)
             ? " A metal is priced by the troy ounce, of 31.1035 g." : ""
         var d = Details(name: "", equation: t("\(money(amount, from)) \(from) → \(toName)"), steps: [], solutions: [t(shown)], note: offlineNote, f: { _ in .nan }, roots: [])
