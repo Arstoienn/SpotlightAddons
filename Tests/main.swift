@@ -880,6 +880,18 @@ expect("2/3*3", "= 2")
 expect("x=10/4", "x = 2.5", "= 5/2")
 UserDefaults.standard.set(false, forKey: "decimalFirst")
 
+// A constant of physics alone in a sum: 50*c^2 is worked out, and e = mc^2 read as the energy.
+expect("50*c^2", "= 4.5×10¹⁸", "Taking c = 3.00×10⁸ m s⁻¹")
+expect("c^2*50", "= 4.5×10¹⁸", "Taking c = 3.00×10⁸ m s⁻¹")
+expect("2*c", "= 6×10⁸", "Taking c = 3.00×10⁸ m s⁻¹")
+expect("50*g", "= 490", "Taking g = 9.8 m s⁻²")
+expect("e=50*c^2", "E = 4.5×10¹⁸", "Taking c = 3.00×10⁸ m s⁻¹")
+expect("e=mc^2, m=50", "E = 4.5×10¹⁸", "Taking m = 50, c = 3.00×10⁸ m s⁻¹")
+expect("E=mc^2, m=50", "E = 4.5×10¹⁸", "Taking m = 50, c = 3.00×10⁸ m s⁻¹")
+expect("5g", nil)
+expect("c", nil)
+expect("m*c^2", nil)
+
 // Money: rates against the US dollar, fixed here; the card is answered from them. Case means
 // nothing in a currency, and the time the rates were recorded is said only with no connection.
 do {
