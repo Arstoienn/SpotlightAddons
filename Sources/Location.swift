@@ -1,6 +1,6 @@
 import Foundation
 
-// A path to a file or folder, typed in whole: /Users/shane/Code/App/build/app.jar. Spotlight's own
+// A path to a file or folder, typed in whole: /Users/me/Code/App/build/app.jar. Spotlight's own
 // search does little with an absolute path, so the card names what is there, and shows it in
 // Finder when the card is clicked, or Return is pressed with the pointer on it.
 struct Location {
