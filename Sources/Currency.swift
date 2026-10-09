@@ -54,6 +54,10 @@ enum Rates {
     static func recorded(_ codes: [String]) -> Date? {
         codes.compactMap { saved?.recorded[group(of: $0).rawValue] }.min().map { Date(timeIntervalSince1970: $0) }
     }
+    // For the status page: when this group was last had, and whether the last try failed.
+    static func state(_ g: Group) -> (recorded: Date?, offline: Bool) {
+        (saved?.recorded[g.rawValue].map { Date(timeIntervalSince1970: $0) }, failed.contains(g))
+    }
     static func sources(_ codes: [String]) -> [String] {
         var out: [String] = []
         for code in codes { let s = group(of: code).source; if !out.contains(s) { out.append(s) } }
