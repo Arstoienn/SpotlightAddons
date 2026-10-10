@@ -21,6 +21,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     var lastMove = Date.distantPast
     var lastAlpha = 1.0
     var typed = 0   // counts changes of text, so that a second look started for an old one gives up
+    // Kept out of App Nap. An app in the background with no window on screen has its timers and
+    // animations slowed by macOS until they all but stop: the card was then put up but stayed
+    // invisible, its fade-in never run, until the preferences were brought to the front. Nothing
+    // runs while Spotlight is closed, so this costs nothing then, and the Mac still sleeps.
+    var awake: NSObjectProtocol?
 
     // ans. The answer showing becomes ans when it is done with: copied, cleared, or Spotlight
     // closed on it. Until something else is typed, that same text still reads ans as it was
@@ -75,6 +80,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func start() {
+        awake = ProcessInfo.processInfo.beginActivity(options: .userInitiatedAllowingIdleSystemSleep,
+                                                      reason: "Answering what is typed into Spotlight")
         watcher.onChange = { [weak self] text in self?.update(text) }
         panel.onHover = { [weak self] in self?.expand() }
         Copying.shared.text = { [weak self] in self.flatMap { Solver.copy($0.text) } }
