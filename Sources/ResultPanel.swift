@@ -6,7 +6,7 @@ import SwiftUI
 // going to Spotlight; resting the pointer on it opens the working.
 final class ResultPanel {
     var onHover: () -> Void = {}
-    private let panel: NSPanel
+    private var panel: NSPanel!
     private let face = NSHostingView(rootView: CardView(answer: Solution(exact: "", approx: nil)))
     private let height: CGFloat = 64
     private let gap: CGFloat = 8
@@ -14,8 +14,15 @@ final class ResultPanel {
     var frame: NSRect { panel.frame }
     var level: NSWindow.Level { panel.level }
 
-    init() {
-        panel = NSPanel(contentRect: .zero, styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: true)
+    init() { panel = makePanel() }
+
+    // A new window each time the card comes up. One kept from before can lose its place on every
+    // Space, as after the Mac has hibernated, and be left on a single desktop: there it is put up
+    // unseen whenever Spotlight is opened anywhere else, over an app in full screen above all, and
+    // neither ordering it in again nor setting its behaviour again brings it back. A new window
+    // takes a few milliseconds.
+    private func makePanel() -> NSPanel {
+        let panel = NSPanel(contentRect: .zero, styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: true)
         panel.level = NSWindow.Level(rawValue: Int(CGWindowLevelForKey(.popUpMenuWindow)))  // above Spotlight's
         panel.backgroundColor = .clear
         panel.isOpaque = false
@@ -28,20 +35,28 @@ final class ResultPanel {
 
         let content = ClickView()
         content.onEnter = { [weak self] in self?.onHover() }
+        panel.contentView = content
+        face.removeFromSuperview()
+        face.frame = content.bounds
         face.autoresizingMask = [.width, .height]
         content.addSubview(face)
-        panel.contentView = content
+        return panel
     }
 
     // window is Spotlight's panel, in points from the top left of the main display.
     func show(_ solution: Solution, window: CGRect) {
         face.rootView = CardView(answer: solution)
-        place(window)
-        if isVisible { panel.alphaValue = 1 }   // in case it was concealed under the detail panel
-        if !isVisible {
+        if isVisible {
+            place(window)
+            panel.alphaValue = 1   // in case it was concealed under the detail panel
+        } else {
+            panel.orderOut(nil)    // the last window, perhaps still fading out
+            panel = makePanel()
+            place(window)
             isVisible = true
             panel.alphaValue = 0
             panel.orderFrontRegardless()
+            let panel = panel!
             NSAnimationContext.runAnimationGroup { $0.duration = 0.12; panel.animator().alphaValue = 1 }
         }
     }
@@ -78,9 +93,9 @@ final class ResultPanel {
     func hide(fade: TimeInterval = 0.1) {
         guard isVisible else { return }
         isVisible = false
-        NSAnimationContext.runAnimationGroup({ $0.duration = fade; panel.animator().alphaValue = 0 }) { [weak self] in
-            if self?.isVisible == false { self?.panel.orderOut(nil) }
-        }
+        // This window, which the card coming up again before the fade is over will have replaced.
+        let panel = panel!
+        NSAnimationContext.runAnimationGroup({ $0.duration = fade; panel.animator().alphaValue = 0 }) { panel.orderOut(nil) }
     }
 }
 
