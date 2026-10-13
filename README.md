@@ -246,7 +246,7 @@ The top of the panel is the card itself, so opening it moves nothing. Below it:
   powers, each line straight on the glass as Spotlight's results are. The line under the pointer
   is lit, with the copy sign at its end: click it to copy it, as LaTeX or as it is shown (the
   Clipboard page says which; LaTeX unless changed), and right-click it for the other. The first line is what was typed, as
-  it was read, so `(20/3)` copies as `\frac{20}{3}`.
+  it was read, so `(20/3)` copies as `\left(\frac{20}{3}\right)`: brackets round a fraction or a sum are drawn tall, and copied with `\left` and `\right`.
 - **Copying the answer**: the button at the end of the card copies the answer as a number,
   2.5 for `10/4` and for `4x=10`. So does Return, while the pointer rests on the card or the
   panel; at any other time Return is Spotlight's.

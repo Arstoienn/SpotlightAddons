@@ -20,6 +20,7 @@ enum Typesetter {
         case .row(let parts): return row(parts.map { box($0, size) })
         case .fraction(let n, let d): return fraction(box(n, size * 0.88), box(d, size * 0.88), size)
         case .root(let x): return root(box(x, size), size)
+        case .group(let x): return group(box(x, size), size)
         case .power(let b, let e): return power(box(b, size), box(e, size * 0.64), size)
         case .bigOperator(let symbol, let lower, let upper):
             return bigOperator(symbol, box(lower, size * 0.62), box(upper, size * 0.62), size)
@@ -116,6 +117,33 @@ enum Typesetter {
             sign.draw(ctx, CGPoint(x: o.x + (column - sign.width) / 2, y: o.y + drop))
             upper.draw(ctx, CGPoint(x: o.x + (column - upper.width) / 2, y: o.y + top + gap + upper.descent))
             lower.draw(ctx, CGPoint(x: o.x + (column - lower.width) / 2, y: o.y + bottom - gap - lower.ascent))
+        }
+    }
+
+    // Round brackets: the font's own round a line of text, drawn curves as tall as what they hold
+    // round a fraction or a sum.
+    static func group(_ x: Box, _ size: CGFloat) -> Box {
+        guard x.ascent + x.descent > size * 1.1 else { return row([plain("(", size), x, plain(")", size)]) }
+        let rule = max(1, size * 0.055), reach = size * 0.2, side = size * 0.1
+        let ascent = x.ascent + size * 0.06, descent = x.descent + size * 0.06
+        let width = x.width + 2 * (reach + side)
+        return Box(width: width, ascent: ascent, descent: descent) { ctx, o in
+            let top = o.y + ascent, bottom = o.y - descent, height = top - bottom
+            ctx.saveGState()
+            ctx.setLineWidth(rule)
+            ctx.setLineCap(.round)
+            ctx.move(to: CGPoint(x: o.x + side + reach, y: top))
+            ctx.addCurve(to: CGPoint(x: o.x + side + reach, y: bottom),
+                         control1: CGPoint(x: o.x + side - reach * 0.3, y: top - height * 0.22),
+                         control2: CGPoint(x: o.x + side - reach * 0.3, y: bottom + height * 0.22))
+            let right = o.x + width - side - reach
+            ctx.move(to: CGPoint(x: right, y: top))
+            ctx.addCurve(to: CGPoint(x: right, y: bottom),
+                         control1: CGPoint(x: right + reach * 1.3, y: top - height * 0.22),
+                         control2: CGPoint(x: right + reach * 1.3, y: bottom + height * 0.22))
+            ctx.strokePath()
+            ctx.restoreGState()
+            x.draw(ctx, CGPoint(x: o.x + side + reach + (width - 2 * (side + reach) - x.width) / 2, y: o.y))
         }
     }
 

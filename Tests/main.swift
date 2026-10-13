@@ -969,7 +969,7 @@ func expectLatex(_ input: String, _ equation: String, solutions: [String]? = nil
         print("FAIL latex \(input)\n  want \(equation) \(solutions ?? [])\n  got  \(d.equation.latex) \(got)")
     }
 }
-expectLatex("(20/3)", "\\frac{20}{3}", solutions: ["= \\frac{20}{3}", "\\approx 6.66667"])
+expectLatex("(20/3)", "\\left(\\frac{20}{3}\\right)", solutions: ["= \\frac{20}{3}", "\\approx 6.66667"])
 expectLatex("x^2-5x+6=0", "x^{2} - 5x + 6 = 0", solutions: ["x = 2", "x = 3"])
 expectLatex("sqrt(2)/2", "\\frac{\\sqrt{2}}{2}")
 expectLatex("sin(30°)", "\\sin(30^{\\circ})", solutions: ["= \\frac{1}{2}", "\\approx 0.5"])
