@@ -65,6 +65,13 @@ enum Bases {
         if base == 1 {
             d.steps.append(Step(label: "Writing one 1 for each unit", math: nil,
                                 note: "In base 1 there is a single digit, and a number is as many of it as it is large: \(abs(n)) is \(abs(n)) ones."))
+        } else if base != 10, let sum = operands(of: quantity) {
+            // 16 − 15 in binary: each number written in the base, and then the sum done in it.
+            func written(_ m: Int) -> String { (m < 0 ? "−" : "") + prefix + String(abs(m), radix: base).uppercased() }
+            for m in sum.a == sum.b ? [sum.a] : [sum.a, sum.b] {
+                d.steps.append(Step(label: "Writing \(m) in base \(base)", math: t("\(m) = \(written(m)) (base \(base))")))
+            }
+            d.steps.append(Step(label: "Working it out in base \(base)", math: t("\(written(sum.a)) \(sum.symbol) \(written(sum.b)) = \(shown) (base \(base))")))
         } else if base != 10 {
             // Divided by the base until nothing is left; the remainders, read upwards, are the digits.
             var rest = abs(n)
@@ -79,7 +86,7 @@ enum Bases {
             }
             d.steps.append(Step(label: "Reading the remainders", math: nil, note: "The remainders, from the last to the first, are the digits: \(digits)."))
         }
-        d.steps.append(Step(label: "Hence", math: t("\(n) = \(shown)\(spelled.isEmpty ? "" : " (\(spelled))")")))
+        d.steps.append(Step(label: "Hence", math: t("\(sign)\(abs(n)) = \(shown)\(spelled.isEmpty ? "" : " (\(spelled))")")))
         // The other bases beneath it, as a programmer would look for them.
         var others: [String] = []
         for (label, b) in [("decimal", 10), ("hexadecimal", 16), ("binary", 2), ("octal", 8)] where b != base {
@@ -89,6 +96,18 @@ enum Bases {
         let approx = others.prefix(3).joined(separator: " · ")
         d.solutions.append(t(others.joined(separator: "; ")))
         return Conversion(value: Double(n), text: shown, approx: approx, details: d)
+    }
+
+    // Two whole numbers with a sign between them: 16-15, 255 + 1, 12 * 12.
+    private static func operands(of quantity: String) -> (a: Int, b: Int, symbol: String)? {
+        let pattern = "^\\s*([0-9]{1,15})\\s*([-+−*×·/÷])\\s*([0-9]{1,15})\\s*$"
+        guard let r = try? NSRegularExpression(pattern: pattern),
+              let m = r.firstMatch(in: quantity, range: NSRange(quantity.startIndex..., in: quantity)),
+              let a = Range(m.range(at: 1), in: quantity).flatMap({ Int(quantity[$0]) }),
+              let sign = Range(m.range(at: 2), in: quantity).map({ String(quantity[$0]) }),
+              let b = Range(m.range(at: 3), in: quantity).flatMap({ Int(quantity[$0]) }) else { return nil }
+        let symbol = ["-": "−", "*": "×", "·": "×", "/": "÷"][sign] ?? sign
+        return (a, b, symbol)
     }
 
     // Four to a group in binary and hexadecimal, from the right: 1111 1111.

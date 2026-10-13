@@ -989,5 +989,16 @@ expectLatex("sin(30°)", "\\sin(30^{\\circ})")
 expectLatex("2x^2+3x-1=0", "2x^{2} + 3x - 1 = 0",
             solutions: ["x = \\frac{-3 - \\sqrt{17}}{4} \\approx -1.78078", "x = \\frac{-3 + \\sqrt{17}}{4} \\approx 0.280776"])
 
+// A sum in another base: each number written in it, then the sum done there.
+expectDetails("16-15 in binary", "16-15 in binary",
+              [("Writing 16 in base 2", "16 = 10000 (base 2)"), ("Writing 15 in base 2", "15 = 1111 (base 2)"),
+               ("Working it out in base 2", "10000 − 1111 = 1 (base 2)"), ("Hence", "1 = 1 (base 2)")], ["1", "decimal 1; hexadecimal 1; octal 1"])
+expectDetails("255+1 in hex", "255+1 in hex",
+              [("Writing 255 in base 16", "255 = FF (base 16)"), ("Writing 1 in base 16", "1 = 1 (base 16)"),
+               ("Working it out in base 16", "FF + 1 = 100 (base 16)"), ("Hence", "256 = 100 (base 16)")], ["100", "decimal 256; binary 1 0000 0000; octal 400"])
+expectDetails("12*12 in hex", "12*12 in hex",
+              [("Writing 12 in base 16", "12 = C (base 16)"), ("Working it out in base 16", "C × C = 90 (base 16)"), ("Hence", "144 = 90 (base 16)")], ["90", "decimal 144; binary 1001 0000; octal 220"])
+
 print(failures == 0 ? "all passed" : "\(failures) failed")
 exit(failures == 0 ? 0 : 1)
+
