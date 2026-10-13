@@ -349,15 +349,33 @@ struct DetailContent: View {
         .padding(.vertical, 10)
     }
 
-    // Maths can't be selected like text, so each line copies itself, as one line, from a menu.
+    // Maths can't be selected like text, so each line copies itself: a click gives its LaTeX,
+    // and its menu the same or one line of text.
     private func copyable(_ math: Math, size: CGFloat, copying whole: String? = nil) -> some View {
-        MathText(math: math, size: size)
-            .contextMenu {
-                Button("Copy") {
-                    NSPasteboard.general.clearContents()
-                    NSPasteboard.general.setString(whole ?? math.plain, forType: .string)
-                }
+        CopyableLine(math: math, size: size, whole: whole)
+    }
+}
+
+// A line of the panel, which says for a moment beside it that it was copied.
+private struct CopyableLine: View {
+    let math: Math
+    let size: CGFloat
+    let whole: String?
+    @State private var copied = false
+    @State private var generation = 0
+
+    var body: some View {
+        HStack(spacing: 8) {
+            MathText(math: math, size: size, copying: MathCopy(latex: whole == nil ? math.latex : nil, text: whole ?? math.plain) {
+                copied = true
+                generation += 1
+                let mine = generation
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.4) { if generation == mine { copied = false } }
+            })
+            if copied {
+                Text("Copied").font(.system(size: 12, weight: .medium)).foregroundStyle(.secondary)
             }
+        }
     }
 }
 

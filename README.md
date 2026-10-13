@@ -243,11 +243,13 @@ commands (`\,` `\;` `\quad`) ignored.
 The top of the panel is the card itself, so opening it moves nothing. Below it:
 
 - **Working**: the key steps, typeset in SF Pro: stacked fractions, roots under a bar, raised
-  powers. Right-click a line to copy it as text.
+  powers. Click a line to copy it, as LaTeX or as it is shown (the Clipboard page says which;
+  LaTeX unless changed), and right-click it for the other. The first line is what was typed, as
+  it was read, so `(20/3)` copies as `\frac{20}{3}`.
 - **Copying the answer**: the button at the end of the card copies the answer as a number,
   2.5 for `10/4` and for `4x=10`. So does Return, while the pointer rests on the card or the
   panel; at any other time Return is Spotlight's.
-- **Solutions**: exact and decimal.
+- **Solutions**: exact and decimal, each copied by a click, as the working is.
 - **Graph**: each side of an equation, or each equation of a system, as its own line, crossing at
   the solutions. Drag to move, scroll or pinch to zoom, double-click to reset.
 
@@ -276,8 +278,8 @@ looked at is the one it opens on.
   and number bases (and whether a base is marked 0x, 0b, 0o), inequalities, algebra by name, matrices and vectors.
 - **Constants**: g, G and c each on or off, and their values as a data booklet rounds them (9.8, 6.67×10⁻¹¹,
   3.00×10⁸) or as measured (9.80665, 6.6743×10⁻¹¹, 299 792 458).
-- **Clipboard**: whether the copy button gives a decimal or the answer as shown, and whether Return copies while
-  the pointer is on the card.
+- **Clipboard**: whether the copy button gives a decimal or the answer as shown, whether a line of the panel copies
+  as LaTeX or as it is shown, and whether Return copies while the pointer is on the card.
 
 ## How it reads Spotlight
 
