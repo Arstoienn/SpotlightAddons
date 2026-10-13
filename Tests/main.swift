@@ -982,6 +982,10 @@ expectLatex("theta/2=pi", "\\frac{\\theta}{2} = \\pi")
 expectLatex("e^(2x)=5", "e^{2x} = 5")
 expectLatex("lcm(4,6)", "\\operatorname{lcm}(4, 6)")
 expectLatex("x+y=3, x-y=1", "x + y = 3, \\quad x - y = 1")
+// Brackets round a fraction grow with it; those round a single line do not.
+expectLatex("x=(1/2)^2", "x = \\left(\\frac{1}{2}\\right)^{2}")
+expectLatex("((1/2)+1)*3", "\\left(\\frac{1}{2} + 1\\right) \\cdot 3")
+expectLatex("sin(30°)", "\\sin(30^{\\circ})")
 expectLatex("2x^2+3x-1=0", "2x^{2} + 3x - 1 = 0",
             solutions: ["x = \\frac{-3 - \\sqrt{17}}{4} \\approx -1.78078", "x = \\frac{-3 + \\sqrt{17}}{4} \\approx 0.280776"])
 

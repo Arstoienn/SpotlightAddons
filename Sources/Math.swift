@@ -43,7 +43,28 @@ indirect enum Math: Equatable {
         // A command needs a space before a letter (\pi r), but none before a bracket or a script.
         s = s.replacingOccurrences(of: "(\\\\[A-Za-z]+) (?=[)\\]},;!.'|^_])", with: "$1", options: .regularExpression)
         s = s.replacingOccurrences(of: "\\{ ", with: "{").replacingOccurrences(of: " \\}", with: "}")
-        return s.trimmingCharacters(in: .whitespaces)
+        return Math.sizedBrackets(s.trimmingCharacters(in: .whitespaces))
+    }
+
+    // Brackets round something tall (a fraction, a sum) grow with it: (\frac{1}{2})^{2} is
+    // \left(\frac{1}{2}\right)^{2}. Those round a single line stay as they are.
+    private static func sizedBrackets(_ s: String) -> String {
+        let chars = Array(s)
+        var open: [Int] = []
+        var grown: [Int: Bool] = [:]   // index of a bracket -> true for "(" and false for ")"
+        for (i, c) in chars.enumerated() {
+            if c == "(" { open.append(i) }
+            else if c == ")", let start = open.popLast() {
+                let inside = String(chars[(start + 1)..<i])
+                if ["\\frac", "\\sum", "\\prod"].contains(where: inside.contains) { grown[start] = true; grown[i] = false }
+            }
+        }
+        if grown.isEmpty { return s }
+        var out = ""
+        for (i, c) in chars.enumerated() {
+            if let opening = grown[i] { out += opening ? "\\left(" : "\\right)" } else { out.append(c) }
+        }
+        return out
     }
 
     private var latexParts: String {
