@@ -21,7 +21,8 @@ final class DetailPanel {
 
     // onCovered: the panel is on screen, drawn, over the card, which can now be put away. Until
     // then both are up, so there is never a frame with neither.
-    func show(_ answer: Solution, _ details: Details, from card: NSRect, level: NSWindow.Level,
+    // spotlightBottom is the bottom edge of Spotlight's panel, in screen coordinates, when it is known.
+    func show(_ answer: Solution, _ details: Details, from card: NSRect, spotlightBottom: CGFloat?, level: NSWindow.Level,
               onCovered: @escaping () -> Void, onCollapsed: @escaping () -> Void) {
         close(animated: false)
         self.onCollapsed = onCollapsed
@@ -30,7 +31,15 @@ final class DetailPanel {
         let measure = NSHostingView(rootView: DetailContent(answer: answer, d: details).frame(width: width))
         let screen = NSScreen.screens.first { $0.frame.intersects(card) } ?? NSScreen.main
         let room = card.maxY - (screen?.visibleFrame.minY ?? 0) - 24
-        let height = min(measure.fittingSize.height, room)
+        // At least down to Spotlight's bottom edge, so that none of its list shows from under the
+        // panel; a longer working goes on past it, as far as the screen allows. With the card
+        // below Spotlight there is nothing under the panel to cover.
+        let reach = spotlightBottom.map { card.maxY - $0 } ?? 0
+        let fitting = measure.fittingSize.height
+        let height = min(max(fitting, reach), room)
+        // Stretched to Spotlight's bottom edge, the panel lies on Spotlight edge for edge, and its
+        // shadow would fall on Spotlight's, darker where they meet and off at the corners.
+        let onSpotlight = reach > fitting && reach <= room
         let target = NSRect(x: card.minX, y: card.maxY - height, width: width, height: height)
 
         let panel = NSPanel(contentRect: target.insetBy(dx: -Chrome.margin, dy: -Chrome.margin),
@@ -40,7 +49,8 @@ final class DetailPanel {
         panel.isOpaque = false
         // The system's shadow, with the same fine dark edge as the card's; it is worked out from
         // what the window shows, so it is worked out again every frame while the glass moves.
-        panel.hasShadow = true
+        // Lying on Spotlight, Spotlight's shadow is the only one.
+        panel.hasShadow = !onSpotlight
         panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .ignoresCycle]
 
         let model = DetailModel(cardHeight: card.height)
@@ -122,6 +132,10 @@ final class DetailPanel {
 enum Chrome {
     static let margin: CGFloat = 0
     static let radius: CGFloat = 26
+    // Glass 64 points high or less is taken for a small control and turns dark over a dark page
+    // behind it, light mode or not, where Spotlight's own glass keeps to the system's appearance.
+    // A point or two more and the card keeps to it too.
+    static let cardHeight: CGFloat = 66
 }
 
 extension View {
@@ -147,8 +161,11 @@ struct ExpandingDetail: View {
 
     var body: some View {
         GeometryReader { geometry in
-            DetailView(answer: answer, d: d, model: model)
+            DetailView(answer: answer, d: d, model: model, fill: geometry.size.height)
                 .frame(width: geometry.size.width, height: geometry.size.height, alignment: .top)
+                // Open, the glass is thickened, so that Spotlight's list under it does not show through
+                // (glass on glass); closed, it is the card's own.
+                .background(.background.opacity(model.expanded ? 0.55 : 0))
                 .frame(height: model.expanded ? geometry.size.height : model.cardHeight, alignment: .top)
                 .clipShape(RoundedRectangle(cornerRadius: Chrome.radius, style: .continuous))
                 .spotlightGlass()
@@ -244,9 +261,10 @@ struct DetailView: View {
     let answer: Solution
     let d: Details
     let model: DetailModel
+    let fill: CGFloat   // the panel's height, which the working is stretched to where it is shorter
 
     var body: some View {
-        ScrollView { DetailContent(answer: answer, d: d) }
+        ScrollView { DetailContent(answer: answer, d: d).frame(minHeight: fill, alignment: .top) }
             .scrollIndicators(model.settled ? .automatic : .hidden)
             .scrollDisabled(!model.settled)
     }
@@ -265,118 +283,209 @@ struct DetailContent: View {
             CardFace(answer: answer)
 
             VStack(alignment: .leading, spacing: 14) {
-                platter("Working", index: 0) {
-                    row(label: "Equation") { copyable(d.equation, size: 19) }
+                section("Working", index: 0) {
+                    CopyRow(copy: LineCopy(d.equation)) {
+                        labelled("Equation") { MathText(math: d.equation, size: 19) }
+                    }
                     ForEach(Array(d.steps.enumerated()), id: \.offset) { _, step in
-                        Divider().padding(.leading, 16)
-                        row(label: step.label) {
-                            if let math = step.math { copyable(math, size: 19) }
-                            if let note = step.note {
-                                Text(subscripted(note, size: 13)).font(.system(size: 13)).foregroundStyle(.secondary)
-                                    .fixedSize(horizontal: false, vertical: true)
+                        CopyRow(copy: step.math.map { LineCopy($0) }) {
+                            labelled(step.label) {
+                                if let math = step.math { MathText(math: math, size: 19) }
+                                if let note = step.note {
+                                    Text(subscripted(note, size: 13)).font(.system(size: 13)).foregroundStyle(.secondary)
+                                        .fixedSize(horizontal: false, vertical: true)
+                                }
                             }
                         }
                     }
                 }
 
-                platter("Solutions", index: 1) {
-                    VStack(alignment: .leading, spacing: 10) {
-                        // A periodic function's dozen go in columns, so the graph stays in view.
-                        if d.solutions.count > 3, d.whole == nil {
-                            // Wide enough for the longest, an angle with its degrees after it.
-                            let widest = CGFloat(d.solutions.map(\.plain.count).max() ?? 0) * 11.5
-                            LazyVGrid(columns: [GridItem(.adaptive(minimum: max(180, widest)), alignment: .leading)], alignment: .leading, spacing: 10) {
-                                ForEach(Array(d.solutions.enumerated()), id: \.offset) { copyable($1, size: 20) }
+                section("Solutions", index: 1) {
+                    // A periodic function's dozen go in columns, so the graph stays in view.
+                    if d.solutions.count > 3, d.whole == nil {
+                        // Wide enough for the longest, an angle with its degrees after it.
+                        let widest = CGFloat(d.solutions.map(\.plain.count).max() ?? 0) * 11.5
+                        LazyVGrid(columns: [GridItem(.adaptive(minimum: max(180, widest)), alignment: .leading)], alignment: .leading, spacing: 0) {
+                            ForEach(Array(d.solutions.enumerated()), id: \.offset) { _, solution in
+                                CopyRow(copy: LineCopy(solution)) { MathText(math: solution, size: 20) }
                             }
-                        } else {
-                            // The answer is what the panel is for: larger than the working above it.
-                            // One value over several lines is set smaller, so that its lines are all of a size.
-                            ForEach(Array(d.solutions.enumerated()), id: \.offset) { copyable($1, size: d.whole == nil ? 26 : 15, copying: d.whole) }
                         }
-                        if let note = d.note {
-                            Text(note).font(.system(size: 13)).foregroundStyle(.secondary)
-                                .fixedSize(horizontal: false, vertical: true)
-                                .padding(.top, 2)
+                    } else {
+                        // The answer is what the panel is for: larger than the working above it.
+                        // One value over several lines is set smaller, so that its lines are all of a
+                        // size, and each of them copies the whole.
+                        ForEach(Array(d.solutions.enumerated()), id: \.offset) { _, solution in
+                            CopyRow(copy: LineCopy(solution, whole: d.whole)) { MathText(math: solution, size: d.whole == nil ? 26 : 15) }
                         }
                     }
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 16)
+                    if let note = d.note {
+                        Text(note).font(.system(size: 13)).foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .padding(.horizontal, 16)
+                            .padding(.top, 2)
+                    }
                 }
 
                 if let graph = d.graph {
-                    platter("Graph", index: 2) {
+                    section("Graph", index: 2) {
                         Plot(graph: graph)
                             .padding(.horizontal, 14)
                             .padding(.vertical, 14)
+                            .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(.quaternary.opacity(0.5)))
                     }
                 }
-
-                HStack {
-                    Spacer()
-                    SettingsButton()
-                }
-                .opacity(shown ? 1 : 0)
             }
+            .padding(.horizontal, 12)
+
+            // Where the panel reaches past the working, down to Spotlight's bottom edge, the room is
+            // left above Preferences, which stays at the foot.
+            Spacer(minLength: 14)
+            HStack {
+                Spacer()
+                SettingsButton()
+            }
+            .opacity(shown ? 1 : 0)
             .padding(.horizontal, 12)
             .padding(.bottom, 8)
         }
         .onAppear { shown = true }
     }
 
-    // A titled, rounded group, concentric with the panel's corners; each one rises a moment
-    // after the one above it.
-    private func platter<Content: View>(_ title: String, index: Int, @ViewBuilder content: () -> Content) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
+    // A titled section, its rows straight on the glass as Spotlight's results are; each one rises
+    // a moment after the one above it.
+    private func section<Content: View>(_ title: String, index: Int, @ViewBuilder content: () -> Content) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
             Text(title)
                 .font(.system(size: 12, weight: .semibold))
                 .foregroundStyle(.secondary)
                 .padding(.leading, 16)
             VStack(alignment: .leading, spacing: 0, content: content)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(.primary.opacity(0.05)))
         }
         .opacity(shown ? 1 : 0)
         .offset(y: shown ? 0 : 12)
         .animation(.spring(response: 0.45, dampingFraction: 0.86).delay(0.06 + 0.05 * Double(index)), value: shown)
     }
 
-    private func row<Content: View>(label: String, @ViewBuilder content: () -> Content) -> some View {
+    private func labelled<Content: View>(_ label: String, @ViewBuilder content: () -> Content) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(subscripted(label, size: 12)).font(.system(size: 12)).foregroundStyle(.secondary)
             content()
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 10)
-    }
-
-    // Maths can't be selected like text, so each line copies itself: a click gives its LaTeX,
-    // and its menu the same or one line of text.
-    private func copyable(_ math: Math, size: CGFloat, copying whole: String? = nil) -> some View {
-        CopyableLine(math: math, size: size, whole: whole)
     }
 }
 
-// A line of the panel, which says for a moment beside it that it was copied.
-private struct CopyableLine: View {
-    let math: Math
-    let size: CGFloat
-    let whole: String?
+// What a line of the panel copies: its LaTeX, or the line as it is shown. One value over several
+// lines (a digest) has no LaTeX, and each of its lines copies the whole.
+struct LineCopy {
+    var latex: String?
+    var text: String
+
+    init(_ math: Math, whole: String? = nil) {
+        latex = whole == nil ? math.latex : nil
+        text = whole ?? math.plain
+    }
+}
+
+// A line of the panel. Maths can't be selected like text, so the line copies itself: it is lit
+// while the pointer is on it, as Spotlight lights its rows, with the copy sign at its end; a click
+// copies it as chosen on the Clipboard page, and its menu offers either. A line with nothing to
+// copy (a step that is only a sentence) is neither lit nor clicked.
+private struct CopyRow<Content: View>: View {
+    let copy: LineCopy?
+    @ViewBuilder let content: Content
+    @State private var hovering = false
     @State private var copied = false
     @State private var generation = 0
 
     var body: some View {
         HStack(spacing: 8) {
-            MathText(math: math, size: size, copying: MathCopy(latex: whole == nil ? math.latex : nil, text: whole ?? math.plain) {
-                copied = true
-                generation += 1
-                let mine = generation
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.4) { if generation == mine { copied = false } }
-            })
-            if copied {
-                Text("Copied").font(.system(size: 12, weight: .medium)).foregroundStyle(.secondary)
+            content.frame(maxWidth: .infinity, alignment: .leading)
+            if copy != nil {
+                HStack(spacing: 5) {
+                    Image(systemName: copied ? "checkmark" : "doc.on.doc")
+                        .font(.system(size: 13, weight: .medium))
+                        .contentTransition(.symbolEffect(.replace))
+                    if copied { Text("Copied").font(.system(size: 12, weight: .medium)) }
+                }
+                .foregroundStyle(.secondary)
+                .opacity(hovering || copied ? 1 : 0)
             }
         }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
+        .background {
+            RoundedRectangle(cornerRadius: 14, style: .continuous)   // concentric with the panel's corners
+                .fill(.quaternary)
+                .opacity(hovering && copy != nil ? 1 : 0)
+        }
+        .overlay {
+            if let copy { RowTarget(copy: copy, hovering: $hovering, copied: didCopy) }
+        }
+        .animation(.easeOut(duration: 0.12), value: hovering)
+        .animation(.easeOut(duration: 0.15), value: copied)
     }
+
+    private func didCopy() {
+        copied = true
+        generation += 1
+        let mine = generation
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.4) { if generation == mine { copied = false } }
+    }
+}
+
+// The row's pointer and clicks, taken in AppKit: the panel is never key, where SwiftUI would not
+// see them.
+private struct RowTarget: NSViewRepresentable {
+    let copy: LineCopy
+    @Binding var hovering: Bool
+    let copied: () -> Void
+
+    func makeNSView(context: Context) -> RowTargetView { RowTargetView() }
+    func updateNSView(_ view: RowTargetView, context: Context) {
+        view.copy = copy
+        view.onHover = { hovering = $0 }
+        view.copied = copied
+    }
+}
+
+private final class RowTargetView: NSView {
+    var copy: LineCopy?
+    var onHover: (Bool) -> Void = { _ in }
+    var copied: () -> Void = {}
+
+    override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
+    override func mouseDown(with event: NSEvent) {}
+    override func mouseUp(with event: NSEvent) {
+        if bounds.contains(convert(event.locationInWindow, from: nil)) { put(asLatex: Prefs.copyLatex) }
+    }
+
+    override func menu(for event: NSEvent) -> NSMenu? {
+        guard let copy else { return nil }
+        let menu = NSMenu()
+        if copy.latex != nil { menu.addItem(withTitle: "Copy LaTeX", action: #selector(copyLatex), keyEquivalent: "").target = self }
+        menu.addItem(withTitle: copy.latex == nil ? "Copy" : "Copy as Text", action: #selector(copyText), keyEquivalent: "").target = self
+        return menu
+    }
+
+    @objc private func copyLatex() { put(asLatex: true) }
+    @objc private func copyText() { put(asLatex: false) }
+
+    private func put(asLatex: Bool) {
+        guard let copy else { return }
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString((asLatex ? copy.latex : nil) ?? copy.text, forType: .string)
+        copied()
+    }
+
+    override func updateTrackingAreas() {
+        super.updateTrackingAreas()
+        trackingAreas.forEach(removeTrackingArea)
+        addTrackingArea(NSTrackingArea(rect: .zero, options: [.mouseEnteredAndExited, .activeAlways, .inVisibleRect], owner: self))
+    }
+
+    override func mouseEntered(with event: NSEvent) { onHover(true) }
+    override func mouseExited(with event: NSEvent) { onHover(false) }
 }
 
 // Each curve or line in the graph, the first solid, the next dashed, then dotted, crossing at the

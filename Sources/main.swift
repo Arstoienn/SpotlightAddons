@@ -228,7 +228,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // Not while Spotlight is being dragged, or has only just been put down.
         guard Date().timeIntervalSince(lastMove) > 0.3 else { return }
         guard !detail.isOpen, let answer = Solver.solve(text), let details = Solver.details(text) else { return }
-        detail.show(answer, details, from: panel.frame, level: panel.level,
+        // Spotlight as it is now: its list grows and shrinks with what is typed without moving it.
+        let now = placement.flatMap { SpotlightWatcher.panel($0)?.rect } ?? spotlight
+        let primary = NSScreen.screens.first?.frame.height ?? 0
+        detail.show(answer, details, from: panel.frame, spotlightBottom: now == .zero ? nil : primary - now.maxY, level: panel.level,
                     onCovered: { [weak self] in self?.panel.conceal() },
                     onCollapsed: { [weak self] in
                         guard let self, (SpotlightWatcher.alpha() ?? 0) > 0.5 else { return }
