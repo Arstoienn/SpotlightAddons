@@ -960,5 +960,30 @@ do {
     expect("750 USD to NTD", "Fetching the rates", "One moment: the card is made again when they arrive.")
 }
 
+// Each line of the panel copies as LaTeX: the equation as it was read, a step, or a solution.
+func expectLatex(_ input: String, _ equation: String, solutions: [String]? = nil) {
+    guard let d = Solver.details(input) else { failures += 1; return print("FAIL latex \(input): no details") }
+    let got = d.solutions.map(\.latex)
+    if d.equation.latex != equation || (solutions != nil && got != solutions!) {
+        failures += 1
+        print("FAIL latex \(input)\n  want \(equation) \(solutions ?? [])\n  got  \(d.equation.latex) \(got)")
+    }
+}
+expectLatex("(20/3)", "\\frac{20}{3}", solutions: ["= \\frac{20}{3}", "\\approx 6.66667"])
+expectLatex("x^2-5x+6=0", "x^{2} - 5x + 6 = 0", solutions: ["x = 2", "x = 3"])
+expectLatex("sqrt(2)/2", "\\frac{\\sqrt{2}}{2}")
+expectLatex("sin(30°)", "\\sin(30^{\\circ})", solutions: ["= \\frac{1}{2}", "\\approx 0.5"])
+expectLatex("asin(0.5)", "\\arcsin(0.5)", solutions: ["= \\frac{\\pi}{6}", "= 30^{\\circ}"])
+expectLatex("sum(k,1,10,k^2)", "\\sum_{k = 1}^{10} k^{2}")
+expectLatex("3e8*2", "3 \\times 10^{8} \\cdot 2")
+expectLatex("F_n=6.55*2", "F_{n} = 6.55 \\cdot 2")
+expectLatex("x^2<=4", "x^{2} \\le 4", solutions: ["-2 \\le x \\le 2"])
+expectLatex("theta/2=pi", "\\frac{\\theta}{2} = \\pi")
+expectLatex("e^(2x)=5", "e^{2x} = 5")
+expectLatex("lcm(4,6)", "\\operatorname{lcm}(4, 6)")
+expectLatex("x+y=3, x-y=1", "x + y = 3, \\quad x - y = 1")
+expectLatex("2x^2+3x-1=0", "2x^{2} + 3x - 1 = 0",
+            solutions: ["x = \\frac{-3 - \\sqrt{17}}{4} \\approx -1.78078", "x = \\frac{-3 + \\sqrt{17}}{4} \\approx 0.280776"])
+
 print(failures == 0 ? "all passed" : "\(failures) failed")
 exit(failures == 0 ? 0 : 1)

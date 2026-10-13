@@ -130,13 +130,76 @@ enum Typesetter {
     }
 }
 
+// What a line of the panel copies: a click gives LaTeX or the line as shown, as chosen on the
+// Clipboard page, and its menu either. A line with no LaTeX (a digest over several lines) copies its text.
+struct MathCopy {
+    var latex: String?
+    var text: String
+    var copied: () -> Void
+}
+
 final class MathNSView: NSView {
     private var box: Box
     private let margin: CGFloat = 2
+    private var hovering = false { didSet { if hovering != oldValue { needsDisplay = true } } }
+
+    // Set for a line in the panel. The panel is never key, so the click is taken here in AppKit.
+    var copying: MathCopy? {
+        didSet { if (copying == nil) != (oldValue == nil) { updateTrackingAreas(); needsDisplay = true } }
+    }
 
     init(_ math: Math, size: CGFloat) {
         box = Typesetter.box(math, size)
         super.init(frame: .zero)
+    }
+
+    override func acceptsFirstMouse(for event: NSEvent?) -> Bool { copying != nil }
+
+    override func mouseDown(with event: NSEvent) {
+        if copying == nil { super.mouseDown(with: event) }
+    }
+
+    override func mouseUp(with event: NSEvent) {
+        guard copying != nil else { return super.mouseUp(with: event) }
+        if bounds.contains(convert(event.locationInWindow, from: nil)) { put(asLatex: Prefs.copyLatex) }
+    }
+
+    override func menu(for event: NSEvent) -> NSMenu? {
+        guard let copying else { return super.menu(for: event) }
+        let menu = NSMenu()
+        if copying.latex != nil { menu.addItem(withTitle: "Copy LaTeX", action: #selector(copyLatex), keyEquivalent: "").target = self }
+        menu.addItem(withTitle: copying.latex == nil ? "Copy" : "Copy as Text", action: #selector(copyText), keyEquivalent: "").target = self
+        return menu
+    }
+
+    @objc private func copyLatex() { put(asLatex: true) }
+    @objc private func copyText() { put(asLatex: false) }
+
+    private func put(asLatex: Bool) {
+        guard let copying else { return }
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString((asLatex ? copying.latex : nil) ?? copying.text, forType: .string)
+        copying.copied()
+    }
+
+    override func updateTrackingAreas() {
+        super.updateTrackingAreas()
+        trackingAreas.forEach(removeTrackingArea)
+        if copying != nil {
+            addTrackingArea(NSTrackingArea(rect: .zero, options: [.mouseEnteredAndExited, .activeAlways, .inVisibleRect], owner: self))
+        } else {
+            hovering = false
+        }
+    }
+
+    override func mouseEntered(with event: NSEvent) {
+        hovering = true
+        NSCursor.pointingHand.set()
+    }
+
+    override func mouseExited(with event: NSEvent) {
+        hovering = false
+        NSCursor.arrow.set()
     }
 
     required init?(coder: NSCoder) { fatalError() }
@@ -156,6 +219,11 @@ final class MathNSView: NSView {
 
     override func draw(_ dirtyRect: NSRect) {
         guard let ctx = NSGraphicsContext.current?.cgContext else { return }
+        // A line that copies shows it can be clicked, faintly, while the pointer is on it.
+        if hovering, copying != nil {
+            NSColor.labelColor.withAlphaComponent(0.08).setFill()
+            NSBezierPath(roundedRect: bounds, xRadius: 5, yRadius: 5).fill()
+        }
         ctx.scaleBy(x: scale, y: scale)
         ctx.textMatrix = .identity
         NSColor.labelColor.setFill()     // resolved for this view's appearance while drawing
@@ -169,9 +237,18 @@ final class MathNSView: NSView {
 struct MathText: NSViewRepresentable {
     let math: Math
     var size: CGFloat = 19
+    var copying: MathCopy? = nil
 
-    func makeNSView(context: Context) -> MathNSView { MathNSView(math, size: size) }
-    func updateNSView(_ view: MathNSView, context: Context) { view.update(math, size: size) }
+    func makeNSView(context: Context) -> MathNSView {
+        let view = MathNSView(math, size: size)
+        view.copying = copying
+        return view
+    }
+
+    func updateNSView(_ view: MathNSView, context: Context) {
+        view.update(math, size: size)
+        view.copying = copying
+    }
 
     // Its natural size, or narrower and in proportion when that is all the room there is.
     func sizeThatFits(_ proposal: ProposedViewSize, nsView: MathNSView, context: Context) -> CGSize? {

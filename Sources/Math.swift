@@ -36,6 +36,82 @@ indirect enum Math: Equatable {
         }
     }
 
+    // The same tree as LaTeX, for pasting into a document: \frac{20}{3}, x^{2} - 5x + 6 = 0, \sin(30^{\circ}).
+    var latex: String {
+        var s = latexParts
+        s = s.replacingOccurrences(of: " {2,}", with: " ", options: .regularExpression)
+        // A command needs a space before a letter (\pi r), but none before a bracket or a script.
+        s = s.replacingOccurrences(of: "(\\\\[A-Za-z]+) (?=[)\\]},;!.'|^_])", with: "$1", options: .regularExpression)
+        s = s.replacingOccurrences(of: "\\{ ", with: "{").replacingOccurrences(of: " \\}", with: "}")
+        return s.trimmingCharacters(in: .whitespaces)
+    }
+
+    private var latexParts: String {
+        switch self {
+        case .text(let s):
+            // F_n is cut where its subscript starts; the subscript is taken as it is.
+            return subscriptRuns(s).map { $0.lowered ? "_{\($0.text)}" : Math.latexText($0.text) }.joined()
+        case .row(let parts): return parts.map(\.latexParts).joined()
+        case .fraction(let n, let d): return "\\frac{\(n.latexParts)}{\(d.latexParts)}"
+        case .root(let x): return "\\sqrt{\(x.latexParts)}"
+        case .power(let base, let exponent): return "\(base.latexParts)^{\(exponent.latexParts)}"
+        case .bigOperator(let symbol, let lower, let upper):
+            return "\(symbol == "∏" ? "\\prod" : "\\sum")_{\(lower.latexParts)}^{\(upper.latexParts)} "
+        }
+    }
+
+    private static let latexSymbols: [Character: String] = [
+        "−": "-", "·": " \\cdot ", "×": " \\times ", "÷": " \\div ", "±": " \\pm ", "∓": " \\mp ",
+        "≤": " \\le ", "≥": " \\ge ", "≠": " \\ne ", "≈": " \\approx ", "→": " \\to ", "⇒": " \\Rightarrow ",
+        "∈": " \\in ", "∉": " \\notin ", "∪": " \\cup ", "∩": " \\cap ", "∧": " \\land ", "∨": " \\lor ", "¬": "\\lnot ",
+        "∞": "\\infty ", "∅": "\\emptyset ", "…": "\\ldots ", "%": "\\%", "°": "^{\\circ}",
+        "ℝ": "\\mathbb{R} ", "ℂ": "\\mathbb{C} ", "ℤ": "\\mathbb{Z} ", "ℕ": "\\mathbb{N} ", "ℚ": "\\mathbb{Q} ",
+        "α": "\\alpha ", "β": "\\beta ", "γ": "\\gamma ", "δ": "\\delta ", "ε": "\\varepsilon ", "ζ": "\\zeta ",
+        "η": "\\eta ", "θ": "\\theta ", "ι": "\\iota ", "κ": "\\kappa ", "λ": "\\lambda ", "μ": "\\mu ", "ν": "\\nu ",
+        "ξ": "\\xi ", "π": "\\pi ", "ρ": "\\rho ", "σ": "\\sigma ", "τ": "\\tau ", "υ": "\\upsilon ", "φ": "\\varphi ",
+        "χ": "\\chi ", "ψ": "\\psi ", "ω": "\\omega ", "Γ": "\\Gamma ", "Δ": "\\Delta ", "Θ": "\\Theta ",
+        "Λ": "\\Lambda ", "Ξ": "\\Xi ", "Π": "\\Pi ", "Σ": "\\Sigma ", "Φ": "\\Phi ", "Ψ": "\\Psi ", "Ω": "\\Omega ",
+    ]
+    private static let superscripts: [Character: Character] = [
+        "⁰": "0", "¹": "1", "²": "2", "³": "3", "⁴": "4", "⁵": "5", "⁶": "6", "⁷": "7", "⁸": "8", "⁹": "9", "⁻": "-", "⁺": "+",
+    ]
+    // Names LaTeX has a command for; any other name before a bracket is an \operatorname.
+    private static let latexFunctions: Set<String> = [
+        "sin", "cos", "tan", "sec", "csc", "cot", "sinh", "cosh", "tanh", "coth", "arcsin", "arccos", "arctan",
+        "ln", "log", "lg", "exp", "det", "gcd", "max", "min", "arg", "dim", "ker", "lim", "sup", "Pr",
+    ]
+
+    private static func latexText(_ s: String) -> String {
+        var s = s
+        // The commas between the equations of a system.
+        s = s.replacingOccurrences(of: ",\\s{2,}", with: ", \\\\quad ", options: .regularExpression)
+        s = s.replacingOccurrences(of: " mod ", with: " \\bmod ")
+        // sin( is \sin(, asin( \arcsin(, lcm( \operatorname{lcm}(.
+        if let call = try? NSRegularExpression(pattern: "(?<![A-Za-z\\\\])([A-Za-z]{2,})(?=[(|])") {
+            for match in call.matches(in: s, range: NSRange(s.startIndex..., in: s)).reversed() {
+                guard let range = Range(match.range(at: 1), in: s) else { continue }
+                var name = String(s[range])
+                if ["asin", "acos", "atan"].contains(name) { name = "arc" + name.dropFirst() }
+                s.replaceSubrange(range, with: latexFunctions.contains(name) ? "\\\(name)" : "\\operatorname{\(name)}")
+            }
+        }
+        // 20/3 and 2π/3, where an answer is written on one line.
+        s = s.replacingOccurrences(of: "(?<![0-9.A-Za-zπ)])([0-9]*\\.?[0-9]*π|[0-9]+(?:\\.[0-9]+)?)/([0-9]+(?:\\.[0-9]+)?)(?![0-9.])",
+                                   with: "\\\\frac{$1}{$2}", options: .regularExpression)
+        // √2 and √(x + 1), where a root is written on one line.
+        s = s.replacingOccurrences(of: "√\\(([^()]*)\\)", with: "\\\\sqrt{$1}", options: .regularExpression)
+        s = s.replacingOccurrences(of: "√([0-9A-Za-z.]+)", with: "\\\\sqrt{$1}", options: .regularExpression)
+        var out = ""
+        var raised = ""
+        for c in s {
+            if let digit = superscripts[c] { raised.append(digit); continue }
+            if !raised.isEmpty { out += "^{\(raised)}"; raised = "" }
+            out += latexSymbols[c] ?? String(c)
+        }
+        if !raised.isEmpty { out += "^{\(raised)}" }
+        return out
+    }
+
     var hasFraction: Bool {
         switch self {
         case .text: return false

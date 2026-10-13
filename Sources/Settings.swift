@@ -175,6 +175,7 @@ enum Prefs {
     private static func flag(_ key: String, _ fallback: Bool) -> Bool { UserDefaults.standard.object(forKey: key) as? Bool ?? fallback }
 
     static var returnCopies: Bool { flag("returnCopies", true) }
+    static var copyLatex: Bool { flag("copyLatex", true) }   // a click on a line of the panel copies its LaTeX
     static var log: Bool { flag("log", false) }
     static var welcome: Bool { flag("welcome", true) }
 
@@ -197,7 +198,7 @@ enum Prefs {
 private let defaultSettings: [String: Any] = [
     "degrees": false, "figures": 6, "exact": true, "decimalFirst": true, "arithmetic": true, "numberFacts": true, "paths": true, "conversions": true,
     "basePrefix": false, "inequalities": true, "algebra": true, "matrices": true, "constant.g": true, "constant.G": true,
-    "constant.c": true, "precise": false, "copyAsShown": false, "returnCopies": true, "log": false, "welcome": true,
+    "constant.c": true, "precise": false, "copyAsShown": false, "copyLatex": true, "returnCopies": true, "log": false, "welcome": true,
 ]
 
 // What a setting does, under it.
@@ -403,6 +404,7 @@ struct ConstantsSettings: View {
 
 struct CopyingSettings: View {
     @AppStorage("copyAsShown") private var copyAsShown = false
+    @AppStorage("copyLatex") private var copyLatex = true
     @AppStorage("returnCopies") private var returnCopies = true
 
     var body: some View {
@@ -415,6 +417,15 @@ struct CopyingSettings: View {
                 .pickerStyle(.radioGroup)
                 .feel(copyAsShown)
                 note("A decimal is what another program can read, and is given to twelve figures whatever is chosen on the Calculation page. Several answers are copied with commas between: 2, 3.")
+            }
+            Section("The panel") {
+                Picker("A line of the working copies", selection: $copyLatex) {
+                    Text("LaTeX: \\frac{5}{2}").tag(true)
+                    Text("The line as shown: 5/2").tag(false)
+                }
+                .pickerStyle(.radioGroup)
+                .feel(copyLatex)
+                note("Click a line of the working or the solutions to copy it; right-click it for the other. The first line is what was typed, as it was read.")
             }
             Section("Return") {
                 Toggle("Return copies, while the pointer is on the card", isOn: $returnCopies)
