@@ -8,7 +8,7 @@ final class ResultPanel {
     var onHover: () -> Void = {}
     private var panel: NSPanel!
     private let face = NSHostingView(rootView: CardView(answer: Solution(exact: "", approx: nil)))
-    private let height: CGFloat = 64
+    private let height = Chrome.cardHeight
     private let gap: CGFloat = 8
     private(set) var isVisible = false
     var frame: NSRect { panel.frame }
@@ -183,6 +183,6 @@ struct CardFace: View {
             Spacer(minLength: 24)
             CopyButton()
         }
-        .frame(height: 64)
+        .frame(height: Chrome.cardHeight)
     }
 }
