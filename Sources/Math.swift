@@ -10,6 +10,7 @@ indirect enum Math: Equatable {
     case root(Math)
     case power(Math, Math)
     case bigOperator(String, lower: Math, upper: Math)   // ∑ or ∏ with its limits
+    case group(Math)                                     // in brackets that grow with what is inside
 
     // "(−3 ± √17)/4", "n²", "e^2.5": brackets only where a single line needs them.
     var plain: String {
@@ -33,6 +34,7 @@ indirect enum Math: Equatable {
             return base.plain + "^" + Math.bracketed(exponent)
         case .bigOperator(let symbol, let lower, let upper):
             return "\(symbol)(\(lower.plain)…\(upper.plain)) "
+        case .group(let x): return "(" + x.plain + ")"
         }
     }
 
@@ -73,6 +75,7 @@ indirect enum Math: Equatable {
             // F_n is cut where its subscript starts; the subscript is taken as it is.
             return subscriptRuns(s).map { $0.lowered ? "_{\($0.text)}" : Math.latexText($0.text) }.joined()
         case .row(let parts): return parts.map(\.latexParts).joined()
+        case .group(let x): return "(" + x.latexParts + ")"   // \left( \right) where it holds a fraction: sizedBrackets
         case .fraction(let n, let d): return "\\frac{\(n.latexParts)}{\(d.latexParts)}"
         case .root(let x): return "\\sqrt{\(x.latexParts)}"
         case .power(let base, let exponent): return "\(base.latexParts)^{\(exponent.latexParts)}"
@@ -141,6 +144,7 @@ indirect enum Math: Equatable {
         case .root(let x): return x.hasFraction
         case .power(let b, let e): return b.hasFraction || e.hasFraction
         case .bigOperator: return false
+        case .group(let x): return x.hasFraction
         }
     }
 

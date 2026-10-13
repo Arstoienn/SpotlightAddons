@@ -66,6 +66,7 @@ extension Solver {
     private static func workings(_ typed: String) -> Details? {
         if let money = Currency.conversion(typed) { return money.details }
         if let hash = Hash.parse(typed) { return hash.details }
+        let asTyped = typed   // before it is tidied: lcm(4,6) is not bracketed as it was written
         guard let typed = Hash.numbers(in: typed).map(Prose.tidy), !Prose.reads(typed) else { return nil }
         if let sequence = Sequence.parse(Latex.plain(typed)) { return sequence.details }
         let asked = Rearrangement.asked(Latex.plain(typed))
@@ -83,7 +84,12 @@ extension Solver {
         if let comparison = Comparison.parse(input) { return comparison.details }
         if let inequality = Inequality.parse(input) { return inequality.details }
         if let inequalities = InequalitySet.parse(input) { return inequalities.details }
-        if let evaluation = Evaluation.parse(input, hadLatex: typed.contains("\\")) { return evaluationDetails(evaluation) }
+        if let evaluation = Evaluation.parse(input, hadLatex: typed.contains("\\")) {
+            var d = evaluationDetails(evaluation)
+            // (20/3) as it was written: the brackets are kept, as they were typed.
+            if evaluation.name == nil, wholly(bracketed: asTyped.replacingOccurrences(of: "\\left(", with: "(").replacingOccurrences(of: "\\right)", with: ")")) { d.equation = .group(d.equation) }
+            return d
+        }
         if Evaluation.namesNumber(input) { return nil }
         if let simplification = Simplification.parse(input) { return simplification.details }
         if let trig = TrigSimplification.parse(input) { return trig.details }
@@ -128,6 +134,18 @@ extension Solver {
 }
 
 // MARK: - Values worked out
+
+// "(20/3)" and "(1 + 2)", not "(1 + 2)(3 + 4)": the first bracket closes at the very end.
+func wholly(bracketed s: String) -> Bool {
+    let text = s.trimmingCharacters(in: .whitespaces)
+    guard text.first == "(", text.last == ")" else { return false }
+    var depth = 0
+    for (i, c) in text.enumerated() {
+        if c == "(" { depth += 1 } else if c == ")" { depth -= 1 }
+        if depth == 0 && i < text.count - 1 { return false }
+    }
+    return depth == 0
+}
 
 // Arithmetic done the way it is on paper: every operation whose inputs are already numbers is
 // done at once, and the expression written out again, until one number is left. The nested
@@ -964,13 +982,13 @@ func typeset(_ e: Expr, _ n: String) -> Math { render(e, n).math }
 // One term of a sum written out: bracketed when it is itself a sum, so 1 + (0 + 1) stays clear.
 func termMath(_ e: Expr) -> Math {
     let r = render(e, "")
-    return r.level < 2 ? row(t("("), r.math, t(")")) : r.math
+    return r.level < 2 ? .group(r.math) : r.math
 }
 
 // level: 1 a sum, 2 a product, 3 a power, 4 an atom; a child below what its place needs is
 // bracketed. Fractions need no brackets: the bar does their grouping.
 private func render(_ e: Expr, _ n: String) -> (math: Math, level: Int) {
-    func wrap(_ r: (math: Math, level: Int), _ needed: Int) -> Math { r.level < needed ? row(t("("), r.math, t(")")) : r.math }
+    func wrap(_ r: (math: Math, level: Int), _ needed: Int) -> Math { r.level < needed ? .group(r.math) : r.math }
     switch e {
     case .num(let v):
         if v == .pi { return (t("π"), 4) }
