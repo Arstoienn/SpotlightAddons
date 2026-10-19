@@ -49,7 +49,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                      restorationHandler: @escaping ([any NSUserActivityRestoring]) -> Void) -> Bool {
         guard let entry = Entry.chosen(userActivity) else { return false }
         switch entry {
-        case .clipboardHistory: ClipboardHistory.open()
         case .settings: settings.show()
         }
         Entry.index()
