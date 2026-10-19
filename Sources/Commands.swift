@@ -6,19 +6,20 @@ import UniformTypeIdentifiers
 // these are not documents but things to do. One chosen comes back to the app as an activity.
 // (Spotlight Add-ons itself is in the list too, as any app is: choosing that only starts it.)
 enum Entry: String, CaseIterable {
-    case clipboardHistory = "clipboard-history"
     case settings = "settings"
 
-    private var title: String { self == .settings ? "Spotlight Add-ons Preferences" : "Clipboard History" }
-    private var summary: String { self == .settings ? "Change how Spotlight Add-ons answers" : "Open Spotlight's clipboard history" }
-    private var symbol: String { self == .settings ? "gearshape" : "clipboard" }
-    private var words: [String] {
-        self == .settings ? ["preferences", "settings", "spotlight plus", "plus"] : ["clipboard", "history", "pasteboard", "clip"]
-    }
+    private var title: String { "Spotlight Add-ons Preferences" }
+    private var summary: String { "Change how Spotlight Add-ons answers" }
+    private var symbol: String { "gearshape" }
+    private var words: [String] { ["preferences", "settings", "spotlight plus", "plus"] }
+
+    // Entries there were once and are no more: an index that still has them loses them here.
+    private static let gone = ["clipboard-history"]
 
     // Said again at every launch, and when one is chosen: it costs nothing, puts right an index
     // that has lost them, and keeps them recent.
     static func index() {
+        CSSearchableIndex.default().deleteSearchableItems(withIdentifiers: gone) { _ in }
         let items = allCases.map { entry in
             let attributes = CSSearchableItemAttributeSet(contentType: .item)
             attributes.title = entry.title
@@ -39,7 +40,7 @@ enum Entry: String, CaseIterable {
         }
         CSSearchableIndex.default().indexSearchableItems(items) { error in
             Log.note(error.map { "the entries could not be put in Spotlight's list: \($0.localizedDescription)" }
-                          ?? "Clipboard History and Spotlight Add-ons Preferences are in Spotlight's list")
+                          ?? "Spotlight Add-ons Preferences is in Spotlight's list")
         }
     }
 
@@ -83,43 +84,5 @@ enum Entry: String, CaseIterable {
         symbol.draw(in: NSRect(x: tile.midX - drawn.width / 2, y: tile.midY - drawn.height / 2, width: drawn.width, height: drawn.height))
         NSGraphicsContext.restoreGraphicsState()
         return rep.representation(using: .png, properties: [:])
-    }
-}
-
-// Spotlight's clipboard history. Spotlight has no public way to be opened on a given view, so it
-// is done with keys: ⌘Space and then ⌘4.
-enum ClipboardHistory {
-    // The Spotlight it was chosen in is still fading out, and ⌘Space before it has gone would
-    // only close it. It is invisible after about 0.1 s, though its window stays up for another
-    // 0.7 s, so it is the opacity that is waited for. Then ⌘Space, and as soon as Spotlight
-    // starts to fade back in, ⌘4, sent to Spotlight's own process so that it can never land in
-    // another app.
-    static func open() {
-        Log.note("asked for the clipboard history")
-        DispatchQueue.global(qos: .userInteractive).async {
-            wait(until: { (SpotlightWatcher.alpha() ?? 0) < 0.05 }, timeout: 1)
-            press(49, to: nil)
-            wait(until: { (SpotlightWatcher.alpha() ?? 0) > 0.1 }, timeout: 1)
-            if let spotlight = NSRunningApplication.runningApplications(withBundleIdentifier: "com.apple.Spotlight").first {
-                press(21, to: spotlight.processIdentifier)
-            }
-        }
-    }
-
-    private static func wait(until done: () -> Bool, timeout: TimeInterval) {
-        let end = Date().addingTimeInterval(timeout)
-        while !done(), Date() < end { usleep(5_000) }
-    }
-
-    // ⌘ and a key: to the system when there is no process to send it to, as ⌘Space, a system
-    // shortcut, has to be.
-    private static func press(_ key: CGKeyCode, to pid: pid_t?) {
-        let source = CGEventSource(stateID: .hidSystemState)
-        let command: CGKeyCode = 55
-        for (code, down) in [(command, true), (key, true), (key, false), (command, false)] {
-            let event = CGEvent(keyboardEventSource: source, virtualKey: code, keyDown: down)
-            event?.flags = code == command && !down ? [] : .maskCommand
-            if let pid { event?.postToPid(pid) } else { event?.post(tap: .cghidEventTap) }
-        }
     }
 }

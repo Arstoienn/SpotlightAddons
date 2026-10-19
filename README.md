@@ -4,10 +4,8 @@ Type an equation into Spotlight and the answer appears on a glass card just abov
 the way Spotlight's own calculator answers 2+2. Rest the pointer on the card and it grows into a
 panel with the working, every solution and a graph; move the pointer off and it shrinks back.
 
-Type `clipboard` or `history`, choose Clipboard History in Spotlight's list and press Return, and
-Spotlight comes back open on its clipboard history, the view that ⌘Space and then ⌘4 gives.
-Clipboard History is an entry Spotlight Add-ons puts in Spotlight's list itself, through Core
-Spotlight; there is no second app. Spotlight Add-ons Preferences is another, and opens the preferences.
+Spotlight Add-ons Preferences, an entry Spotlight Add-ons puts in Spotlight's list itself through
+Core Spotlight, opens the preferences; there is no second app.
 
 ## What it does
 
@@ -287,9 +285,8 @@ looked at is the one it opens on.
 There is no public way to give Spotlight an answer that changes with each key. Spotlight Add-ons runs
 in the background and reads Spotlight's search field through Accessibility, so it needs that
 permission: System Settings ›
-Privacy & Security › Accessibility. It never types into Spotlight or changes what is in it. The
-keys it presses are the two for the clipboard history, ⌘Space and ⌘4, when Clipboard History is
-chosen: Spotlight has no public way to be opened on that view either.
+Privacy & Security › Accessibility. It never types into Spotlight, presses a key or changes what is
+in it.
 
 While a card is up it watches for Return, and nothing else: Return copies the answer when the
 pointer is on the card, and at any other time is Spotlight's.
@@ -307,9 +304,8 @@ permission survives a rebuild.
 
 Built and used on macOS 26.5.1 (25F80) with Xcode 26.5 and Swift 6.3.2, on Apple silicon. It has
 not been tried on anything else. It leans on how Spotlight happens to behave in that version: the
-window it draws itself in, the search field as Accessibility gives it, and ⌘4 for the clipboard
-history. A later macOS may change any of these, and the card or the clipboard history would then
-need looking at again.
+window it draws itself in and the search field as Accessibility gives it. A later macOS may change
+either, and the card would then need looking at again.
 
 Spotlight's own calculator answers arithmetic as well. With both on, a sum gets two answers; turn
 one off, Spotlight's in System Settings › Spotlight, or this one's in its settings.
