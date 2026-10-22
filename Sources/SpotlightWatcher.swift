@@ -11,17 +11,26 @@ final class SpotlightWatcher {
 
     private var observer: AXObserver?
     private var app: AXUIElement?
+    private var pid: pid_t = 0   // the Spotlight followed, 0 for none
     private var field: AXUIElement?
     private var lastLook = Date.distantPast
+    private var running: NSKeyValueObservation?
 
     func start() {
-        // Spotlight is restarted now and then (and by `killall Spotlight`); follow the new one.
-        NSWorkspace.shared.notificationCenter.addObserver(
-            forName: NSWorkspace.didLaunchApplicationNotification, object: nil, queue: .main
-        ) { [weak self] note in
-            let launched = note.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication
-            if launched?.bundleIdentifier == "com.apple.Spotlight" { self?.attach() }
+        // Spotlight is restarted now and then, by itself and by `killall Spotlight`; follow the new
+        // one. It has no Dock icon, and NSWorkspace posts no launch notification for an app without
+        // one, so the list of running apps is watched instead.
+        running = NSWorkspace.shared.observe(\.runningApplications) { [weak self] _, _ in
+            DispatchQueue.main.async { self?.follow() }
         }
+        attach()
+    }
+
+    // Spotlight is no longer the one followed: it has quit, or come back as another process. It can
+    // be missing from the list for a moment while it is still running, which is no change.
+    private func follow() {
+        let now = NSRunningApplication.runningApplications(withBundleIdentifier: "com.apple.Spotlight").first?.processIdentifier ?? 0
+        if now == pid || (now == 0 && pid != 0 && kill(pid, 0) == 0) { return }
         attach()
     }
 
@@ -31,8 +40,9 @@ final class SpotlightWatcher {
         }
         observer = nil
         field = nil
+        pid = 0
         guard let spotlight = NSRunningApplication.runningApplications(withBundleIdentifier: "com.apple.Spotlight").first
-        else { return }
+        else { return Log.note("Spotlight is not running") }
 
         let pid = spotlight.processIdentifier
         let app = AXUIElementCreateApplication(pid)
@@ -43,10 +53,17 @@ final class SpotlightWatcher {
         guard AXObserverCreate(pid, callback, &created) == .success, let created else { return }
         let refcon = Unmanaged.passUnretained(self).toOpaque()
         for name in [kAXValueChangedNotification, kAXFocusedUIElementChangedNotification] {
-            AXObserverAddNotification(created, app, name as CFString, refcon)
+            // Just started, Spotlight cannot be asked anything for a moment; it is asked again shortly.
+            let error = AXObserverAddNotification(created, app, name as CFString, refcon)
+            guard error == .success else {
+                Log.note("Spotlight is not answering yet (\(error.rawValue))")
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in self?.follow() }
+                return
+            }
         }
         CFRunLoopAddSource(CFRunLoopGetMain(), AXObserverGetRunLoopSource(created), .defaultMode)
         self.app = app
+        self.pid = pid
         observer = created
         if let focused = element(app, kAXFocusedUIElementAttribute) { take(focused) }
         Log.note("attached to Spotlight\(field == nil ? ", no search field yet" : "")")
