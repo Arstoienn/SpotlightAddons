@@ -119,19 +119,21 @@ commas between the thousands. `=` is read as "to" only between an amount of mone
 
 Coins and metals are the same: `0.5 btc to usd`, `1 eth to btc`, `₿1 to ntd`, `100 usd to btc`; `2 oz gold to usd`,
 `1 xau to jpy`, `10 g gold to ntd`, `1 kg of silver to usd`. A metal (gold, silver, platinum, palladium; XAU, XAG, XPT,
-XPD) is priced by the troy ounce, of 31.1035 g; the coins are the thirty or so best known (BTC, ETH, USDT, USDC, BNB, XRP,
-SOL, ADA, DOGE, DOT, LTC, and so on).
+XPD) is priced by the troy ounce, of 31.1035 g. The coins are the hundred or so best known (BTC, ETH, USDT, USDC, BNB, XRP,
+SOL, ADA, DOGE, DOT, LTC, XMR, TRX, NEAR, ARB, OP, and so on), named by their codes, and a few also by name (`bitcoin`,
+`monero`, `chainlink`); `10 usdt to xmr`. A coin whose code is also a unit, a number or a letter (TON, GRAM, PI, THETA) is
+left out, as is one whose code is a word that might be meant otherwise (SUN, OHM, RAIN).
 
 The rates are fetched as the card is made, in the background, each against the US dollar, and the card is made again
 when they arrive: currencies from open.er-api.com (they are those of the day, as that is the finest it gives, and are asked for no oftener than once an hour, which is what the source asks), coins from
-api.coinbase.com and metals from api.gold-api.com (as they trade). The last rates had are kept, and with no connection they
+api.coinbase.com (and those it does not have, such as XMR, TRX, KAS and OKB, from api.kraken.com) and metals from api.gold-api.com (as they trade). The last rates had are kept, and with no connection they
 are used, and the card then says when they were recorded: `1 BTC = 82645.1 USD · offline, rates of 8 Oct 2026, 14:01`.
 With a connection it says nothing of the time. With neither a connection nor rates saved, there is no value to give, and
 the card says so.
 
 Currency rates are [Rates By Exchange Rate API](https://www.exchangerate-api.com), used under its terms for the open access
-endpoint, which require this credit; the card's panel says so too. Coins are from Coinbase's public exchange-rates endpoint and metals from
-gold-api.com. Nothing is sent to them but the request: no part of what is typed.
+endpoint, which require this credit; the card's panel says so too. Coins are from Coinbase's public exchange-rates endpoint and Kraken's public
+ticker, and metals from gold-api.com. Nothing is sent to them but the request: no part of what is typed.
 
 ### Algebra, asked for by name
 

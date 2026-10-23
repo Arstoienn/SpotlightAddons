@@ -246,7 +246,7 @@ struct StatusSettings: View {
                         let state = Rates.state(group)
                         let when = state.recorded.map(Currency.stamp)
                         row(state.offline ? .bad : state.recorded == nil ? .neutral : .good,
-                            group == .fiat ? "Currencies" : group == .crypto ? "Coins" : "Metals",
+                            group == .fiat ? "Currencies" : group == .crypto ? "Coins" : group == .moreCrypto ? "Other coins" : "Metals",
                             state.offline ? (when.map { "No connection: the rates of \($0) are used." } ?? "No connection, and none saved.")
                                           : (when.map { "Live. Recorded \($0), from \(group.source)." } ?? "Not fetched yet: they are asked for when money is typed."))
                     }

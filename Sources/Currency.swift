@@ -3,20 +3,22 @@ import Foundation
 // 750 USD to NTD, 750USD=NTD?, $20 in yen, 0.5 btc to usd, 2 oz gold to twd: an amount of money,
 // a coin or a metal said in another. The rates are fetched as they stand, in the background, each
 // against the US dollar: currencies from open.er-api.com (once a day), coins from api.coinbase.com
-// and metals from api.gold-api.com (as they trade). The card is answered from the last that were
+// (and those it does not have, such as Monero, from api.kraken.com) and metals from api.gold-api.com
+// (as they trade). The card is answered from the last that were
 // had, and made again when fresh ones arrive. With no connection the last rates recorded are used,
 // and the card says when they were recorded: that is said only then.
 enum Rates {
     enum Group: String, CaseIterable, Codable {
-        case fiat, crypto, metals
+        case fiat, crypto, moreCrypto, metals
         var source: String {
             switch self {
             case .fiat: "open.er-api.com"
             case .crypto: "api.coinbase.com"
+            case .moreCrypto: "api.kraken.com"
             case .metals: "api.gold-api.com"
             }
         }
-        var name: String { self == .fiat ? "currency" : self == .crypto ? "coin" : "metal" }
+        var name: String { self == .fiat ? "currency" : self == .metals ? "metal" : "coin" }
     }
 
     struct Saved: Codable {
@@ -38,7 +40,8 @@ enum Rates {
     static var fixed = false
 
     static func group(of code: String) -> Group {
-        Currency.metals.contains(code) ? .metals : Currency.coins.contains(code) ? .crypto : .fiat
+        Currency.metals.contains(code) ? .metals : Currency.kraken[code] != nil ? .moreCrypto
+            : Currency.coins.contains(code) ? .crypto : .fiat
     }
 
     static var table: [String: Double]? { saved?.perDollar }
@@ -81,7 +84,7 @@ enum Rates {
         let failedNow = failed.contains(g)
         switch g {
         case .fiat: return failedNow ? (saved?.recorded[g.rawValue] == nil ? 30 : 300) : 3600
-        case .crypto, .metals: return failedNow ? 15 : 30
+        case .crypto, .moreCrypto, .metals: return failedNow ? 15 : 30
         }
     }
 
@@ -114,11 +117,20 @@ enum Rates {
         if due.contains(.crypto) { ask("https://api.coinbase.com/v2/exchange-rates?currency=USD", { object in
             guard let o = (object as? [String: Any])?["data"] as? [String: Any], let r = o["rates"] as? [String: String] else { return nil }
             let found = r.compactMap { key, value -> (String, Double)? in
-                guard Currency.coins.contains(key), let v = Double(value), v > 0 else { return nil }
+                guard Currency.coins.contains(key), Currency.kraken[key] == nil, let v = Double(value), v > 0 else { return nil }
                 return (key, v)
             }
             return found.isEmpty ? nil : Dictionary(uniqueKeysWithValues: found)
         }, group: .crypto) }
+        // Kraken gives each pair's last trade, the price of one coin in dollars.
+        if due.contains(.moreCrypto) { ask("https://api.kraken.com/0/public/Ticker?pair=" + Currency.kraken.values.sorted().joined(separator: ","), { object in
+            guard let r = (object as? [String: Any])?["result"] as? [String: Any] else { return nil }
+            let found = Currency.kraken.compactMap { code, pair -> (String, Double)? in
+                guard let last = ((r[pair] as? [String: Any])?["c"] as? [String])?.first, let price = Double(last), price > 0 else { return nil }
+                return (code, 1 / price)
+            }
+            return found.isEmpty ? nil : Dictionary(uniqueKeysWithValues: found)
+        }, group: .moreCrypto) }
         for metal in Currency.metals.sorted() where due.contains(.metals) {
             ask("https://api.gold-api.com/price/\(metal)", { object in
                 guard let o = object as? [String: Any], let price = o["price"] as? Double, price > 0 else { return nil }
@@ -160,9 +172,23 @@ enum Currency {
         """.split(whereSeparator: { $0 == " " || $0 == "\n" }).map(String.init))
 
     // The coins and metals that may be named. A coin is by its usual code; a metal is priced by
-    // the troy ounce. The lists are short on purpose: a code that is a word is left out.
-    static let coins: Set<String> = ["BTC", "ETH", "USDT", "USDC", "BNB", "XRP", "SOL", "ADA", "DOGE", "DOT", "LTC", "AVAX", "LINK", "POL", "SHIB", "ATOM",
-                                     "UNI", "XLM", "BCH", "ETC", "APT", "SUI", "PEPE", "DAI", "WBTC", "HBAR", "FIL", "ICP", "AAVE", "INJ", "ALGO", "XTZ", "EOS"]
+    // the troy ounce. The coins are the best known, but not one whose code is also a unit, a number
+    // or a letter (TON, GRAM, PI, THETA, 1INCH, S), nor one whose code is a word that might be meant
+    // otherwise (SUN, OHM, RAIN, NIGHT). A word that can only be the coin when said of money (NEAR,
+    // DASH, SAND) is kept.
+    static let coins: Set<String> = Set(kraken.keys).union([
+        "BTC", "ETH", "USDT", "USDC", "BNB", "XRP", "SOL", "ADA", "DOGE", "DOT", "LTC", "AVAX", "LINK", "POL", "SHIB", "ATOM",
+        "UNI", "XLM", "BCH", "ETC", "APT", "SUI", "PEPE", "DAI", "WBTC", "HBAR", "FIL", "ICP", "AAVE", "INJ", "ALGO", "XTZ", "EOS",
+        "ZEC", "HYPE", "ENA", "QNT", "ONDO", "WLD", "PAXG", "WLFI", "ARB", "JUP", "ZRO", "ETHFI", "STX", "CRV", "PYTH", "FLR",
+        "TIA", "PENGU", "EURC", "PYUSD", "USDS", "STRK", "SEI", "BSV", "LDO", "GNO", "GRT", "JTO", "COMP", "JASMY", "FLOKI", "CVX",
+        "EIGEN", "AKT", "WIF", "AXS", "NEAR", "TAO", "CRO", "RENDER", "FET", "ENS", "CAKE", "DASH", "VET", "AERO", "PENDLE", "MORPHO",
+        "SKY", "RUNE", "MANA", "BONK", "BAT", "OP", "TRUMP", "CHZ", "ENJ", "KSM", "EGLD", "MINA", "IMX", "GALA", "APE", "SNX", "YFI",
+        "SUSHI", "LRC", "BAL", "ANKR", "STORJ", "MATIC", "HNT", "ZEN", "KAVA", "RPL", "LPT", "IOTX", "BAND", "MKR", "SAND"])
+    // Coins Coinbase has no price for, from Kraken instead, each by the name Kraken gives its pair with the US dollar.
+    static let kraken: [String: String] = [
+        "XMR": "XXMRZUSD", "TRX": "TRXUSD", "OKB": "OKBUSD", "BGB": "BGBUSD", "KAS": "KASUSD", "NEXO": "NEXOUSD", "XDC": "XDCUSD",
+        "DCR": "DCRUSD", "CFX": "CFXUSD", "BTT": "BTTUSD", "JST": "JSTUSD", "AR": "ARUSD", "USDE": "USDEUSD", "RLUSD": "RLUSDUSD",
+        "XAUT": "XAUTUSD"]
     static let metals: Set<String> = ["XAU", "XAG", "XPT", "XPD"]
 
     // And what else a currency is called: a symbol, or a name that is only its own.
@@ -191,6 +217,7 @@ enum Currency {
         let others: [String: [String]] = [
             "BTC": ["₿", "bitcoin", "bitcoins"], "ETH": ["ether", "ethereum"], "USDT": ["tether"], "DOGE": ["dogecoin"], "LTC": ["litecoin"],
             "SOL": ["solana"], "XRP": ["ripple"], "ADA": ["cardano"], "DOT": ["polkadot"], "XLM": ["stellar"],
+            "XMR": ["monero"], "ZEC": ["zcash"], "LINK": ["chainlink"], "AVAX": ["avalanche"], "ARB": ["arbitrum"], "HYPE": ["hyperliquid"],
             "XAU": ["gold"], "XAG": ["silver"], "XPT": ["platinum"], "XPD": ["palladium"],
         ]
         for (code, words) in more.merging(others, uniquingKeysWith: { $0 + $1 }) { for w in words { t[w] = code } }

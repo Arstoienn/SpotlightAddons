@@ -897,7 +897,8 @@ expect("m*c^2", nil)
 do {
     let recorded = Date(timeIntervalSince1970: 1791417751)
     let stamp = Currency.stamp(recorded)
-    Rates.install(["USD": 1, "TWD": 31.5523, "EUR": 0.86, "JPY": 150.2, "BTC": 0.00001, "ETH": 0.0004, "XAU": 1 / 4000.0, "XAG": 1 / 50.0], recorded: recorded, offline: false)
+    Rates.install(["USD": 1, "TWD": 31.5523, "EUR": 0.86, "JPY": 150.2, "BTC": 0.00001, "ETH": 0.0004, "USDT": 1, "XMR": 0.002, "NEAR": 0.5,
+                   "XAU": 1 / 4000.0, "XAG": 1 / 50.0], recorded: recorded, offline: false)
     expect("750 USD to NTD", "= 23,664.23 TWD", "1 USD = 31.5523 TWD")
     expect("750USD=NTD?", "= 23,664.23 TWD", "1 USD = 31.5523 TWD")
     expect("750usd=ntd", "= 23,664.23 TWD", "1 USD = 31.5523 TWD")
@@ -946,6 +947,15 @@ do {
     expect("1 eth to btc", "= 0.025 BTC", "1 ETH = 0.025 BTC")
     expect("1 bitcoin to ntd", "= 3,155,230.00 TWD", "1 BTC = 3155230 TWD")
     expect("1 sol to usd", "No rate", "api.coinbase.com has no rate for SOL.")
+    // Those Coinbase has not, such as Monero, are from Kraken.
+    expect("10usdt to xmr", "= 0.02 XMR", "1 USDT = 0.002 XMR")
+    expect("10 USDT to XMR", "= 0.02 XMR", "1 USDT = 0.002 XMR")
+    expect("1 monero to usd", "= 500.00 USD", "1 XMR = 500 USD")
+    expect("1 xmr to btc", "= 0.005 BTC", "1 XMR = 0.005 BTC")
+    expect("2 near to ntd", "= 126.21 TWD", "1 NEAR = 63.1046 TWD")
+    expect("1 trx to usd", "No rate", "api.kraken.com has no rate for TRX.")
+    expectDetails("1 xmr to btc", "1.00 XMR → BTC", [("Taking the rate", "1 XMR = 0.005 BTC"), ("Multiplying", "1.00 × 0.005 = 0.005 BTC"),
+                                                   ("Hence", "1.00 XMR ≈ 0.005 BTC")])
     // Nothing else is taken for money: units, equations and a name by itself.
     expect("5 km to miles", "= 3.10686 miles", "5 km")
     expect("x=5", nil)
