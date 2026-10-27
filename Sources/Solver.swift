@@ -549,6 +549,13 @@ enum Constants {
 
     static let units = ["g": "m s⁻²", "G": "N m² kg⁻²", "c": "m s⁻¹"]
 
+    // The values each is usually given, to be chosen in the settings rather than typed.
+    static let presets: [String: [(value: Double, label: String)]] = [
+        "g": [(10, "rounded"), (9.8, "two figures"), (9.81, "three figures"), (9.80665, "standard gravity")],
+        "G": [(6.67e-11, "three figures"), (6.6743e-11, "as measured")],
+        "c": [(3.00e8, "three figures"), (299_792_458, "exact")],
+    ]
+
     // A constant of the table with its value: the one typed in the settings, where one was, as g
     // is 10 in many a question; otherwise the booklet's, or the measured one.
     static func chosen(_ name: String) -> (value: Double, text: String)? {

@@ -386,7 +386,8 @@ struct ConstantsSettings: View {
                 ForEach(Array(Constants.table.enumerated()), id: \.offset) { index, row in
                     let isOn = [$g, $bigG, $c][index]
                     let value = Constants.chosen(row.name)?.value ?? 0
-                    ConstantRow(name: row.name, title: row.title, value: value, unit: Text(Constants.units[row.name] ?? ""), isOn: isOn) { typed in
+                    ConstantRow(name: row.name, title: row.title, value: value, unit: Text(Constants.units[row.name] ?? ""), isOn: isOn,
+                                presets: Constants.presets[row.name] ?? []) { typed in
                         let usual = precise ? row.precise.value : row.booklet.value
                         if let typed, typed != usual { UserDefaults.standard.set(typed, forKey: "constantValue." + row.name) }
                         else { UserDefaults.standard.removeObject(forKey: "constantValue." + row.name) }
@@ -446,12 +447,33 @@ private struct ConstantRow: View {
     let unit: Text
     @Binding var isOn: Bool
     var remove: (() -> Void)? = nil
+    var presets: [(value: Double, label: String)] = []
     let commit: (Double?) -> Void
 
     var body: some View {
         HStack(spacing: 12) {
             symbol(name).frame(width: 56, alignment: .leading).help(title ?? name)
-            ValueField(value: value, commit: commit)
+            HStack(spacing: 4) {
+                ValueField(value: value, commit: commit)
+                // The usual values, so that none need be typed: 9.8, 9.81, 10.
+                if !presets.isEmpty {
+                    Menu {
+                        ForEach(presets, id: \.value) { preset in
+                            Button { commit(preset.value) } label: {
+                                let text = "\(Constants.written(preset.value))   \(preset.label)"
+                                if preset.value == value { Label(text, systemImage: "checkmark") } else { Text(text) }
+                            }
+                        }
+                    } label: {
+                        Image(systemName: "chevron.up.chevron.down")
+                    }
+                    .menuStyle(.borderlessButton)
+                    .menuIndicator(.hidden)
+                    .fixedSize()
+                    .help("The usual values of \(name)")
+                }
+            }
+            .frame(width: 136, alignment: .leading)
             unit.foregroundStyle(.secondary).lineLimit(1)
             Spacer()
             if let remove {
@@ -516,7 +538,7 @@ private struct AddConstantRow: View {
         VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: 12) {
                 TextField("", text: $name, prompt: Text("Name")).frame(width: 56)
-                TextField("", text: $value, prompt: Text("Value")).frame(width: 110)
+                TextField("", text: $value, prompt: Text("Value")).frame(width: 110).frame(width: 136, alignment: .leading)
                 TextField("", text: $unit, prompt: Text("Unit"))
                 Button("Add", action: add)
                     .disabled((try? entry.get()) == nil)
