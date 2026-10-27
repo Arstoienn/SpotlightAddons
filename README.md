@@ -43,7 +43,7 @@ Everything is typed into Spotlight's search field. Each row gives what is typed,
 | Scientific notation | `5.97e24`, `1.6E-19`, `3e8*2` | the same |
 | Grouped digits | `1,000+250` | |
 | Money | `$12.50*3`, `€10+5` | |
-| Constants | `pi`, `π`, `e^2`; `g`, `G`, `c` when another letter is the unknown | `\pi`, `e^{2}` |
+| Constants | `pi`, `π`, `e^2`; `g`, `G`, `c` and constants of your own when another letter is the unknown | `\pi`, `e^{2}` |
 | Degrees and radians | `sin(30°)`, `sin(x deg)`, `sin(x rad)`; radians where nothing is said | `\sin 30^\circ` |
 | Rounding | `floor(3.7)`, `ceil(3.2)`, `round(3.14159,2)`, `trunc(3.9)`, `frac(3.75)`, `sign(-5)` | `\lfloor 3.7 \rfloor`, `\lceil 3.2 \rceil` |
 | Size | `abs(-5)`, `\|3-7\|` | `\left\| 3-7 \right\|`, `\lvert x \rvert` |
@@ -149,12 +149,15 @@ ticker, and metals from gold-api.com. Nothing is sent to them but the request: n
 
 - The unknown is the one letter in an equation. Capitals are letters of their own: `G` is not `g`, and `E`
   is a letter where `e` is Euler's number. So is a letter with a subscript, `F_n` or `v_0`.
-- `theta`, `omega`, `lambda`, `alpha`, `beta`, `phi`, `rho`, `tau` and `mu` are each one unknown, shown as θ, ω
+- `theta`, `omega`, `lambda`, `alpha`, `beta`, `phi`, `rho`, `tau`, `mu`, `epsilon` and `sigma` are each one unknown, shown as θ, ω
   and so on; pasted as themselves or as `\theta` they are too.
 - `g`, `G` and `c` are the physical constants (9.8, 6.67×10⁻¹¹ and 3.00×10⁸) whenever the equation has
   another letter to solve for: `h=0.5g*3^2` gives `h ≈ 44.1` and `x=2g` gives 19.6, while `2g=10` is still solved
-  for `g`. The card says what was taken, and the working writes it in.
-- A `!` before one of these letters reads it the other way round: `9e16=!c^2` is True, where `9e16=c^2` is
+  for `g`. The card says what was taken, and the working writes it in. Each value may be typed over in the
+  settings: g as 10, as many a question gives it.
+- Constants of your own, added in the settings, are read the same way: with `R` as 8.314,
+  `PV=nRT, P=2, V=3, n=1` gives `T ≈ 0.721674`. A name is one letter, which may have a subscript: `R`, `k_e`, `mu_0`.
+- A `!` before one of these letters, or one of your own (`!k_e`), reads it the other way round: `9e16=!c^2` is True, where `9e16=c^2` is
   solved for `c`; and `c=2*!g` is solved for `g`, where `c=2g` takes `g` as 9.8.
 - Implicit multiplication reads as on paper: `2n`, `2(x+1)`, `(x+1)(x-1)`, `3sin x`. A function written
   without brackets is of what follows it, `sin 2x` of 2x; `sin^2 x` is its square, and `tan^-1 x`, as
@@ -277,8 +280,8 @@ looked at is the one it opens on.
   answered as a decimal first (`10/4` gives 2.5, with 5/2 beneath: the default) or as a fraction first.
 - **Cards**: what brings up a card: arithmetic with no equals sign, a number by itself, a path to a file, units
   and number bases (and whether a base is marked 0x, 0b, 0o), inequalities, algebra by name, matrices and vectors.
-- **Constants**: g, G and c each on or off, and their values as a data booklet rounds them (9.8, 6.67×10⁻¹¹,
-  3.00×10⁸) or as measured (9.80665, 6.6743×10⁻¹¹, 299 792 458).
+- **Constants**: one list. g, G and c, each with its value, which may be typed over (g as 10), and a switch; under
+  them, constants of your own, added on the last row with a name, a value and a unit.
 - **Clipboard**: whether the copy button gives a decimal or the answer as shown, whether a line of the panel copies
   as LaTeX or as it is shown, and whether Return copies while the pointer is on the card.
 

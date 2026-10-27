@@ -532,8 +532,8 @@ func factorial(_ v: Double) -> Double {
 // The Greek letters most often an unknown, typed by name, pasted as themselves, or as LaTeX has
 // them: 2omega = 10 is solved for ω.
 enum Greek {
-    static let names = ["theta": "θ", "omega": "ω", "lambda": "λ", "alpha": "α", "beta": "β", "phi": "φ", "rho": "ρ", "tau": "τ", "mu": "μ"]
-    static let symbols = "θωλαβφρτμ"
+    static let names = ["theta": "θ", "omega": "ω", "lambda": "λ", "alpha": "α", "beta": "β", "phi": "φ", "rho": "ρ", "tau": "τ", "mu": "μ", "epsilon": "ε", "sigma": "σ"]
+    static let symbols = "θωλαβφρτμεσ"
 }
 
 // The physical constants whose symbols are typed as they stand. A letter is one of these only
@@ -547,10 +547,81 @@ enum Constants {
         ("c", "Speed of light in vacuum", (3.00e8, "3.00×10⁸ m s⁻¹"), (299_792_458, "299 792 458 m s⁻¹")),
     ]
 
-    // Those switched on in the settings, with the values chosen there.
+    static let units = ["g": "m s⁻²", "G": "N m² kg⁻²", "c": "m s⁻¹"]
+
+    // A constant of the table with its value: the one typed in the settings, where one was, as g
+    // is 10 in many a question; otherwise the booklet's, or the measured one.
+    static func chosen(_ name: String) -> (value: Double, text: String)? {
+        guard let row = table.first(where: { $0.name == name }) else { return nil }
+        if let v = Options.value(name) { return (v, written(v) + " " + (units[name] ?? "")) }
+        return Options.precise ? row.precise : row.booklet
+    }
+
+    // A value as the booklet writes a constant, in standard form where it is very large or small:
+    // 1.26×10⁻⁶ and not 0.00000125664.
+    static func written(_ value: Double) -> String {
+        let size = abs(value), shown = decimal(value)
+        guard size != 0, size < 1e-3 || size >= 1e6, !shown.contains("×") else { return shown }
+        let parts = String(format: "%.\(Options.figures - 1)e", value).split(separator: "e")
+        var mantissa = String(parts[0])
+        while mantissa.hasSuffix("0") { mantissa.removeLast() }
+        if mantissa.hasSuffix(".") { mantissa.removeLast() }
+        let power = Int(parts[1]) ?? 0
+        return "\(mantissa)×10\(power < 0 ? "⁻" : "")\(superscript(abs(power)))".replacingOccurrences(of: "-", with: "−")
+    }
+
+    // A constant added in the settings: k_e = 8.99×10⁹ N m² C⁻².
+    struct Custom: Codable, Equatable, Identifiable {
+        var name: String
+        var value: Double
+        var unit: String = ""
+        var off: Bool? = nil   // switched off in the settings, and kept
+
+        var id: String { name }
+        var text: String { unit.isEmpty ? written(value) : written(value) + " " + unit }
+    }
+
+    // Those added in the settings, kept as JSON; read again only when that has changed.
+    private static var read: (raw: String, list: [Custom]) = ("", [])
+    static var custom: [Custom] {
+        get {
+            let raw = UserDefaults.standard.string(forKey: "customConstants") ?? ""
+            if raw != read.raw { read = (raw, (try? JSONDecoder().decode([Custom].self, from: Data(raw.utf8))) ?? []) }
+            return read.list
+        }
+        set {
+            guard let data = try? JSONEncoder().encode(newValue) else { return }
+            UserDefaults.standard.set(String(decoding: data, as: UTF8.self), forKey: "customConstants")
+        }
+    }
+
+    // A value typed in the settings: a number, or a sum of numbers, 6.022*10^23.
+    static func number(_ typed: String) -> Double? {
+        guard let expr = try? Parser.constant(typed.trimmingCharacters(in: .whitespaces), physical: false), !expr.hasUnknown,
+              case let v = expr.eval(0), v.isFinite else { return nil }
+        return v
+    }
+
+    // The letter a name typed in the settings stands for, as the parser reads it: mu_0 is μ_0.
+    // Why it cannot be a constant, where it cannot.
+    static func letter(_ typed: String) -> Result<String, Refusal> {
+        let typed = typed.trimmingCharacters(in: .whitespaces)
+        guard !typed.isEmpty else { return .failure(Refusal("A constant needs a name.")) }
+        guard let tokens = try? Parser.tokenize(typed), tokens.count == 1, case .letter(let name) = tokens[0] else {
+            return .failure(Refusal("A name is one letter, which may have a subscript: R, k_e, mu_0."))
+        }
+        if name == "e" || name == "i" { return .failure(Refusal("\(name) already stands for a number.")) }
+        if table.contains(where: { $0.name == name }) { return .failure(Refusal("\(name) is one of the constants above.")) }
+        if ["x", "y", "z"].contains(name) { return .failure(Refusal("\(name) is kept for an unknown.")) }
+        return .success(name)
+    }
+    struct Refusal: Error { let reason: String; init(_ reason: String) { self.reason = reason } }
+
+    // Those switched on in the settings, with the values chosen there, and those added there.
     static var all: [String: (value: Double, text: String)] {
         var out: [String: (value: Double, text: String)] = [:]
-        for row in table where Options.constant(row.name) { out[row.name] = Options.precise ? row.precise : row.booklet }
+        for row in table where Options.constant(row.name) { out[row.name] = chosen(row.name) }
+        for c in custom where c.off != true && out[c.name] == nil { out[c.name] = (c.value, c.text) }
         return out
     }
 
@@ -580,6 +651,8 @@ enum Options {
     static var precise: Bool { flag("precise", false) }          // constants as they are known, not as the booklet rounds them
     static var copyAsShown: Bool { flag("copyAsShown", false) }  // 5/2 on the pasteboard, where it would have been 2.5
     static func constant(_ name: String) -> Bool { flag("constant." + name, true) }
+    // The value typed in the settings for g, G or c, where one was.
+    static func value(_ name: String) -> Double? { UserDefaults.standard.object(forKey: "constantValue." + name) as? Double }
 
     // How many significant figures a decimal is given to: six, unless chosen otherwise.
     static var figures: Int {
@@ -794,12 +867,12 @@ enum Parser {
             } else if c == "°" {
                 tokens.append(.symbol(c))
                 i = s.index(after: i)
-            } else if c == "!", !endsOperand(tokens), let next = s[s.index(after: i)...].first, Constants.all[String(next)] != nil {
+            } else if c == "!", !endsOperand(tokens), let (name, length) = markedConstant(s[s.index(after: i)...]) {
                 // After a number or a bracket ! is a factorial. With nothing before it to be
                 // one of, it marks the letter after it to be read the other way round: 9e16 = !c^2
                 // is about the speed of light, where 9e16 = c^2 would be solved for c.
-                tokens.append(.marked(String(next)))
-                i = s.index(i, offsetBy: 2)
+                tokens.append(.marked(name))
+                i = s.index(i, offsetBy: 1 + length)
             } else if "+-*/^()=,!%".contains(c) || Binary.table[c] != nil {
                 tokens.append(.symbol(c))
                 i = s.index(after: i)
@@ -808,6 +881,22 @@ enum Parser {
             }
         }
         return tokens
+    }
+
+    // The constant that begins what follows a !, and how many characters it takes: k_e, or
+    // mu_0 for μ_0. The longest there is, so that !k_e is not k.
+    static func markedConstant(_ rest: Substring) -> (name: String, length: Int)? {
+        var best: (name: String, length: Int)?
+        for name in Constants.all.keys {
+            var spellings = [name]
+            if let (word, symbol) = Greek.names.first(where: { name.hasPrefix($0.value) }) { spellings.append(word + name.dropFirst(symbol.count)) }
+            for spelling in spellings where rest.hasPrefix(spelling) && spelling.count > (best?.length ?? 0) {
+                // A subscript is read to its end: !k_e is not a constant where only k_el is.
+                if spelling.contains("_"), let after = rest.dropFirst(spelling.count).first, after.isASCII, after.isLetter || after.isNumber { continue }
+                best = (name, spelling.count)
+            }
+        }
+        return best
     }
 
     // F_n and v_0: a subscript makes the letter before it a letter of its own, F_n, not F. It is

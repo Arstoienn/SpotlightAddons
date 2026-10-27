@@ -198,7 +198,7 @@ enum Prefs {
 private let defaultSettings: [String: Any] = [
     "degrees": false, "figures": 6, "exact": true, "decimalFirst": true, "arithmetic": true, "numberFacts": true, "paths": true, "conversions": true,
     "basePrefix": false, "inequalities": true, "algebra": true, "matrices": true, "constant.g": true, "constant.G": true,
-    "constant.c": true, "precise": false, "copyAsShown": false, "copyLatex": true, "returnCopies": true, "log": false, "welcome": true,
+    "constant.c": true, "precise": false, "constantValue.g": 0.0, "constantValue.G": 0.0, "constantValue.c": 0.0, "copyAsShown": false, "copyLatex": true, "returnCopies": true, "log": false, "welcome": true,
 ]
 
 // What a setting does, under it.
@@ -363,42 +363,178 @@ struct CardsSettings: View {
     }
 }
 
+// Every constant on one row: its letter, its value, which may be typed over, its unit, and a
+// switch. g is 10 by typing 10; a constant of one's own is added on the last row.
 struct ConstantsSettings: View {
     @AppStorage("constant.g") private var g = true
     @AppStorage("constant.G") private var bigG = true
     @AppStorage("constant.c") private var c = true
+    // Read only to be told of a change: the values are Options.value and Constants.custom.
+    @AppStorage("constantValue.g") private var gValue = 0.0
+    @AppStorage("constantValue.G") private var bigGValue = 0.0
+    @AppStorage("constantValue.c") private var cValue = 0.0
+    @AppStorage("customConstants") private var customRaw = ""
     @AppStorage("precise") private var precise = false
 
     // What each constant is shown working in.
-    private static let examples = [["h=0.5g*3^2", "2g=10"], ["F=G*5*6/2^2"], ["9e16=!c^2"]]
+    private static let examples = ["g": ["h=0.5g*3^2", "2g=10"], "G": ["F=G*5*6/2^2"], "c": ["9e16=!c^2"]]
 
     var body: some View {
+        let _ = (gValue, bigGValue, cValue, customRaw, precise)
         Form {
-            Section("Which letters are constants") {
+            Section {
                 ForEach(Array(Constants.table.enumerated()), id: \.offset) { index, row in
                     let isOn = [$g, $bigG, $c][index]
-                    Toggle(isOn: isOn) {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("\(row.name)   \(row.title)")
-                            Text(precise ? row.precise.text : row.booklet.text).font(.callout).foregroundStyle(.secondary)
-                        }
+                    let value = Constants.chosen(row.name)?.value ?? 0
+                    ConstantRow(name: row.name, title: row.title, value: value, unit: Text(Constants.units[row.name] ?? ""), isOn: isOn) { typed in
+                        let usual = precise ? row.precise.value : row.booklet.value
+                        if let typed, typed != usual { UserDefaults.standard.set(typed, forKey: "constantValue." + row.name) }
+                        else { UserDefaults.standard.removeObject(forKey: "constantValue." + row.name) }
                     }
-                    .feel(isOn.wrappedValue, showing: Self.examples[min(index, Self.examples.count - 1)])
+                    .feel(value, showing: Self.examples[row.name] ?? [])
+                    .feel(isOn.wrappedValue, showing: Self.examples[row.name] ?? [])
                 }
-                note("A letter is its constant only where the equation has another letter to solve for: h = 0.5g·3² uses g, and 2g = 10 is solved for g. A ! before the letter turns that round: 9e16 = !c² is about the speed of light. Switch one off to keep its letter always an unknown.")
-            }
-            Section("Values") {
-                Picker("Values", selection: $precise) {
-                    Text("Rounded").tag(false)
-                    Text("As measured").tag(true)
+                ForEach(Constants.custom) { constant in
+                    let isOn = Binding(get: { constant.off != true }, set: { on in update(constant.name) { $0.off = on ? nil : true } })
+                    ConstantRow(name: constant.name, title: nil, value: constant.value, unit: Text(constant.unit), isOn: isOn,
+                                remove: { Constants.custom.removeAll { $0.name == constant.name } }) { typed in
+                        if let typed { update(constant.name) { $0.value = typed } }
+                    }
+                    .feel(constant, showing: ["x=2*\(constant.name)"])
                 }
-                .pickerStyle(.segmented)
-                .feel(precise, showing: ["F=G*5*6/2^2"])
-                note(precise ? "The values as they are known, to more figures than the booklet gives: use these for a real quantity."
-                             : "The values as a data booklet rounds them, to three figures or so, which is what a mark scheme works from.")
+                AddConstantRow()
+            } header: {
+                Text("Constants")
+            } footer: {
+                note("A letter is taken as its constant only where the equation has another letter to be solved for: h = 0.5g·3² uses g, whereas 2g = 10 is solved for g. A ! before the letter reverses this. Clearing the value of g, G or c restores the usual one.")
             }
         }
         .formStyle(.grouped)
+    }
+
+    private func update(_ name: String, _ change: (inout Constants.Custom) -> Void) {
+        var list = Constants.custom
+        guard let at = list.firstIndex(where: { $0.name == name }) else { return }
+        change(&list[at])
+        Constants.custom = list
+    }
+}
+
+// A letter as it is written, its subscript lowered: k_e.
+private func symbol(_ name: String) -> Text {
+    let parts = name.split(separator: "_", maxSplits: 1).map(String.init)
+    let letter = Text(parts[0]).font(.system(.body, design: .serif).italic())
+    guard parts.count == 2 else { return letter }
+    return letter + Text(parts[1]).font(.system(.caption, design: .serif)).baselineOffset(-4)
+}
+
+// A value as it may be typed again: 6.67e-11, 3e8, 9.8.
+private func typable(_ v: Double) -> String {
+    let size = abs(v)
+    guard size != 0, size < 1e-3 || size >= 1e6 else { return String(format: "%.10g", v) }
+    let parts = String(format: "%.9e", v).split(separator: "e")
+    var mantissa = String(parts[0])
+    while mantissa.hasSuffix("0") { mantissa.removeLast() }
+    if mantissa.hasSuffix(".") { mantissa.removeLast() }
+    return mantissa + "e\(Int(parts[1]) ?? 0)"
+}
+
+private struct ConstantRow: View {
+    let name: String
+    let title: String?
+    let value: Double
+    let unit: Text
+    @Binding var isOn: Bool
+    var remove: (() -> Void)? = nil
+    let commit: (Double?) -> Void
+
+    var body: some View {
+        HStack(spacing: 12) {
+            symbol(name).frame(width: 56, alignment: .leading).help(title ?? name)
+            ValueField(value: value, commit: commit)
+            unit.foregroundStyle(.secondary).lineLimit(1)
+            Spacer()
+            if let remove {
+                Button(action: remove) { Image(systemName: "minus.circle") }
+                    .buttonStyle(.borderless)
+                    .help("Removes \(name)")
+            }
+            Toggle("", isOn: $isOn).labelsHidden().toggleStyle(.switch).controlSize(.small)
+        }
+        .opacity(isOn ? 1 : 0.5)
+    }
+}
+
+// The value of a constant, kept when Return is pressed or the field is left. What is not a
+// number is put back as it was; nothing at all is passed on as nil.
+private struct ValueField: View {
+    let value: Double
+    let commit: (Double?) -> Void
+    @State private var text = ""
+    @FocusState private var focused: Bool
+
+    var body: some View {
+        TextField("", text: $text)
+            .labelsHidden()
+            .textFieldStyle(.roundedBorder)
+            .multilineTextAlignment(.leading)
+            .frame(width: 110)
+            .focused($focused)
+            .onAppear { text = typable(value) }
+            .onChange(of: value) { if !focused { text = typable(value) } }
+            .onChange(of: focused) { _, now in if !now { save() } }
+            .onSubmit(save)
+    }
+
+    private func save() {
+        let typed = text.trimmingCharacters(in: .whitespaces)
+        if typed.isEmpty { commit(nil) } else if let v = Constants.number(typed) { commit(v) }
+        text = typable(value)
+    }
+}
+
+// The last row: a name, a value and a unit, and Add.
+private struct AddConstantRow: View {
+    @State private var name = ""
+    @State private var value = ""
+    @State private var unit = ""
+
+    // The constant the fields describe, or why they do not describe one yet.
+    private var entry: Result<Constants.Custom, Constants.Refusal> {
+        let letter: String
+        switch Constants.letter(name) {
+        case .success(let l): letter = l
+        case .failure(let refusal): return .failure(refusal)
+        }
+        if Constants.custom.contains(where: { $0.name == letter }) { return .failure(Constants.Refusal("\(letter) is already in the list.")) }
+        guard !value.trimmingCharacters(in: .whitespaces).isEmpty else { return .failure(Constants.Refusal("")) }
+        guard let v = Constants.number(value) else { return .failure(Constants.Refusal("The value is to be a number: 8.99e9, 6.022*10^23.")) }
+        return .success(Constants.Custom(name: letter, value: v, unit: unit.trimmingCharacters(in: .whitespaces)))
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack(spacing: 12) {
+                TextField("", text: $name, prompt: Text("Name")).frame(width: 56)
+                TextField("", text: $value, prompt: Text("Value")).frame(width: 110)
+                TextField("", text: $unit, prompt: Text("Unit"))
+                Button("Add", action: add)
+                    .disabled((try? entry.get()) == nil)
+            }
+            .labelsHidden()
+            .textFieldStyle(.roundedBorder)
+            .multilineTextAlignment(.leading)
+            .onSubmit(add)
+            if !name.isEmpty, case .failure(let refusal) = entry, !refusal.reason.isEmpty {
+                Text(refusal.reason).font(.callout).foregroundStyle(.secondary)
+            }
+        }
+    }
+
+    private func add() {
+        guard case .success(let constant) = entry else { return }
+        Constants.custom.append(constant)
+        (name, value, unit) = ("", "", "")
     }
 }
 

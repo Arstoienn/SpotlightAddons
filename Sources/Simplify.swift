@@ -259,7 +259,7 @@ struct Rearrangement {
 
     // "…, x=?" or "… x=?" after an equation names the letter wanted.
     static func asked(_ input: String) -> (equation: String, letter: String)? {
-        guard let match = input.range(of: "[,;\\s]+[A-Za-z_0-9θωλαβφρτμ]+\\s*=\\s*\\?\\s*$", options: .regularExpression) else { return nil }
+        guard let match = input.range(of: "[,;\\s]+[A-Za-z_0-9θωλαβφρτμεσ]+\\s*=\\s*\\?\\s*$", options: .regularExpression) else { return nil }
         let name = input[match].trimmingCharacters(in: CharacterSet(charactersIn: ",; ?=").union(.whitespaces))
         guard let token = try? Parser.tokenize(name), token.count == 1, case .letter(let letter) = token[0] else { return nil }
         return (String(input[..<match.lowerBound]), letter)

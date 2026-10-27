@@ -20,5 +20,7 @@ pkill -x SpotlightPlus || true
 pkill -x SpotlightSolve || true
 rm -rf "/Applications/Spotlight Add-ons.app" "/Applications/Spotlight Plus.app" "/Applications/Spotlight Solve.app"
 cp -R "$app" /Applications/
+# Left in build/, the copy would be found by Spotlight too, and listed beside the installed one.
+rm -rf "$app"
 open "/Applications/Spotlight Add-ons.app"
 echo "Installed and started /Applications/Spotlight Add-ons.app (signed with ${identity:-ad hoc})"

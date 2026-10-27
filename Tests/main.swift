@@ -448,6 +448,55 @@ with("precise", true) {
     expect("x=2g", "x ≈ 19.6133", "Taking g = 9.80665 m s⁻²")
     expect("E=0.002c^2", "E ≈ 1.79751×10¹⁴", "Taking c = 299 792 458 m s⁻¹")
 }
+// A value typed in the settings for g, as 10 is in many a question; the others are as before
+with("constantValue.g", 10.0) {
+    expect("x=2g", "x = 20", "Taking g = 10 m s⁻²")
+    expect("h=0.5g*3^2", "h = 45", "Taking g = 10 m s⁻²")
+    expect("20=0.5g*t^2", "t = ±2", "Taking g = 10 m s⁻²")
+    expect("2g=10", "g = 5")
+    expect("!g=10", "True", "10 = 10")
+    expect("E=0.002c^2", "E = 1.8×10¹⁴", "Taking c = 3.00×10⁸ m s⁻¹")
+    with("precise", true) { expect("x=2g", "x = 20", "Taking g = 10 m s⁻²") }
+    with("constant.g", false) { expect("x=2g", nil) }
+}
+with("constantValue.g", 9.81) { expect("x=2g", "x ≈ 19.62", "Taking g = 9.81 m s⁻²") }
+with("constantValue.c", 3e8) { expect("E=0.002c^2", "E = 1.8×10¹⁴", "Taking c = 3×10⁸ m s⁻¹") }
+with("constantValue.G", 6.674e-11) { expect("F=G*5*6/2^2", "F = 5.0055×10⁻¹⁰", "Taking G = 6.674×10⁻¹¹ N m² kg⁻²") }
+
+// Constants added in the settings are used as g is
+Constants.custom = [Constants.Custom(name: "R", value: 8.314, unit: "J K⁻¹ mol⁻¹"),
+                    Constants.Custom(name: "k_e", value: 8.99e9, unit: "N m² C⁻²"),
+                    Constants.Custom(name: "μ_0", value: 4e-7 * .pi, unit: "T m A⁻¹"),
+                    Constants.Custom(name: "h", value: 6.63e-34)]
+expect("PV=nRT, P=2, V=3, n=1", "T ≈ 0.721674", "Taking P = 2, V = 3, n = 1, R = 8.314 J K⁻¹ mol⁻¹")
+expect("F=k_e*2*3/4^2", "F = 3371250000", "Taking k_e = 8.99×10⁹ N m² C⁻²")
+expect("B=mu_0*2/(2pi*0.1)", "B ≈ 0.000004", "Taking μ_0 = 1.25664×10⁻⁶ T m A⁻¹")
+expect("E=h*5e14", "E = 3.315×10⁻¹⁹", "Taking h = 6.63×10⁻³⁴")
+expect("2R=10", "R = 5")
+expect("!R=8.314", "True", "8.314 = 8.314")
+expect("8.314=!R*x", nil)
+expect("R=2*!k_e", "k_e ≈ 4.157", "Taking R = 8.314 J K⁻¹ mol⁻¹")
+expect("R=2*!mu_0", "μ_0 ≈ 4.157", approxAny: true)
+expect("x=2k_e", "x = 1.798×10¹⁰", "Taking k_e = 8.99×10⁹ N m² C⁻²")
+expect("x=2k", nil)
+Constants.custom[0].off = true
+expect("x=2R", nil)
+expect("2R=10", "R = 5")
+Constants.custom[0].off = nil
+for (typed, want) in [("R", "R"), ("k_e", "k_e"), ("mu_0", "μ_0"), ("epsilon_0", "ε_0"), ("sigma", "σ"), (" N_A ", "N_A")] {
+    if (try? Constants.letter(typed).get()) != want { failures += 1; print("FAIL letter \(typed)") }
+}
+for (typed, want) in [("8.314", 8.314), ("6.022*10^23", 6.022e23), ("8.99e9", 8.99e9), ("1/(4pi*8.85e-12)", 1 / (4 * .pi * 8.85e-12))] {
+    if abs((Constants.number(typed) ?? 0) / want - 1) > 1e-12 { failures += 1; print("FAIL number \(typed)") }
+}
+for typed in ["", "x", "R", "2+"] where Constants.number(typed) != nil { failures += 1; print("FAIL number \(typed) should be refused") }
+for typed in ["", "ab", "e", "i", "g", "G", "c", "x", "pi", "sin", "2", "k_"] {
+    if (try? Constants.letter(typed).get()) != nil { failures += 1; print("FAIL letter \(typed) should be refused") }
+}
+Constants.custom = []
+expect("x=2R", nil)
+expect("h=0.5g*3^2", "h ≈ 44.1", "Taking g = 9.8 m s⁻²")
+
 with("figures", 3) {
     expect("x=1/3", "x = 1/3", "≈ 0.333")
     expect("2n^2=10", "n = ±√5", "≈ ±2.24")

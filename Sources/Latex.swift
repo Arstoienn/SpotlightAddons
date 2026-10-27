@@ -43,7 +43,7 @@ enum Latex {
         "displaystyle": "", "limits": "", "nolimits": "", "textstyle": "",
         "approx": "≈", "ne": "≠", "neq": "≠", "le": "≤", "leq": "≤", "ge": "≥", "geq": "≥",
         "theta": "θ", "omega": "ω", "lambda": "λ", "alpha": "α", "beta": "β", "phi": "φ", "varphi": "φ",
-        "rho": "ρ", "tau": "τ", "mu": "μ",
+        "rho": "ρ", "tau": "τ", "mu": "μ", "epsilon": "ε", "varepsilon": "ε", "sigma": "σ",
         // spacing
         "quad": " ", "qquad": " ", "enspace": " ", "thinspace": " ", "medspace": " ", "thickspace": " ",
     ]
