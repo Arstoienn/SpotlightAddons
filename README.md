@@ -71,7 +71,8 @@ Everything is typed into Spotlight's search field. Each row gives what is typed,
 | In a range | `sin(x)=sqrt(3)/2, 0°<=x<360°`, `cos(x)=1/2, x in [0,2π)` (or `x∈[0,2π)`), `x^2=4, x>0`; degrees where the range is in them | `\sin x=\frac{\sqrt{3}}{2},\quad 0^\circ\le x<360^\circ`, `x\in[0,2\pi)` |
 | Systems | `x+y=3, x-y=1`; nonlinear ones too | `\begin{cases} x+y=3 \\ x-y=1 \end{cases}` |
 | A sequence from some terms | nothing is said until it is asked: `u_1=12, u_5=29, d` gives the common difference, `…, r` the common ratio (`±√2`, `±(29/12)^(1/4)`), and `u_1=12, u_5=29, u_10=?` or `S_5=?` a term or a sum; `u_1=2, d=3, u_10=?`, `u_1=2, r=3, S_5=?`. A slip for the subscript, `u+1`, `u1`, is read as `u_1` beside `u_5`. The panel draws the terms | `u_{1}=12, u_{5}=29, d` |
-| A formula with values given | `v=u+at, u=2, a=3, t=4`, `E=1/2*m*v^2, m=2, v=3`, `PV=nRT, P=2, V=3, n=1, R=8.314` | |
+| A formula with values given | `v=u+at, u=2, a=3, t=4`, `E=1/2*m*v^2, m=2, v=3`, `PV=nRT, P=2, V=3, n=1, R=8.314`; an angle keeps its unit, `12=1.8+4vcos(theta), theta=30°` (or `30deg`, `pi/6`), and a bare `theta=30` is in radians unless degrees are chosen, the card saying which | |
+| Letters that stand together | one equation in several letters that are only ever multiplied together gives them together: `12=1.8+4vcos(theta)` gives v cos(θ) = 2.55, `0.5mv^2=100` gives mv² = 200 | |
 | A formula turned round | `1/(7b)=11x/y`, `F=ma, a=?`, `F=kq/r^2, r=?` | `\frac{1}{7b}=\frac{11x}{y}, x=?` |
 | Which letter | the unknown is the one letter; `!c` reads c the other way round; Greek names, `theta`, `omega`, …, and subscripts, `F_n`, are letters | `\theta`, `F_{n}` |
 | Inequalities | `x^2>4`, `x^2-4<=0`, `x^3-x>0`, `x^2 != 4`, `\|2x+1\|<3`, `exp(x)>1`; together, `1<x<5`, `x>1 && x<5`, `x<1 or x>5`, `x^2>4 && x<10` | `x^2 \ge 4`, `x \ne 2`, `\left\| x \right\| < 3` |
