@@ -93,7 +93,13 @@ extension Solver {
         if Evaluation.namesNumber(input) { return nil }
         if let simplification = Simplification.parse(input) { return simplification.details }
         if let trig = TrigSimplification.parse(input) { return trig.details }
-        guard let eq = try? Parser.parse(input) else { return Rearrangement.parse(input, for: asked?.letter)?.details }
+        guard let eq = try? Parser.parse(input) else {
+            return Rearrangement.parse(input, for: asked?.letter)?.details ?? Grouped.parse(input)?.details
+        }
+        return details(of: eq)
+    }
+
+    static func details(of eq: Equation) -> Details {
         let n = eq.unknown
         let (leftMath, rightMath) = (typeset(eq.left, n), typeset(eq.right, n))
         let header = row(leftMath, t(" = "), rightMath)
@@ -970,7 +976,8 @@ func polyMath(_ p: Poly, _ n: String) -> Math {
         var coefficient = magnitude == 1 && k > 0 ? "" : decimal(magnitude)
         if k > 0, coefficient.contains("×") { coefficient += "·" }   // 6.67×10⁻¹¹·x, not run together
         let sign = p[k] < 0 ? (parts.isEmpty ? "−" : " − ") : (parts.isEmpty ? "" : " + ")
-        let power: Math = k == 0 ? t("") : k == 1 ? t(n) : .power(t(n), t("\(k)"))
+        // (v cos(θ))², taken as one unknown, is bracketed.
+        let power: Math = k == 0 ? t("") : k == 1 ? t(n) : .power(Grouped.isGroup(n) ? .group(t(n)) : t(n), t("\(k)"))
         parts += [t(sign + coefficient), power]
     }
     return parts.isEmpty ? t("0") : .row(parts)
@@ -997,7 +1004,8 @@ private func render(_ e: Expr, _ n: String) -> (math: Math, level: Int) {
         let text = decimal(v)
         return (t(text), v < 0 ? 1 : text.contains("×") ? 2 : 4)
     case .unknown:
-        return (t(n), 4)
+        // v cos(θ), taken as one unknown, is bracketed under a power as a product would be.
+        return (t(n), Grouped.isGroup(n) ? 2 : 4)
     case .constant(let name, _):
         return (t(name), 4)
     case .index(let k):

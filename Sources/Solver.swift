@@ -47,7 +47,14 @@ enum Solver {
         if Evaluation.namesNumber(input) { return nil }
         if let simplification = Simplification.parse(input) { return simplification.solution }
         if let trig = TrigSimplification.parse(input) { return trig.solution }
-        guard let equation = try? Parser.parse(input) else { return Rearrangement.parse(input, for: asked?.letter)?.solution }
+        guard let equation = try? Parser.parse(input) else {
+            return Rearrangement.parse(input, for: asked?.letter)?.solution ?? Grouped.parse(input)?.solution
+        }
+        return solve(equation)
+    }
+
+    // One equation in its one unknown, which may stand for several letters together: v cos(θ).
+    static func solve(_ equation: Equation) -> Solution? {
         // "x = 5" is already its own answer. "x_1 = 10" and "theta = 30" are not quite: the card
         // has the name as it is written, x with its subscript and θ.
         let name = equation.unknown
