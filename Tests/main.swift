@@ -947,6 +947,13 @@ expect("e=mc^2, m=50", "E = 4.5×10¹⁸", "Taking m = 50, c = 3.00×10⁸ m s�
 expect("E=mc^2, m=50", "E = 4.5×10¹⁸", "Taking m = 50, c = 3.00×10⁸ m s⁻¹")
 // An angle given is given in its unit: 30° as typed, and 30 by itself in radians unless the
 // settings say degrees, which the card says. theta = 30 gives the θ of the equation.
+// An expression, with no = in it, is worked out with the values given written in.
+expect("mg*1.2+1/2mv^2,m=55,v=0.9", "≈ 669.075", "Taking m = 55, v = 0.9, g = 9.8 m s⁻²")
+expect("1/2mv^2, m=2, v=3", "= 9", "Taking m = 2, v = 3")
+expect("x^2+1, x=3", "= 10", "Taking x = 3")
+expect("x+y, x=2", nil)
+expect("x>1, x=3", nil)
+expectCopy("mg*1.2+1/2mv^2,m=55,v=0.9", "669.075")
 expect("12=1.8+4vcos(theta), theta=30°", "v ≈ 2.94449", "Taking θ = 30°")
 expect("12=1.8+4vcos(θ), θ=30°", "v ≈ 2.94449", "Taking θ = 30°")
 expect("12=1.8+4vcos(theta), theta=pi/6", "v ≈ 2.94449", "Taking θ = π/6")

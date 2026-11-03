@@ -1,7 +1,8 @@
 import Foundation
 
 // A formula with some of its letters given: v = u + at, u = 2, a = 3, t = 4. What is given is
-// written into the formula, and what is left is solved.
+// written into the formula, and what is left is solved; an expression, with no = in it, is
+// worked out.
 struct Given {
     var assignments: [(name: String, value: Double)]
     var substituted: String       // the equation with the numbers written in
@@ -16,6 +17,9 @@ struct Given {
         var equations: [String] = []
         for part in parts {
             let sides = part.split(separator: "=", omittingEmptySubsequences: false).map { $0.trimmingCharacters(in: .whitespaces) }
+            // An expression with no = in it is worked out with the values written in:
+            // mg*1.2 + 1/2mv^2, m = 55, v = 0.9. One with < or > in it is no such expression.
+            if sides.count == 1, part.range(of: "[<>≤≥≠!]", options: .regularExpression) == nil { equations.append(part); continue }
             guard sides.count == 2 else { return nil }
             if sides[0].range(of: "^[A-Za-zα-ωθ][A-Za-z0-9]*(_[A-Za-z0-9]+)?$", options: .regularExpression) != nil,
                let value = (try? Parser.constant(sides[1], physical: true))?.eval(0), value.isFinite,
