@@ -107,7 +107,7 @@ each of a list: `mean(1,2,3,4)` or `mean([1,2,3,4])`; `quartile([…],1)`, `perc
 `1 atm to psi`: length, mass, volume, time, speed, area, data, energy, power, pressure, force, angle,
 frequency and temperature. `255 in hex` (FF), `3 in binary` (11), `255 to octal`, `255 in base 7`, `hex(255)`,
 `bin(10)`, `oct(64)`: the same number written in base 16, 2, 8 or another; the prefixes 0x, 0b, 0o are only
-added where the setting for them is on, and are always understood when typed (`0xFF + 1`). Sums of quantities, `5 km + 300 m`, `5 ft 10 in`, `1 h 30 min to s`. Other forms of a number,
+added where the setting for them is on, and are always understood when typed (`0xFF + 1`). Sums of quantities, `5 km + 300 m`, `5 ft 10 in`, `1 h 30 min to s`. A height in feet and inches, `5'7` (in metres), `5'7" to cm`, `6'`. Other forms of a number,
 `0.75 to fraction`, `1/3 to decimal`, `12345 to scientific`, `0.25 to percent`, `2024 to roman`, `MCMXCIV to number`. In LaTeX, `5\,\mathrm{km} \text{ to } \mathrm{mi}`.
 
 ### Money

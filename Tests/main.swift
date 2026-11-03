@@ -870,6 +870,14 @@ for (typed, want) in [("v=u+at, u=2, a=3, t=4", "v = 14"), ("s=ut+1/2at^2, u=0, 
     let got = Solver.solve(typed)?.exact
     if let want, got != want { failures += 1; print("FAIL \(typed)\n  want \(want)\n  got  \(got ?? "nil")") }
 }
+// Feet and inches as a height is written; ′ and ″ are still minutes and seconds of arc
+for (typed, want) in [("5'7", "= 1.7018 m"), ("5'7\"", "= 1.7018 m"), ("5' 7\" to cm", "= 170.18 cm"), ("5’7”", "= 1.7018 m"), ("5'7 in", "= 1.7018 m"),
+                      ("5'7 in cm", "= 170.18 cm"), ("5'7 to meters", "= 1.7018 meters"), ("6'", "= 1.8288 m"), ("6' to in", "= 72 in"), ("5'10.5\" to cm", "= 179.07 cm"),
+                      ("5'7 to kg", nil)] as [(String, String?)] {
+    let got = Solver.solve(typed)?.exact
+    if got != want { failures += 1; print("FAIL \(typed)\n  want \(want ?? "nil")\n  got  \(got ?? "nil")") }
+}
+if Solver.copy("5'7") != "1.7018" { failures += 1; print("FAIL copy of 5'7: \(Solver.copy("5'7") ?? "nil")") }
 if Solver.copy("2^64") != "18446744073709551616" { failures += 1; print("FAIL copy of a big integer: \(Solver.copy("2^64") ?? "nil")") }
 
 // Trigonometric identities

@@ -21,6 +21,7 @@ struct Conversion {
         if let base = Bases.parse(text) { return base }
         if let money = Currency.parse(text) { return money }
         if let form = NumberForms.parse(text) { return form }
+        if let height = Units.parseFeet(text) { return height }
         if let units = Units.parse(text) { return units }
         return Units.parseSum(text, target: nil)
     }
@@ -304,6 +305,20 @@ enum Units {
         }
         d.steps.append(Step(label: "Adding", math: t("= \(decimal(value)) \(chosen.name)")))
         return Conversion(value: value, text: "= \(decimal(value)) \(chosen.name)", approx: written, details: d)
+    }
+
+    // 5'7, 5'7", 5' 7 in and 5': feet and inches as a height is written, read as 5 ft 7 in, and in
+    // metres where nothing else is asked. ′ and ″ stay minutes and seconds of arc.
+    static func parseFeet(_ text: String) -> Conversion? {
+        let pattern = "^([0-9]+(?:\\.[0-9]+)?)\\s*['’]\\s*(?:([0-9]+(?:\\.[0-9]+)?)\\s*(?:\"|”|''|’’|inches|inch|in)?)?\\s*(?:(?:to|in|into|as|->|→|=>)\\s*(\\S.*))?$"
+        guard let regex = try? NSRegularExpression(pattern: pattern, options: .caseInsensitive) else { return nil }
+        let ns = text as NSString
+        guard let m = regex.firstMatch(in: text, range: NSRange(location: 0, length: ns.length)) else { return nil }
+        func group(_ i: Int) -> String? { m.range(at: i).location == NSNotFound ? nil : ns.substring(with: m.range(at: i)) }
+        let written = "\(group(1)!) ft" + (group(2).map { " \($0) in" } ?? "")
+        let target = group(3)?.trimmingCharacters(in: .whitespaces) ?? "m"
+        // One quantity alone is no sum, so it goes the way 5 ft to m would.
+        return group(2) == nil ? parse("\(written) to \(target)") : parseSum(written, target: target)
     }
 
     // Whether it names a unit, or a temperature scale.
