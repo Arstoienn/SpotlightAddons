@@ -345,7 +345,7 @@ struct DetailContent: View {
                 section("Working", index: 0) {
                     CopyRow(copy: LineCopy(d.equation)) {
                         labelled("Input") {
-                            MathText(math: d.equation, size: 19)
+                            workingText(d.equation, size: 19)
                             ForEach(answer.notes, id: \.self) { note in
                                 Text(note).font(.system(size: 13)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                             }
@@ -355,7 +355,7 @@ struct DetailContent: View {
                     ForEach(Array(working.steps.enumerated()), id: \.offset) { i, step in
                         CopyRow(copy: step.math.map { LineCopy($0) }) {
                             labelled("\(i + 1). \(step.label)") {
-                                if let math = step.math { MathText(math: math, size: 19) }
+                                if let math = step.math { workingText(math, size: 19) }
                                 if let note = step.note {
                                     Text(subscripted(note, size: 13)).font(.system(size: 13)).foregroundStyle(.secondary)
                                         .fixedSize(horizontal: false, vertical: true)
@@ -383,7 +383,10 @@ struct DetailContent: View {
                             // The answer larger than the working, unless it is a long one, which at that size
                             // would be a term to a line: then the size of the working.
                             let long = Typesetter.box(solution, 26).width > 900
-                            CopyRow(copy: LineCopy(solution, whole: d.whole)) { MathText(math: solution, size: d.whole != nil ? 15 : long ? 19 : 26) }
+                            let size: CGFloat = isAstronomy ? 19 : d.whole != nil ? 15 : long ? 19 : 26
+                            CopyRow(copy: LineCopy(solution, whole: d.whole)) {
+                                workingText(solution, size: size)
+                            }
                         }
                     }
                     if let note = working.solutionNote {
@@ -408,8 +411,16 @@ struct DetailContent: View {
                             .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(.quaternary.opacity(0.5)))
                     }
                 }
+                if let diagram = d.diagram {
+                    section(diagram.title, index: 2) {
+                        AstroDiagramView(diagram: diagram)
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 14)
+                            .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(.quaternary.opacity(0.5)))
+                    }
+                }
                 if let graph = d.graph {
-                    section("Graph", index: 2) {
+                    section("Graph", index: 3) {
                         Plot(graph: graph)
                             .padding(.horizontal, 14)
                             .padding(.vertical, 14)
@@ -447,6 +458,21 @@ struct DetailContent: View {
         .opacity(shown ? 1 : 0)
         .offset(y: shown ? 0 : 12)
         .animation(.spring(response: 0.45, dampingFraction: 0.86).delay(0.06 + 0.05 * Double(index)), value: shown)
+    }
+
+    private var isAstronomy: Bool { answer.symbol == "moon.stars" }
+
+    // Astronomy's scientific engine returns prose and inline formulas in a single text node.
+    // Give that text room to wrap without shrinking the entire calculation into one line.
+    @ViewBuilder private func workingText(_ math: Math, size: CGFloat) -> some View {
+        if isAstronomy, case .text(let text) = math {
+            Text(subscripted(text, size: size))
+                .font(.system(size: size))
+                .lineLimit(nil)
+                .fixedSize(horizontal: false, vertical: true)
+        } else {
+            MathText(math: math, size: size)
+        }
     }
 
     private func labelled<Content: View>(_ label: String, @ViewBuilder content: () -> Content) -> some View {
@@ -794,6 +820,7 @@ private struct Plot: View {
     // room either side (a periodic function's dozen would squash it flat); tall enough for most
     // of the curves, ignoring the far tails, and always showing the marked points.
     private func initial() -> (ClosedRange<Double>, ClosedRange<Double>) {
+        if let frame = graph.frame { return frame }
         if graph.curves.contains(where: { if case .implicit = $0.shape { true } else { false } }) { return framedCurves() }
         let framed = graph.points.sorted { hypot($0.x, $0.y) < hypot($1.x, $1.y) }.prefix(4)
         let verticals = graph.curves.compactMap { if case .vertical(let x) = $0.shape { x } else { nil } }

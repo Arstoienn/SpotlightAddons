@@ -117,7 +117,7 @@ enum Prefs {
 
 // What is kept, and what it was before anything was chosen.
 private let defaultSettings: [String: Any] = [
-    "degrees": false, "figures": 6, "exact": true, "decimalFirst": true, "arithmetic": true, "paths": true, "commands": false, "commandReturn": true,
+    "degrees": false, "figures": 6, "exact": true, "decimalFirst": true, "arithmetic": true, "paths": true, "commands": false, "commandReturn": true, "astronomy": true,
     "basePrefix": false, "constant.g": true, "constant.G": true,
     "constant.c": true, "precise": false, "constantValue.g": 0.0, "constantValue.G": 0.0, "constantValue.c": 0.0, "copyAsShown": false, "copyLatex": true, "returnCopies": true, "log": false, "welcome": true,
 ]
@@ -243,10 +243,13 @@ struct GeneralSettings: View {
             looked += 1
         }
         .alert("Reset all settings?", isPresented: $resetting) {
-            Button("Reset", role: .destructive) { for key in defaultSettings.keys { UserDefaults.standard.removeObject(forKey: key) } }
+            Button("Reset", role: .destructive) {
+                for key in defaultSettings.keys { UserDefaults.standard.removeObject(forKey: key) }
+                UserDefaults.standard.removeObject(forKey: Completion.usesKey)
+            }
             Button("Cancel", role: .cancel) {}
         } message: {
-            Text("The choices on every page return to what they were when Spotlight Add-ons was first opened. Constants that were added are kept.")
+            Text("The choices on every page return to what they were when Spotlight Add-ons was first opened, and the completions after @ return to alphabetical order, forgetting which were chosen most. Constants that were added are kept.")
         }
     }
 
@@ -390,6 +393,7 @@ struct CardsSettings: View {
     @AppStorage("paths") private var paths = true
     @AppStorage("commands") private var commands = false
     @AppStorage("commandReturn") private var commandReturn = true
+    @AppStorage("astronomy") private var astronomy = true
 
     var body: some View {
         Form {
@@ -403,6 +407,9 @@ struct CardsSettings: View {
                 Switch(title: "A command for Terminal", typed: "> top", detail: "The command is typed in a new Terminal window and is not run until Return is pressed there.", isOn: $commands)
                 Switch(title: "Return types the command from anywhere", detail: "When off, Return does so only with the pointer on the card.", isOn: $commandReturn)
                     .disabled(!commands)
+            }
+            Section("Specialist calculators") {
+                Switch(title: "Astronomy", typed: "@ escape_velocity(earth)", detail: "A list of functions, bodies and units completes what is typed after @; the arrows, Tab, Return and Escape work it while it is open.", isOn: $astronomy)
             }
         }
         .formStyle(.grouped)

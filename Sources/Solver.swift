@@ -795,6 +795,7 @@ enum Options {
     static var paths: Bool { flag("paths", true) }               // /Users/me/file.txt named, and shown in Finder
     static var commands: Bool { flag("commands", false) }        // > top typed in a new Terminal window
     static var commandReturn: Bool { flag("commandReturn", true) } // Return types it there wherever the pointer is
+    static var astronomy: Bool { flag("astronomy", true) }       // @ escape_velocity(earth): astronomy, with completion
     static var arithmetic: Bool { flag("arithmetic", true) }     // 12*3+4 answered with no = in it
     static var precise: Bool { flag("precise", false) }          // constants as they are known, not as the booklet rounds them
     static var copyAsShown: Bool { flag("copyAsShown", false) }  // 5/2 on the pasteboard, where it would have been 2.5

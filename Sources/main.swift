@@ -10,7 +10,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let watcher = SpotlightWatcher()
     let panel = ResultPanel()
     let detail = DetailPanel()
-    let returnKey = ReturnKey()
+    let keys = KeyTap()
     let settings = SettingsWindow()
     let welcome = Welcome()
     var text = ""
@@ -21,6 +21,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     var lastMove = Date.distantPast
     var lastAlpha = 1.0
     var typed = 0   // counts changes of text, so that a second look started for an old one gives up
+    // Completions offered on the card while a call after @ is typed, and the text at which Escape
+    // put them away, so that they stay away until something more is typed.
+    var completion: Completion.List?
+    var dismissed: String?
+    var completionCaret: NSRange?
+    var astronomyExpandRequested: String?
     // Kept out of App Nap. An app in the background with no window on screen has its timers and
     // animations slowed by macOS until they all but stop: the card was then put up but stayed
     // invisible, its fade-in never run, until the preferences were brought to the front. Nothing
@@ -87,29 +93,72 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 Location.parse(text)?.show()
             }
         }
-        // Return copies only with the pointer resting on the card or its panel.
-        returnKey.take = { [weak self] in
-            guard let self, panel.isVisible else { return false }
-            // A line after > is no search: Return types it in Terminal wherever the pointer is,
-            // unless that is turned off. Nothing is run by it, only typed at the prompt.
-            if let command = Command.parse(text), command.typeable, Options.commandReturn { return Copying.shared.copy() }
-            guard Prefs.returnCopies, detail.isOpen || panel.frame.contains(NSEvent.mouseLocation) else { return false }
-            // Otherwise a command is typed in Terminal only for a pointer moved onto the card, as
-            // expand() asks, never one the card came up under. One that cannot be typed is taken
-            // and does nothing, so that Spotlight does not open its first result instead.
-            if let command = Command.parse(text), command.typeable {
-                let pointer = NSEvent.mouseLocation
-                guard hypot(pointer.x - pointerAtCard.x, pointer.y - pointerAtCard.y) > 2 else { return false }
-            }
-            return Copying.shared.copy()
-        }
-        // Rates come in after the card was made from the last had, or the connection is found
-        // lost: the card is made again, if it is money that is showing.
+        keys.take = { [weak self] key in self?.take(key) ?? false }
         NotificationCenter.default.addObserver(forName: Rates.changed, object: nil, queue: .main) { [weak self] _ in
             guard let self, panel.isVisible, !detail.isOpen, Currency.conversion(text) != nil else { return }
             _ = present()
         }
+        NotificationCenter.default.addObserver(forName: AstronomyEngine.changed, object: nil, queue: .main) { [weak self] notice in
+            guard let self, notice.object as? String == text, !detail.isOpen, Astronomy.marked(text) else { return }
+            guard present() else { astronomyExpandRequested = nil; return }
+            if astronomyExpandRequested == text {
+                astronomyExpandRequested = nil
+                expand(byKey: true)
+            }
+        }
         watcher.start()
+    }
+
+    // A key while the card is up. With completions offered, the arrows choose among them, Tab and
+    // Return write the chosen one into Spotlight's field, and Escape puts the list away; nothing
+    // else is taken from Spotlight, and with no list these keys are Spotlight's but for Return.
+    func take(_ key: KeyTap.Key) -> Bool {
+        guard panel.isVisible else { return false }
+        if var list = completion {
+            switch key {
+            case .up, .down:
+                list.selected = min(max(list.selected + (key == .up ? -1 : 1), 0), list.items.count - 1)
+                completion = list
+                _ = present()
+            case .tab, .returnKey:
+                guard let edit = Completion.choose(list, in: Astronomy.catalogue) else { return true }
+                // Written after the key is let go of, not inside the keyboard's event tap.
+                DispatchQueue.main.async { [weak self] in self?.watcher.write(edit.text, selecting: edit.selection) }
+            case .escape:
+                dismissed = text
+                completion = nil
+                if Solver.solve(text) == nil || !present() { hide() }
+            }
+            return true
+        }
+        return key == .returnKey && returnTaken()
+    }
+
+    // Return copies only with the pointer resting on the card or its panel.
+    func returnTaken() -> Bool {
+        guard panel.isVisible else { return false }
+        // A line after > is no search: Return types it in Terminal wherever the pointer is,
+        // unless that is turned off. Nothing is run by it, only typed at the prompt.
+        if let command = Command.parse(text), command.typeable, Options.commandReturn { return Copying.shared.copy() }
+        // After @, Return opens the working, which a search of the web for the call would not
+        // be; with the working open, it copies the answer as it does anywhere.
+        if Astronomy.marked(text), !detail.isOpen {
+            if Solver.details(text) != nil {
+                DispatchQueue.main.async { [weak self] in self?.expand(byKey: true) }
+            } else {
+                astronomyExpandRequested = text
+            }
+            return true
+        }
+        guard Prefs.returnCopies, detail.isOpen || panel.frame.contains(NSEvent.mouseLocation) else { return false }
+        // Otherwise a command is typed in Terminal only for a pointer moved onto the card, as
+        // expand() asks, never one the card came up under. One that cannot be typed is taken
+        // and does nothing, so that Spotlight does not open its first result instead.
+        if let command = Command.parse(text), command.typeable {
+            let pointer = NSEvent.mouseLocation
+            guard hypot(pointer.x - pointerAtCard.x, pointer.y - pointerAtCard.y) > 2 else { return false }
+        }
+        return Copying.shared.copy()
     }
 
     func update(_ text: String) {
@@ -119,8 +168,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             detail.close(animated: false)
         }
         // Spotlight says the field has changed several times for each key; once is enough.
-        if text == self.text, panel.isVisible { return }
+        let caret = watcher.selection()
+        if text == self.text, panel.isVisible, caret == completionCaret { return }
+        completionCaret = caret
         if text.isEmpty { remember() }
+        if text != self.text { astronomyExpandRequested = nil }
         self.text = text
         typed += 1
         Memory.answers = text == remembered ? ansBefore : ansNow
@@ -129,7 +181,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             let copied = NSPasteboard.general.string(forType: .string)?.trimmingCharacters(in: .whitespacesAndNewlines)
             Memory.clip = copied.flatMap { Double($0.replacingOccurrences(of: "−", with: "-")) }
         }
-        guard Solver.solve(text) != nil else {
+        // After @, what fits where the caret is, unless Escape put the list away at this very text.
+        let offered = Options.astronomy && text != dismissed ? Completion.list(text, caret: watcher.selection()?.location, in: Astronomy.catalogue) : nil
+        if dismissed != nil, text != dismissed { dismissed = nil }
+        // The choice kept while the same things are offered, as when only the caret moved.
+        if var offered, let before = completion, before.items == offered.items { offered.selected = before.selected; completion = offered } else { completion = offered }
+        guard completion != nil || Solver.solve(text) != nil else {
             let foreign = text.unicodeScalars.filter { $0.value > 0x7F }.count
             Log.note("typed \(text.count) characters\(foreign > 0 ? " (\(foreign) not ASCII)" : ""): nothing to show")
             return hide()
@@ -150,7 +207,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     // Puts the card up for the text as it stands, if Spotlight is there with room for it.
     func present() -> Bool {
-        guard let card = CardText.of(text), let geometry = watcher.geometry(),
+        guard let card = completion.map(CardText.offering) ?? CardText.of(text), let geometry = watcher.geometry(),
               (SpotlightWatcher.alpha() ?? 0) > 0
         else { return false }
         placement = geometry.placement
@@ -162,11 +219,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let place = command == nil ? Location.parse(text) : nil
         Copying.shared.isCommand = command != nil
         Copying.shared.isPlace = place != nil
-        Copying.shared.available = command.map(\.typeable) ?? (Copying.shared.isPlace || NumberFacts.parse(Latex.plain(text)) == nil)
+        Copying.shared.available = completion == nil && (!Astronomy.marked(text) || Solver.copy(text) != nil) && (command.map(\.typeable) ?? (Copying.shared.isPlace || NumberFacts.parse(Latex.plain(text)) == nil))
         shown = text
         pointerAtCard = NSEvent.mouseLocation
         panel.show(card, window: geometry.window)
-        returnKey.isOn = true
+        keys.isOn = true
         watch()
         return true
     }
@@ -237,14 +294,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     // The pointer on the card: the card grows into the working. The panel starts exactly where
     // the card is and covers it, so the card is put away underneath at once; it comes back, in
     // the same place, when the panel has shrunk back into it.
-    func expand() {
-        // Not while Spotlight is being dragged, or has only just been put down.
-        guard Date().timeIntervalSince(lastMove) > 0.3 else { return }
+    // Return after @ opens it too, wherever the pointer is (byKey).
+    func expand(byKey: Bool = false) {
+        // Not while Spotlight is being dragged, or has only just been put down, nor over a list of completions.
+        guard Date().timeIntervalSince(lastMove) > 0.3, completion == nil else { return }
         // Not for a pointer that has stayed where it was since the card came up or changed, as it
         // does at each key and when Spotlight opens again on what was typed before: the card came
         // to the pointer, not the pointer to the card.
         let pointer = NSEvent.mouseLocation
-        guard hypot(pointer.x - pointerAtCard.x, pointer.y - pointerAtCard.y) > 2 else { return }
+        guard byKey || hypot(pointer.x - pointerAtCard.x, pointer.y - pointerAtCard.y) > 2 else { return }
         guard !detail.isOpen, let answer = CardText.of(text), let details = Solver.details(text) else { return }
         // Spotlight as it is now: its list grows and shrinks with what is typed without moving it.
         let now = placement.flatMap { SpotlightWatcher.panel($0)?.rect } ?? spotlight
@@ -258,7 +316,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func hide() {
-        returnKey.isOn = false
+        astronomyExpandRequested = nil
+        keys.isOn = false
+        completion = nil
         panel.hide()
         detail.close(animated: true)
         link?.invalidate()
@@ -266,6 +326,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 }
 
+
+// Read-only smoke check of the packaged runtime, before any GUI, settings migration or AX prompt.
+if CommandLine.arguments.dropFirst().first == "--astronomy-check" {
+    AstronomyEngine.synchronous = true
+    let query=CommandLine.arguments.dropFirst(2).joined(separator:" ")
+    let answer=AstronomyEngine.shared.answer(query)
+    print("Resources: " + AstronomyEngine.resource.path)
+    print(answer.solution.exact)
+    if let note=answer.details?.note { print(note) }
+    exit((answer.details?.steps.isEmpty ?? true) ? 1 : 0)
+}
 
 Prefs.bringOver()
 let app = NSApplication.shared

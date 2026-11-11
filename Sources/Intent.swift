@@ -5,6 +5,7 @@ import Foundation
 // and so on, with what it is asked of. The pipeline then answers it (Pipeline.swift).
 enum MathIntent {
     case command(Command)
+    case astronomy(Astronomy)
     case place(Location)
     case money(Conversion)
     case digest(Hash)
@@ -45,6 +46,7 @@ enum MathIntent {
     var symbol: String {
         switch self {
         case .command: return "terminal"
+        case .astronomy: return "moon.stars"
         case .place(let place): return place.isFolder ? "folder" : "doc"
         case .money: return "banknote"
         case .digest: return "lock"
@@ -72,6 +74,7 @@ enum MathIntent {
     var name: String {
         switch self {
         case .command: return "Running a command"
+        case .astronomy: return "Working out an astronomical quantity"
         case .place: return "Naming a place"
         case .money: return "Converting money"
         case .digest: return "Taking a digest"
@@ -130,10 +133,13 @@ enum Analyzer {
         // Past anything typed into Spotlight, a thousand characters or brackets sixty deep, there is
         // no card: a sum of thousands of terms, or roots nested hundreds deep, would take seconds to
         // read, work out, write out and draw, or run out of room doing it.
-        guard typed.count <= 1000, Analyzer.nesting(typed) <= 60 else { return nil }
+        guard typed.count <= (Astronomy.marked(typed) ? 32000 : 1000), Analyzer.nesting(typed) <= 60 else { return nil }
         // A line for Terminal is read before anything else, and kept exactly as typed: > 2+2 is a
         // command, not 4, and ans and clip in it are left as they are.
         if let command = Command.parse(typed) { return Reading(intent: .command(command), input: typed) }
+        // After @, astronomy, and nothing else: @ 2+2 is no sum, and a call half typed is no
+        // question yet, while completion offers what fits (Completion.swift).
+        if Astronomy.marked(typed) { return Astronomy.parse(typed).map { Reading(intent: .astronomy($0), input: typed) } }
         if let place = Location.parse(typed) { return Reading(intent: .place(place), input: typed) }
         // Money is read as typed: a $ before the amount is no mark of mathematics.
         if let money = Currency.conversion(typed) { return Reading(intent: .money(money), input: typed) }

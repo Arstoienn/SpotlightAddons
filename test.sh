@@ -9,7 +9,9 @@
 set -e
 cd "$(dirname "$0")"
 mkdir -p build
-sources="Sources/Solver.swift Sources/Latex.swift Sources/Math.swift Sources/Details.swift Sources/System.swift Sources/Comparison.swift Sources/Number.swift Sources/Hash.swift Sources/Simplify.swift Sources/Location.swift Sources/Convert.swift Sources/Inequality.swift Sources/Algebra.swift Sources/ComplexMath.swift Sources/MatrixMath.swift Sources/Domain.swift Sources/Given.swift Sources/Grouped.swift Sources/Insufficient.swift Sources/Interval.swift Sources/BigInt.swift Sources/RationalEquation.swift Sources/TrigSimplify.swift Sources/Sequence.swift Sources/Currency.swift Sources/Exact.swift Sources/Pipeline.swift Sources/Series.swift Sources/Integration.swift Sources/Differential.swift Sources/Letters.swift Sources/Intent.swift Sources/Roles.swift Sources/Notes.swift Sources/Command.swift Sources/TrigProof.swift Sources/Euler.swift Sources/AngleIdentity.swift Sources/Colour.swift Sources/Working.swift"
+./setup-astronomy.sh
+build/astronomy-runtime/bin/python3 -I Tests/AstronomyEngineTests.py
+sources="Sources/Solver.swift Sources/Latex.swift Sources/Math.swift Sources/Details.swift Sources/System.swift Sources/Comparison.swift Sources/Number.swift Sources/Hash.swift Sources/Simplify.swift Sources/Location.swift Sources/Convert.swift Sources/Inequality.swift Sources/Algebra.swift Sources/ComplexMath.swift Sources/MatrixMath.swift Sources/Domain.swift Sources/Given.swift Sources/Grouped.swift Sources/Insufficient.swift Sources/Interval.swift Sources/BigInt.swift Sources/RationalEquation.swift Sources/TrigSimplify.swift Sources/Sequence.swift Sources/Currency.swift Sources/Exact.swift Sources/Pipeline.swift Sources/Series.swift Sources/Integration.swift Sources/Differential.swift Sources/Letters.swift Sources/Intent.swift Sources/Roles.swift Sources/Notes.swift Sources/Command.swift Sources/TrigProof.swift Sources/Euler.swift Sources/AngleIdentity.swift Sources/Colour.swift Sources/Working.swift Sources/Completion.swift Sources/Astronomy.swift Sources/AstronomyEngine.swift"
 
 case "$1" in
 --snapshot|--baseline)
@@ -29,7 +31,17 @@ case "$1" in
     ./build/booklets Tests/booklets.json
     ;;
 *)
-    swiftc -O -o build/solver-tests $sources Tests/main.swift
+    swiftc -O -o build/solver-tests $sources Tests/main.swift Tests/AstronomyTests.swift
     ./build/solver-tests
     ;;
 esac
+
+if [ "${1:-}" = "--visual" ]; then
+    python3 - <<'PYTHON'
+from pathlib import Path
+import subprocess
+sources = [str(p) for p in sorted(Path('Sources').glob('*.swift')) if p.name != 'main.swift']
+subprocess.run(['swiftc', '-o', 'build/astronomy-visual', *sources, 'Tests/AstronomyVisual/main.swift'], check=True)
+subprocess.run(['./build/astronomy-visual'], check=True)
+PYTHON
+fi

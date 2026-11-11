@@ -23,6 +23,8 @@ Opening Spotlight Add-ons itself, from Spotlight or Finder, opens the preference
 - **True or false** for statements with numbers alone, joined with `&&`, `||` and `not`.
 - **Digests**, a **path** to a file, `ans` for the last answer and `clip` for the clipboard.
 - A **command for Terminal**, typed after `>`: `> top` is typed at the prompt in a new Terminal window when its card is clicked, and runs when you press Return there. Return over Spotlight types it too. Off unless chosen in the settings.
+- **Astronomy**, typed after `@`: `@ escape_velocity(earth)`, `@ orbital_period(1 AU, sun)`, `@ wien_peak(5778 K)`,
+  with a list of functions, bodies and units completing what is typed (see [Astronomy mode](#astronomy-mode)).
 - **LaTeX** is read for all of it, as it is usually copied.
 - What is no mathematics is left alone: `r2d2`, `wi-fi 6`, `5 ft 10`, `$100`, `2026-10-06`, `007`.
 
@@ -279,6 +281,34 @@ hand; nonlinear ones (`x^2+y^2=25, x+y=7`) numerically, with simple values writt
 \begin{bmatrix} \begin{vmatrix}`, with `^{…}` and `_{…}` for powers and subscripts, and spacing
 commands (`\,` `\;` `\quad`) ignored.
 
+## Astronomy mode
+
+Type `@` to choose among **234 astronomy methods in 14 categories**, from celestial bodies and orbital mechanics to cosmology, telescope optics, data analysis and gravitational waves. [AstronomyMethods.md](AstronomyMethods.md) lists every signature, runnable example, formula, model, output type and source.
+
+```text
+@ schwarzschild_radius(10 M_sun)
+@ escape_velocity(earth)
+@ eccentricity(orbit(earth,sun,at="2026-11-11"))
+@ redshift(500 nm,600 nm)                       # dimensionless z = 0.2
+@ blackbody_spectrum(5772 K)
+@ hr_position(sun)
+@ sky_map({longitude:121.56 deg,latitude:25.03 deg},"2026-11-11T12:00:00")
+@ cosmic_age(3,model="Planck18")
+@ transit_light_curve(jupiter,sun,{a:0.05 AU,central_mass:sun},{start:-0.2 day,stop:0.2 day,count:300})
+```
+
+**Completion.** Functions, aliases, bodies, units and example arguments share the executable registry in `Resources/Astronomy/methods.json`. Loose matching finds `escape vel`, `schw`, `gravity`, `blackbody` and `earth escape speed`. ↑/↓ select, Tab/Return insert, Escape dismisses. The first argument placeholder is selected; nested calls, named optional arguments, arrays, quoted paths and UTF-16 caret positions are supported. Frequent choices rank first among equally good matches; Reset All Settings clears the counts. Return opens the working, including when a background calculation is still finishing.
+
+**Working and diagrams.** Results show physical formulas, numerical inputs and unit conversions, model assumptions and sources. Views include ellipses with equal axis scales, H–R diagrams, Schwarzschild/Kerr structure, spectra, sky maps, transit/RV curves, cosmological distance curves, potential maps, image previews and quantity/data panels. Transit radius and inclination controls recompute the limb-darkened model. Structured results copy as JSON.
+
+**Data and precision.** A persistent local worker uses Astropy, SciPy, photutils and batman. The app bundles JPL DE440s and pinned IERS tables for offline ephemerides, UTC/TT/TDB and coordinate transformations. Results identify frame, epoch, model and warnings. The default epoch is J2000. Bare quantities use SI/radians except parallax, whose bare values are arcseconds; explicit units are preferred. Cosmology defaults to explicitly reported Planck18, with Planck15, WMAP9 and custom flat ΛCDM options.
+
+FITS/CSV images and CSV time/flux columns are read only; see the reference for input object schemas. Model approximations stay visible: geometric eclipse screening does not certify contact times, fuel-scaled stellar lifetimes do not include metallicity-dependent evolutionary tracks, and quadrupole waveforms/ISCO proxies do not claim full GR merger physics. Uncertainty is reported where computed; catalogue and model error bars are not invented. Distinct legacy IB-style operations remain available. The Astronomy switch is under Cards in preferences.
+
+**Build and verification.** `./setup-astronomy.sh` prepares pinned portable CPython, scientific libraries and the checksummed JPL kernel inside `build/`. Setup needs network access once; normal calculations work offline. `./build.sh --no-install` builds and signs `build/Spotlight Add-ons.app` inside the worktree. `./build.sh` retains the original install/restart behavior.
+
+`./test.sh` runs all 234 registered examples, numerical invariants and data-file acceptance tests, followed by the Swift solver/completion/integration suite. `./test.sh --visual` additionally renders 12 representative diagrams to `build/astronomy-previews/`. Background calculations have a 60-second limit and a bounded cache.
+
 ## The panel
 
 The card's sign, on its left, says what kind of answer it is: ±/ for something worked out, # for a number by itself,
@@ -320,8 +350,8 @@ opens on.
   2.5, with 5/2 beneath: the default) or as a fraction; whether a base is marked 0x, 0b, 0o; what the copy button and
   a line of the working copy; and whether Return copies while the pointer is on the card.
 - **Cards**: whether arithmetic with no equals sign has a card, as Spotlight's own calculator answers it too; a path
-  to a file, a command for Terminal (off at first), and whether Return types the command from anywhere. Everything
-  else that is mathematics always has its card.
+  to a file, a command for Terminal (off at first), and whether Return types the command from anywhere; and
+  Astronomy mode after `@`. Everything else that is mathematics always has its card.
 - **Constants**: g, G and c, each with its value, which may be typed over (g as 10), and a switch; under them,
   constants of your own, added on the last row with a name, a value and a unit.
 
@@ -330,12 +360,15 @@ opens on.
 There is no public way to give Spotlight an answer that changes with each key. Spotlight Add-ons runs
 in the background and reads Spotlight's search field through Accessibility, so it needs that
 permission: System Settings ›
-Privacy & Security › Accessibility. It never types into Spotlight or presses a key. The one change it
-makes to what is in it is to empty the search field, through Accessibility, once a line typed after
-`>` has gone to Terminal, so that Spotlight opens on nothing next time.
+Privacy & Security › Accessibility. It never types into Spotlight or presses a key. It changes what is
+in it, through Accessibility, in two ways only: it empties the search field once a line typed after `>`
+has gone to Terminal, so that Spotlight opens on nothing next time; and in Astronomy mode it writes a
+completion chosen from the list into the field, and selects the placeholder to be typed over.
 
-While a card is up it watches for Return, and nothing else: Return copies the answer when the
-pointer is on the card, types a line after `>` in Terminal, and at any other time is Spotlight's.
+While a card is up it watches for Return: Return copies the answer when the pointer is on the card,
+types a line after `>` in Terminal, opens the working after `@`, and at any other time is Spotlight's.
+While a list of completions is on the card, and only then, it takes ↑, ↓, Tab, Return and Escape for the
+list; every other key, and these at any other time, reach Spotlight untouched.
 
 ## Build and install
 

@@ -89,13 +89,30 @@ final class SpotlightWatcher {
     // What is in the search field at this moment.
     func current() -> String? { field.flatMap { string($0, kAXValueAttribute) } }
 
+    // What is selected in the search field, or where the caret is (a selection of nothing), in
+    // UTF-16 units; nil where Spotlight does not say.
+    func selection() -> NSRange? {
+        guard let field, let v = value(field, kAXSelectedTextRangeAttribute), CFGetTypeID(v) == AXValueGetTypeID() else { return nil }
+        var range = CFRange()
+        guard AXValueGetValue(v as! AXValue, .cfRange, &range) else { return nil }
+        return NSRange(location: range.location, length: range.length)
+    }
+
     // The search field emptied, through Accessibility and not by keys: done once a line typed after
-    // > has gone to Terminal, so that Spotlight opens on nothing next time rather than on it. The
-    // only change ever made to what is in Spotlight.
-    func clear() {
-        guard let field else { return Log.note("the search field could not be emptied: none followed") }
-        let error = AXUIElementSetAttributeValue(field, kAXValueAttribute as CFString, "" as CFString)
-        if error != .success { Log.note("the search field could not be emptied (\(error.rawValue))") }
+    // > has gone to Terminal, so that Spotlight opens on nothing next time rather than on it.
+    func clear() { write("", selecting: NSRange(location: 0, length: 0), why: "emptied") }
+
+    // The search field written through Accessibility, and part of it selected: a completion chosen
+    // from the list, with its first placeholder selected to be typed over. The only other change
+    // ever made to what is in Spotlight.
+    func write(_ text: String, selecting selection: NSRange, why: String = "completed") {
+        guard let field else { return Log.note("the search field could not be \(why): none followed") }
+        let error = AXUIElementSetAttributeValue(field, kAXValueAttribute as CFString, text as CFString)
+        guard error == .success else { return Log.note("the search field could not be \(why) (\(error.rawValue))") }
+        var range = CFRange(location: selection.location, length: selection.length)
+        guard let value = AXValueCreate(.cfRange, &range) else { return }
+        let placed = AXUIElementSetAttributeValue(field, kAXSelectedTextRangeAttribute as CFString, value)
+        if placed != .success { Log.note("the selection in the search field could not be set (\(placed.rawValue))") }
     }
 
     private func element(_ e: AXUIElement, _ attribute: String) -> AXUIElement? {
@@ -109,6 +126,9 @@ final class SpotlightWatcher {
     private func take(_ element: AXUIElement) {
         guard string(element, kAXRoleAttribute) == kAXTextFieldRole else { return }
         field = element
+        if let observer {
+            AXObserverAddNotification(observer, element, kAXSelectedTextChangedNotification as CFString, Unmanaged.passUnretained(self).toOpaque())
+        }
         onChange(string(element, kAXValueAttribute) ?? "")
     }
 

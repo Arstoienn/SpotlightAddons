@@ -1765,6 +1765,8 @@ finishRateRefresh()
 workingCheck(refreshRequests == 4 && !Rates.state(.fiat).offline && Rates.table?["TWD"] == 33, "retry after a failure did not recover")
 Rates.transport = originalRatesTransport; Rates.persist = originalRatesPersistence; Rates.fixed = true
 
+astronomyTests()
+
 print(failures == 0 ? "all passed" : "\(failures) failed")
 exit(failures == 0 ? 0 : 1)
 

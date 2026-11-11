@@ -1,0 +1,6158 @@
+[
+  {
+    "name": "mass",
+    "category": "Celestial Bodies",
+    "description": "Catalogue lookup: mass in SI kilograms",
+    "parameters": [
+      {
+        "name": "body",
+        "kind": "mass",
+        "required": true
+      }
+    ],
+    "returns": "mass",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "Catalogue lookup: mass in SI kilograms",
+    "source": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/",
+    "aliases": [],
+    "example": "mass(earth)",
+    "priority": "P0"
+  },
+  {
+    "name": "radius",
+    "category": "Celestial Bodies",
+    "description": "Catalogue lookup: mean volumetric radius",
+    "parameters": [
+      {
+        "name": "body",
+        "kind": "body",
+        "required": true
+      }
+    ],
+    "returns": "length",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "Catalogue lookup: mean volumetric radius",
+    "source": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/",
+    "aliases": [],
+    "example": "radius(earth)",
+    "priority": "P0"
+  },
+  {
+    "name": "diameter",
+    "category": "Celestial Bodies",
+    "description": "d = 2R",
+    "parameters": [
+      {
+        "name": "body",
+        "kind": "body",
+        "required": true
+      }
+    ],
+    "returns": "length",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "d = 2R",
+    "source": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/",
+    "aliases": [],
+    "example": "diameter(jupiter)",
+    "priority": "P1"
+  },
+  {
+    "name": "volume",
+    "category": "Celestial Bodies",
+    "description": "V = 4πR³/3",
+    "parameters": [
+      {
+        "name": "body",
+        "kind": "body",
+        "required": true
+      }
+    ],
+    "returns": "volume",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "V = 4πR³/3",
+    "source": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/",
+    "aliases": [],
+    "example": "volume(earth)",
+    "priority": "P1"
+  },
+  {
+    "name": "density",
+    "category": "Celestial Bodies",
+    "description": "ρ = 3M/(4πR³)",
+    "parameters": [
+      {
+        "name": "body",
+        "kind": "body",
+        "required": true
+      }
+    ],
+    "returns": "density",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "ρ = 3M/(4πR³)",
+    "source": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/",
+    "aliases": [],
+    "example": "density(earth)",
+    "priority": "P0"
+  },
+  {
+    "name": "surface_area",
+    "category": "Celestial Bodies",
+    "description": "A = 4πR²",
+    "parameters": [
+      {
+        "name": "body",
+        "kind": "body",
+        "required": true
+      }
+    ],
+    "returns": "area",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "A = 4πR²",
+    "source": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/",
+    "aliases": [],
+    "example": "surface_area(earth)",
+    "priority": "P1"
+  },
+  {
+    "name": "surface_gravity",
+    "category": "Celestial Bodies",
+    "description": "g = GM/R²",
+    "parameters": [
+      {
+        "name": "body",
+        "kind": "body",
+        "required": true
+      },
+      {
+        "name": "radius",
+        "kind": "radius",
+        "required": false,
+        "default": "None"
+      }
+    ],
+    "returns": "acceleration",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "g = GM/R²",
+    "source": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/",
+    "aliases": [
+      "gravity",
+      "field_strength"
+    ],
+    "example": "surface_gravity(earth)",
+    "priority": "P0"
+  },
+  {
+    "name": "escape_velocity",
+    "category": "Celestial Bodies",
+    "description": "v_esc = √(2GM/R)",
+    "parameters": [
+      {
+        "name": "body",
+        "kind": "body",
+        "required": true
+      },
+      {
+        "name": "radius",
+        "kind": "radius",
+        "required": false,
+        "default": "None"
+      }
+    ],
+    "returns": "speed",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "v_esc = √(2GM/R)",
+    "source": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/",
+    "aliases": [
+      "escape_speed",
+      "v_esc",
+      "earth escape speed"
+    ],
+    "example": "escape_velocity(earth)",
+    "priority": "P0"
+  },
+  {
+    "name": "rotation_period",
+    "category": "Celestial Bodies",
+    "description": "Catalogue sidereal rotation period; negative is retrograde",
+    "parameters": [
+      {
+        "name": "body",
+        "kind": "body",
+        "required": true
+      }
+    ],
+    "returns": "time",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "Catalogue sidereal rotation period; negative is retrograde",
+    "source": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/",
+    "aliases": [],
+    "example": "rotation_period(venus)",
+    "priority": "P1"
+  },
+  {
+    "name": "axial_tilt",
+    "category": "Celestial Bodies",
+    "description": "Catalogue axial obliquity",
+    "parameters": [
+      {
+        "name": "body",
+        "kind": "body",
+        "required": true
+      }
+    ],
+    "returns": "angle",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "Catalogue axial obliquity",
+    "source": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/",
+    "aliases": [],
+    "example": "axial_tilt(earth)",
+    "priority": "P1"
+  },
+  {
+    "name": "luminosity",
+    "category": "Celestial Bodies",
+    "description": "Catalogue bolometric luminosity",
+    "parameters": [
+      {
+        "name": "body",
+        "kind": "body",
+        "required": true
+      },
+      {
+        "name": "temperature",
+        "kind": "temperature",
+        "required": false,
+        "default": "None"
+      }
+    ],
+    "returns": "power",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "Catalogue bolometric luminosity",
+    "source": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/",
+    "aliases": [],
+    "example": "luminosity(sun)",
+    "priority": "P1"
+  },
+  {
+    "name": "distance",
+    "category": "Celestial Bodies",
+    "description": "d = |r₂(t) − r₁(t)|",
+    "parameters": [
+      {
+        "name": "body1",
+        "kind": "body",
+        "required": true
+      },
+      {
+        "name": "body2",
+        "kind": "body",
+        "required": true
+      },
+      {
+        "name": "at",
+        "kind": "datetime",
+        "required": false,
+        "default": "J2000"
+      }
+    ],
+    "returns": "length",
+    "visualization": "panel",
+    "model": "Simultaneous geometric ICRS positions; JPL DE440s ephemeris; no light-time iteration",
+    "formula": "d = |r₂(t) − r₁(t)|",
+    "source": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/",
+    "aliases": [],
+    "example": "distance(earth, moon, at=\"2026-11-11\")",
+    "priority": "P0"
+  },
+  {
+    "name": "light_time",
+    "category": "Celestial Bodies",
+    "description": "t = d/c",
+    "parameters": [
+      {
+        "name": "body1",
+        "kind": "body",
+        "required": true
+      },
+      {
+        "name": "body2",
+        "kind": "body",
+        "required": true
+      },
+      {
+        "name": "at",
+        "kind": "datetime",
+        "required": false,
+        "default": "J2000"
+      }
+    ],
+    "returns": "time",
+    "visualization": "panel",
+    "model": "Geometric distance / c; no Shapiro delay",
+    "formula": "t = d/c",
+    "source": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/",
+    "aliases": [],
+    "example": "light_time(earth, sun, at=\"2026-11-11\")",
+    "priority": "P0"
+  },
+  {
+    "name": "compare",
+    "category": "Celestial Bodies",
+    "description": "Property ratio = p₁ / p₂",
+    "parameters": [
+      {
+        "name": "body1",
+        "kind": "body",
+        "required": true
+      },
+      {
+        "name": "body2",
+        "kind": "body",
+        "required": true
+      },
+      {
+        "name": "property",
+        "kind": "property",
+        "required": false,
+        "default": "radius"
+      }
+    ],
+    "returns": "structured data / typed quantities",
+    "visualization": "comparison",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "Property ratio = p₁ / p₂",
+    "source": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/",
+    "aliases": [],
+    "example": "compare(earth, jupiter, radius)",
+    "priority": "P1"
+  },
+  {
+    "name": "body",
+    "category": "Celestial Bodies",
+    "description": "Catalogue mass, radius, density, rotation, obliquity and luminosity",
+    "parameters": [
+      {
+        "name": "name",
+        "kind": "body",
+        "required": true
+      }
+    ],
+    "returns": "structured data / typed quantities",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "Catalogue mass, radius, density, rotation, obliquity and luminosity",
+    "source": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/",
+    "aliases": [],
+    "example": "body(earth)",
+    "priority": "P1"
+  },
+  {
+    "name": "orbit",
+    "category": "Orbital Mechanics",
+    "description": "Osculating Kepler ellipse from r, v: ε = v²/2 − μ/r, a = −μ/2ε",
+    "parameters": [
+      {
+        "name": "body",
+        "kind": "satellite",
+        "required": true
+      },
+      {
+        "name": "center",
+        "kind": "mass",
+        "required": false,
+        "default": "None"
+      },
+      {
+        "name": "at",
+        "kind": "datetime",
+        "required": false,
+        "default": "J2000"
+      }
+    ],
+    "returns": "structured data / typed quantities",
+    "visualization": "orbit",
+    "model": "Newtonian two-body osculating elements; ICRS/TDB; JPL DE440s ephemeris",
+    "formula": "Osculating Kepler ellipse from r, v: ε = v²/2 − μ/r, a = −μ/2ε",
+    "source": "https://docs.astropy.org/en/stable/coordinates/solarsystem.html",
+    "aliases": [],
+    "example": "orbit(earth, sun, at=\"2026-11-11\")",
+    "priority": "P0"
+  },
+  {
+    "name": "orbital_elements",
+    "category": "Orbital Mechanics",
+    "description": "h = r × v; e = (v × h)/μ − r/|r|",
+    "parameters": [
+      {
+        "name": "body",
+        "kind": "satellite",
+        "required": true
+      },
+      {
+        "name": "center",
+        "kind": "mass",
+        "required": false,
+        "default": "None"
+      },
+      {
+        "name": "at",
+        "kind": "datetime",
+        "required": false,
+        "default": "J2000"
+      }
+    ],
+    "returns": "structured data / typed quantities",
+    "visualization": "orbit",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "h = r × v; e = (v × h)/μ − r/|r|",
+    "source": "https://docs.astropy.org/en/stable/coordinates/solarsystem.html",
+    "aliases": [],
+    "example": "orbital_elements(moon, earth)",
+    "priority": "P1"
+  },
+  {
+    "name": "state_vector",
+    "category": "Orbital Mechanics",
+    "description": "State = (r_body − r_center, v_body − v_center)",
+    "parameters": [
+      {
+        "name": "body",
+        "kind": "satellite",
+        "required": true
+      },
+      {
+        "name": "center",
+        "kind": "mass",
+        "required": false,
+        "default": "None"
+      },
+      {
+        "name": "at",
+        "kind": "datetime",
+        "required": false,
+        "default": "J2000"
+      }
+    ],
+    "returns": "structured data / typed quantities",
+    "visualization": "orbit",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "State = (r_body − r_center, v_body − v_center)",
+    "source": "https://docs.astropy.org/en/stable/coordinates/solarsystem.html",
+    "aliases": [],
+    "example": "state_vector(earth, sun)",
+    "priority": "P1"
+  },
+  {
+    "name": "orbital_period",
+    "category": "Orbital Mechanics",
+    "description": "P = 2π√(a³/μ)",
+    "parameters": [
+      {
+        "name": "body",
+        "kind": "satellite",
+        "required": true
+      },
+      {
+        "name": "center",
+        "kind": "mass",
+        "required": false,
+        "default": "None"
+      }
+    ],
+    "returns": "time",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "P = 2π√(a³/μ)",
+    "source": "https://docs.astropy.org/en/stable/coordinates/solarsystem.html",
+    "aliases": [
+      "kepler",
+      "period"
+    ],
+    "example": "orbital_period(earth)",
+    "priority": "P0"
+  },
+  {
+    "name": "orbital_velocity",
+    "category": "Orbital Mechanics",
+    "description": "v = |v(t)| from osculating state",
+    "parameters": [
+      {
+        "name": "body",
+        "kind": "satellite",
+        "required": true
+      },
+      {
+        "name": "at",
+        "kind": "datetime",
+        "required": false,
+        "default": "J2000"
+      }
+    ],
+    "returns": "speed",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "v = |v(t)| from osculating state",
+    "source": "https://docs.astropy.org/en/stable/coordinates/solarsystem.html",
+    "aliases": [],
+    "example": "orbital_velocity(earth, at=\"2026-11-11\")",
+    "priority": "P0"
+  },
+  {
+    "name": "circular_velocity",
+    "category": "Orbital Mechanics",
+    "description": "v_c = √(GM/r)",
+    "parameters": [
+      {
+        "name": "radius",
+        "kind": "radius",
+        "required": true
+      },
+      {
+        "name": "central_mass",
+        "kind": "mass",
+        "required": true
+      }
+    ],
+    "returns": "speed",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "v_c = √(GM/r)",
+    "source": "https://docs.astropy.org/en/stable/coordinates/solarsystem.html",
+    "aliases": [],
+    "example": "circular_velocity(1 AU, sun)",
+    "priority": "P1"
+  },
+  {
+    "name": "vis_viva",
+    "category": "Orbital Mechanics",
+    "description": "v² = GM(2/r − 1/a)",
+    "parameters": [
+      {
+        "name": "radius",
+        "kind": "radius",
+        "required": true
+      },
+      {
+        "name": "semi_major_axis",
+        "kind": "length",
+        "required": true
+      },
+      {
+        "name": "central_mass",
+        "kind": "mass",
+        "required": true
+      }
+    ],
+    "returns": "speed",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "v² = GM(2/r − 1/a)",
+    "source": "https://docs.astropy.org/en/stable/coordinates/solarsystem.html",
+    "aliases": [],
+    "example": "vis_viva(1 AU, 1.2 AU, sun)",
+    "priority": "P1"
+  },
+  {
+    "name": "kepler_third_law",
+    "category": "Orbital Mechanics",
+    "description": "P² = 4π²a³/(GM)",
+    "parameters": [
+      {
+        "name": "semi_major_axis",
+        "kind": "length",
+        "required": true
+      },
+      {
+        "name": "central_mass",
+        "kind": "mass",
+        "required": true
+      }
+    ],
+    "returns": "time",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "P² = 4π²a³/(GM)",
+    "source": "https://docs.astropy.org/en/stable/coordinates/solarsystem.html",
+    "aliases": [],
+    "example": "kepler_third_law(1 AU, sun)",
+    "priority": "P0"
+  },
+  {
+    "name": "semi_major_axis",
+    "category": "Orbital Mechanics",
+    "description": "a = −μ/(2ε)",
+    "parameters": [
+      {
+        "name": "orbit",
+        "kind": "orbit_object",
+        "required": true
+      }
+    ],
+    "returns": "length",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "a = −μ/(2ε)",
+    "source": "https://docs.astropy.org/en/stable/coordinates/solarsystem.html",
+    "aliases": [],
+    "example": "semi_major_axis(orbit(earth, sun))",
+    "priority": "P1"
+  },
+  {
+    "name": "eccentricity",
+    "category": "Orbital Mechanics",
+    "description": "e = |(v × h)/μ − r/r|",
+    "parameters": [
+      {
+        "name": "orbit",
+        "kind": "orbit_object",
+        "required": true
+      }
+    ],
+    "returns": "dimensionless",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "e = |(v × h)/μ − r/r|",
+    "source": "https://docs.astropy.org/en/stable/coordinates/solarsystem.html",
+    "aliases": [],
+    "example": "eccentricity(orbit(earth, sun))",
+    "priority": "P1"
+  },
+  {
+    "name": "inclination",
+    "category": "Orbital Mechanics",
+    "description": "i = arccos(h_z/|h|)",
+    "parameters": [
+      {
+        "name": "orbit",
+        "kind": "orbit_object",
+        "required": true
+      }
+    ],
+    "returns": "angle",
+    "visualization": "panel",
+    "model": "Inclination to ICRS equator; specify explicit ecliptic orbit for ecliptic inclination",
+    "formula": "i = arccos(h_z/|h|)",
+    "source": "https://docs.astropy.org/en/stable/coordinates/solarsystem.html",
+    "aliases": [],
+    "example": "inclination(orbit(earth, sun))",
+    "priority": "P1"
+  },
+  {
+    "name": "periapsis",
+    "category": "Orbital Mechanics",
+    "description": "r_p = a(1−e)",
+    "parameters": [
+      {
+        "name": "orbit",
+        "kind": "orbit_object",
+        "required": true
+      }
+    ],
+    "returns": "length",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "r_p = a(1−e)",
+    "source": "https://docs.astropy.org/en/stable/coordinates/solarsystem.html",
+    "aliases": [],
+    "example": "periapsis(earth_orbit)",
+    "priority": "P1"
+  },
+  {
+    "name": "apoapsis",
+    "category": "Orbital Mechanics",
+    "description": "r_a = a(1+e)",
+    "parameters": [
+      {
+        "name": "orbit",
+        "kind": "orbit_object",
+        "required": true
+      }
+    ],
+    "returns": "length",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "r_a = a(1+e)",
+    "source": "https://docs.astropy.org/en/stable/coordinates/solarsystem.html",
+    "aliases": [],
+    "example": "apoapsis(earth_orbit)",
+    "priority": "P1"
+  },
+  {
+    "name": "true_anomaly",
+    "category": "Orbital Mechanics",
+    "description": "tan(ν/2) = √((1+e)/(1−e)) tan(E/2)",
+    "parameters": [
+      {
+        "name": "orbit",
+        "kind": "orbit_object",
+        "required": true
+      },
+      {
+        "name": "at",
+        "kind": "datetime",
+        "required": false,
+        "default": "None"
+      }
+    ],
+    "returns": "angle",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "tan(ν/2) = √((1+e)/(1−e)) tan(E/2)",
+    "source": "https://docs.astropy.org/en/stable/coordinates/solarsystem.html",
+    "aliases": [],
+    "example": "true_anomaly(earth_orbit)",
+    "priority": "P1"
+  },
+  {
+    "name": "mean_anomaly",
+    "category": "Orbital Mechanics",
+    "description": "M = E − e sin E",
+    "parameters": [
+      {
+        "name": "orbit",
+        "kind": "orbit_object",
+        "required": true
+      },
+      {
+        "name": "at",
+        "kind": "datetime",
+        "required": false,
+        "default": "None"
+      }
+    ],
+    "returns": "angle",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "M = E − e sin E",
+    "source": "https://docs.astropy.org/en/stable/coordinates/solarsystem.html",
+    "aliases": [],
+    "example": "mean_anomaly(earth_orbit)",
+    "priority": "P1"
+  },
+  {
+    "name": "eccentric_anomaly",
+    "category": "Orbital Mechanics",
+    "description": "Solve E − e sin E = M",
+    "parameters": [
+      {
+        "name": "orbit",
+        "kind": "orbit_object",
+        "required": true
+      },
+      {
+        "name": "at",
+        "kind": "datetime",
+        "required": false,
+        "default": "None"
+      }
+    ],
+    "returns": "angle",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "Solve E − e sin E = M",
+    "source": "https://docs.astropy.org/en/stable/coordinates/solarsystem.html",
+    "aliases": [],
+    "example": "eccentric_anomaly(earth_orbit)",
+    "priority": "P1"
+  },
+  {
+    "name": "mean_motion",
+    "category": "Orbital Mechanics",
+    "description": "n = √(μ/a³)",
+    "parameters": [
+      {
+        "name": "orbit",
+        "kind": "orbit_object",
+        "required": true
+      }
+    ],
+    "returns": "angular speed",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "n = √(μ/a³)",
+    "source": "https://docs.astropy.org/en/stable/coordinates/solarsystem.html",
+    "aliases": [],
+    "example": "mean_motion(earth_orbit)",
+    "priority": "P1"
+  },
+  {
+    "name": "specific_orbital_energy",
+    "category": "Orbital Mechanics",
+    "description": "ε = −μ/(2a)",
+    "parameters": [
+      {
+        "name": "orbit",
+        "kind": "orbit_object",
+        "required": true
+      }
+    ],
+    "returns": "specific energy",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "ε = −μ/(2a)",
+    "source": "https://docs.astropy.org/en/stable/coordinates/solarsystem.html",
+    "aliases": [],
+    "example": "specific_orbital_energy(earth_orbit)",
+    "priority": "P1"
+  },
+  {
+    "name": "specific_angular_momentum",
+    "category": "Orbital Mechanics",
+    "description": "h = √(μa(1−e²))",
+    "parameters": [
+      {
+        "name": "orbit",
+        "kind": "orbit_object",
+        "required": true
+      }
+    ],
+    "returns": "specific angular momentum",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "h = √(μa(1−e²))",
+    "source": "https://docs.astropy.org/en/stable/coordinates/solarsystem.html",
+    "aliases": [],
+    "example": "specific_angular_momentum(earth_orbit)",
+    "priority": "P1"
+  },
+  {
+    "name": "synodic_period",
+    "category": "Orbital Mechanics",
+    "description": "1/S = |1/P₁ ∓ 1/P₂|",
+    "parameters": [
+      {
+        "name": "period1",
+        "kind": "time",
+        "required": true
+      },
+      {
+        "name": "period2",
+        "kind": "time",
+        "required": true
+      },
+      {
+        "name": "sense",
+        "kind": "value",
+        "required": false,
+        "default": "prograde"
+      }
+    ],
+    "returns": "time",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "1/S = |1/P₁ ∓ 1/P₂|",
+    "source": "https://docs.astropy.org/en/stable/coordinates/solarsystem.html",
+    "aliases": [],
+    "example": "synodic_period(365.25 day, 686.98 day)",
+    "priority": "P1"
+  },
+  {
+    "name": "hill_sphere",
+    "category": "Orbital Mechanics",
+    "description": "r_H ≈ a(1−e)(m/(3M))^(1/3)",
+    "parameters": [
+      {
+        "name": "body",
+        "kind": "body",
+        "required": true
+      },
+      {
+        "name": "primary",
+        "kind": "body",
+        "required": true
+      },
+      {
+        "name": "semi_major_axis",
+        "kind": "length",
+        "required": true
+      },
+      {
+        "name": "eccentricity",
+        "kind": "value",
+        "required": false,
+        "default": "0"
+      }
+    ],
+    "returns": "length",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "r_H ≈ a(1−e)(m/(3M))^(1/3)",
+    "source": "https://docs.astropy.org/en/stable/coordinates/solarsystem.html",
+    "aliases": [],
+    "example": "hill_sphere(earth, sun, 1 AU)",
+    "priority": "P1"
+  },
+  {
+    "name": "roche_limit",
+    "category": "Orbital Mechanics",
+    "description": "d = kR₁(ρ₁/ρ₂)^(1/3), k_fluid=2.44, k_rigid=2^(1/3)",
+    "parameters": [
+      {
+        "name": "primary",
+        "kind": "body",
+        "required": true
+      },
+      {
+        "name": "satellite",
+        "kind": "body",
+        "required": false,
+        "default": "None"
+      },
+      {
+        "name": "model",
+        "kind": "model_roche_limit",
+        "required": false,
+        "default": "fluid"
+      }
+    ],
+    "returns": "length",
+    "visualization": "panel",
+    "model": "Strengthless fluid (2.44) or rigid (1.26) satellite approximation",
+    "formula": "d = kR₁(ρ₁/ρ₂)^(1/3), k_fluid=2.44, k_rigid=2^(1/3)",
+    "source": "https://docs.astropy.org/en/stable/coordinates/solarsystem.html",
+    "aliases": [],
+    "example": "roche_limit(earth, moon, model=\"fluid\")",
+    "priority": "P1"
+  },
+  {
+    "name": "lagrange_points",
+    "category": "Orbital Mechanics",
+    "description": "∂Ω/∂x = 0 in the circular restricted three-body rotating frame",
+    "parameters": [
+      {
+        "name": "primary",
+        "kind": "body",
+        "required": true
+      },
+      {
+        "name": "secondary",
+        "kind": "body",
+        "required": true
+      }
+    ],
+    "returns": "structured data / typed quantities",
+    "visualization": "potential",
+    "model": "Circular restricted three-body; positions in separation units, barycentric rotating frame",
+    "formula": "∂Ω/∂x = 0 in the circular restricted three-body rotating frame",
+    "source": "https://docs.astropy.org/en/stable/coordinates/solarsystem.html",
+    "aliases": [],
+    "example": "lagrange_points(sun, earth)",
+    "priority": "P1"
+  },
+  {
+    "name": "sphere_of_influence",
+    "category": "Orbital Mechanics",
+    "description": "r_SOI = a(m/M)^(2/5)",
+    "parameters": [
+      {
+        "name": "body",
+        "kind": "body",
+        "required": true
+      },
+      {
+        "name": "primary",
+        "kind": "body",
+        "required": true
+      }
+    ],
+    "returns": "length",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "r_SOI = a(m/M)^(2/5)",
+    "source": "https://docs.astropy.org/en/stable/coordinates/solarsystem.html",
+    "aliases": [],
+    "example": "sphere_of_influence(earth, sun)",
+    "priority": "P1"
+  },
+  {
+    "name": "propagate_orbit",
+    "category": "Orbital Mechanics",
+    "description": "Integrate r̈ = −μr/r³; DOP853",
+    "parameters": [
+      {
+        "name": "orbit",
+        "kind": "orbit_object",
+        "required": true
+      },
+      {
+        "name": "duration",
+        "kind": "time",
+        "required": true
+      }
+    ],
+    "returns": "structured data / typed quantities",
+    "visualization": "orbit",
+    "model": "Newtonian two-body; DOP853 relative tolerance 1e-10",
+    "formula": "Integrate r̈ = −μr/r³; DOP853",
+    "source": "https://docs.astropy.org/en/stable/coordinates/solarsystem.html",
+    "aliases": [],
+    "example": "propagate_orbit(earth_orbit, 30 day)",
+    "priority": "P1"
+  },
+  {
+    "name": "two_body_simulation",
+    "category": "Orbital Mechanics",
+    "description": "r̈ᵢ = Σⱼ Gmⱼ(rⱼ−rᵢ)/|rⱼ−rᵢ|³",
+    "parameters": [
+      {
+        "name": "body1",
+        "kind": "body",
+        "required": true
+      },
+      {
+        "name": "body2",
+        "kind": "body",
+        "required": true
+      },
+      {
+        "name": "initial_state",
+        "kind": "value",
+        "required": true
+      }
+    ],
+    "returns": "structured data / typed quantities",
+    "visualization": "orbit",
+    "model": "Newtonian point masses; numerical DOP853; collision singularities rejected",
+    "formula": "r̈ᵢ = Σⱼ Gmⱼ(rⱼ−rᵢ)/|rⱼ−rᵢ|³",
+    "source": "https://docs.astropy.org/en/stable/coordinates/solarsystem.html",
+    "aliases": [],
+    "example": "two_body_simulation(sun, earth, {positions: [[0,0,0],[1 AU,0,0]], velocities: [[0,0,0],[0,29.78 km/s,0]], duration: 365 day})",
+    "priority": "P1"
+  },
+  {
+    "name": "n_body_simulation",
+    "category": "Orbital Mechanics",
+    "description": "Newtonian N-body integration; report relative energy drift",
+    "parameters": [
+      {
+        "name": "bodies",
+        "kind": "value",
+        "required": true
+      },
+      {
+        "name": "initial_states",
+        "kind": "value",
+        "required": true
+      },
+      {
+        "name": "duration",
+        "kind": "time",
+        "required": true
+      }
+    ],
+    "returns": "structured data / typed quantities",
+    "visualization": "orbit",
+    "model": "Newtonian point masses; no relativity, tides or physical collisions",
+    "formula": "Newtonian N-body integration; report relative energy drift",
+    "source": "https://docs.astropy.org/en/stable/coordinates/solarsystem.html",
+    "aliases": [],
+    "example": "n_body_simulation([sun,earth], {positions:[[0,0,0],[1 AU,0,0]],velocities:[[0,0,0],[0,29.78 km/s,0]]}, 365 day)",
+    "priority": "P1"
+  },
+  {
+    "name": "hohmann_transfer",
+    "category": "Spaceflight & Maneuvers",
+    "description": "Δv₁ = √(μ/r₁)(√(2r₂/(r₁+r₂))−1); Δv₂ = √(μ/r₂)(1−√(2r₁/(r₁+r₂)))",
+    "parameters": [
+      {
+        "name": "initial_orbit",
+        "kind": "orbit_object",
+        "required": true
+      },
+      {
+        "name": "target_orbit",
+        "kind": "orbit_object",
+        "required": true
+      }
+    ],
+    "returns": "structured data / typed quantities",
+    "visualization": "transfer",
+    "model": "Two coplanar circular orbits; impulsive burns; no launch or capture costs",
+    "formula": "Δv₁ = √(μ/r₁)(√(2r₂/(r₁+r₂))−1); Δv₂ = √(μ/r₂)(1−√(2r₁/(r₁+r₂)))",
+    "source": "https://orbital-mechanics.space/",
+    "aliases": [],
+    "example": "hohmann_transfer({a:1 AU,central_mass:sun},{a:1.524 AU,central_mass:sun})",
+    "priority": "P1"
+  },
+  {
+    "name": "bielliptic_transfer",
+    "category": "Spaceflight & Maneuvers",
+    "description": "Sum three vis-viva burns across two transfer ellipses",
+    "parameters": [
+      {
+        "name": "initial_orbit",
+        "kind": "orbit_object",
+        "required": true
+      },
+      {
+        "name": "target_orbit",
+        "kind": "orbit_object",
+        "required": true
+      },
+      {
+        "name": "intermediate_radius",
+        "kind": "length",
+        "required": true
+      }
+    ],
+    "returns": "structured data / typed quantities",
+    "visualization": "transfer",
+    "model": "Coplanar circular endpoints; intermediate radius above both endpoints",
+    "formula": "Sum three vis-viva burns across two transfer ellipses",
+    "source": "https://orbital-mechanics.space/",
+    "aliases": [],
+    "example": "bielliptic_transfer({a:1 AU,central_mass:sun},{a:2 AU,central_mass:sun},10 AU)",
+    "priority": "P1"
+  },
+  {
+    "name": "lambert_transfer",
+    "category": "Spaceflight & Maneuvers",
+    "description": "Universal-variable Lambert equation; Lagrange f,g coefficients",
+    "parameters": [
+      {
+        "name": "position1",
+        "kind": "value",
+        "required": true
+      },
+      {
+        "name": "position2",
+        "kind": "value",
+        "required": true
+      },
+      {
+        "name": "flight_time",
+        "kind": "time",
+        "required": true
+      },
+      {
+        "name": "central_mass",
+        "kind": "mass",
+        "required": true
+      }
+    ],
+    "returns": "structured data / typed quantities",
+    "visualization": "transfer",
+    "model": "Zero-revolution, prograde short-way transfer; positions relative to common center",
+    "formula": "Universal-variable Lambert equation; Lagrange f,g coefficients",
+    "source": "https://orbital-mechanics.space/",
+    "aliases": [],
+    "example": "lambert_transfer([1 AU,0,0],[0,1 AU,0],90 day,sun)",
+    "priority": "P1"
+  },
+  {
+    "name": "delta_v",
+    "category": "Spaceflight & Maneuvers",
+    "description": "Δv = Σ|Δvᵢ|",
+    "parameters": [
+      {
+        "name": "maneuver",
+        "kind": "value",
+        "required": true
+      }
+    ],
+    "returns": "speed",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "Δv = Σ|Δvᵢ|",
+    "source": "https://orbital-mechanics.space/",
+    "aliases": [],
+    "example": "delta_v(hohmann_transfer({a:1 AU,central_mass:sun},{a:2 AU,central_mass:sun}))",
+    "priority": "P1"
+  },
+  {
+    "name": "transfer_time",
+    "category": "Spaceflight & Maneuvers",
+    "description": "Transfer duration from maneuver object",
+    "parameters": [
+      {
+        "name": "maneuver",
+        "kind": "value",
+        "required": true
+      }
+    ],
+    "returns": "time",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "Transfer duration from maneuver object",
+    "source": "https://orbital-mechanics.space/",
+    "aliases": [],
+    "example": "transfer_time(hohmann_transfer({a:1 AU,central_mass:sun},{a:2 AU,central_mass:sun}))",
+    "priority": "P1"
+  },
+  {
+    "name": "plane_change_delta_v",
+    "category": "Spaceflight & Maneuvers",
+    "description": "Δv = 2v sin(θ/2)",
+    "parameters": [
+      {
+        "name": "velocity",
+        "kind": "speed",
+        "required": true
+      },
+      {
+        "name": "angle",
+        "kind": "angle",
+        "required": true
+      }
+    ],
+    "returns": "speed",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "Δv = 2v sin(θ/2)",
+    "source": "https://orbital-mechanics.space/",
+    "aliases": [],
+    "example": "plane_change_delta_v(7.8 km/s,30 deg)",
+    "priority": "P1"
+  },
+  {
+    "name": "rocket_equation",
+    "category": "Spaceflight & Maneuvers",
+    "description": "Δv = I_sp g₀ ln(m₀/m_f)",
+    "parameters": [
+      {
+        "name": "initial_mass",
+        "kind": "mass",
+        "required": true
+      },
+      {
+        "name": "final_mass",
+        "kind": "mass",
+        "required": true
+      },
+      {
+        "name": "isp",
+        "kind": "time",
+        "required": true
+      }
+    ],
+    "returns": "speed",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "Δv = I_sp g₀ ln(m₀/m_f)",
+    "source": "https://orbital-mechanics.space/",
+    "aliases": [],
+    "example": "rocket_equation(1000 kg,500 kg,300 s)",
+    "priority": "P1"
+  },
+  {
+    "name": "mass_ratio",
+    "category": "Spaceflight & Maneuvers",
+    "description": "m₀/m_f = exp(Δv/(I_sp g₀))",
+    "parameters": [
+      {
+        "name": "delta_v",
+        "kind": "value",
+        "required": true
+      },
+      {
+        "name": "isp",
+        "kind": "time",
+        "required": true
+      }
+    ],
+    "returns": "dimensionless",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "m₀/m_f = exp(Δv/(I_sp g₀))",
+    "source": "https://orbital-mechanics.space/",
+    "aliases": [],
+    "example": "mass_ratio(3 km/s,300 s)",
+    "priority": "P1"
+  },
+  {
+    "name": "thrust_acceleration",
+    "category": "Spaceflight & Maneuvers",
+    "description": "a = F/m",
+    "parameters": [
+      {
+        "name": "thrust",
+        "kind": "force",
+        "required": true
+      },
+      {
+        "name": "mass",
+        "kind": "mass",
+        "required": true
+      }
+    ],
+    "returns": "acceleration",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "a = F/m",
+    "source": "https://orbital-mechanics.space/",
+    "aliases": [],
+    "example": "thrust_acceleration(100 N,1000 kg)",
+    "priority": "P1"
+  },
+  {
+    "name": "burn_time",
+    "category": "Spaceflight & Maneuvers",
+    "description": "t = m_propellant / ṁ",
+    "parameters": [
+      {
+        "name": "propellant_mass",
+        "kind": "mass",
+        "required": true
+      },
+      {
+        "name": "mass_flow_rate",
+        "kind": "mass_flow",
+        "required": true
+      }
+    ],
+    "returns": "time",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "t = m_propellant / ṁ",
+    "source": "https://orbital-mechanics.space/",
+    "aliases": [],
+    "example": "burn_time(100 kg,2 kg/s)",
+    "priority": "P1"
+  },
+  {
+    "name": "launch_window",
+    "category": "Spaceflight & Maneuvers",
+    "description": "Find minima of wrapped heliocentric phase error to Hohmann departure phase",
+    "parameters": [
+      {
+        "name": "origin",
+        "kind": "body",
+        "required": true
+      },
+      {
+        "name": "target",
+        "kind": "body",
+        "required": true
+      },
+      {
+        "name": "date_range",
+        "kind": "value",
+        "required": true
+      },
+      {
+        "name": "model",
+        "kind": "model_launch_window",
+        "required": false,
+        "default": "hohmann"
+      }
+    ],
+    "returns": "structured data / typed quantities",
+    "visualization": "curve",
+    "model": "Coplanar circular Hohmann phase estimate using JPL DE440s heliocentric positions; windows are not launch solutions",
+    "formula": "Find minima of wrapped heliocentric phase error to Hohmann departure phase",
+    "source": "https://orbital-mechanics.space/",
+    "aliases": [],
+    "example": "launch_window(earth,mars,[\"2026-01-01\",\"2028-01-01\"])",
+    "priority": "P1"
+  },
+  {
+    "name": "phase_angle",
+    "category": "Spaceflight & Maneuvers",
+    "description": "φ = atan2((r₁ × r₂)_z, r₁·r₂)",
+    "parameters": [
+      {
+        "name": "body1",
+        "kind": "body",
+        "required": true
+      },
+      {
+        "name": "body2",
+        "kind": "body",
+        "required": true
+      },
+      {
+        "name": "center",
+        "kind": "mass",
+        "required": false,
+        "default": "sun"
+      },
+      {
+        "name": "at",
+        "kind": "datetime",
+        "required": false,
+        "default": "J2000"
+      }
+    ],
+    "returns": "structured data / typed quantities",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "φ = atan2((r₁ × r₂)_z, r₁·r₂)",
+    "source": "https://orbital-mechanics.space/",
+    "aliases": [],
+    "example": "phase_angle(earth,mars,sun,at=\"2026-11-11\")",
+    "priority": "P1"
+  },
+  {
+    "name": "gravity_assist",
+    "category": "Spaceflight & Maneuvers",
+    "description": "δ = 2 asin(1/(1+r_p v∞²/μ)); rotate incoming v∞ in specified flyby plane",
+    "parameters": [
+      {
+        "name": "encounter_state",
+        "kind": "value",
+        "required": true
+      },
+      {
+        "name": "planet",
+        "kind": "body",
+        "required": true
+      },
+      {
+        "name": "flyby_parameters",
+        "kind": "value",
+        "required": true
+      }
+    ],
+    "returns": "structured data / typed quantities",
+    "visualization": "panel",
+    "model": "Unpowered hyperbolic patched-conic flyby; prescribed encounter-plane normal",
+    "formula": "δ = 2 asin(1/(1+r_p v∞²/μ)); rotate incoming v∞ in specified flyby plane",
+    "source": "https://orbital-mechanics.space/",
+    "aliases": [],
+    "example": "gravity_assist({velocity:[15 km/s,0,0],planet_velocity:[0,13 km/s,0]},jupiter,{periapsis:1e8 m,normal:[0,0,1]})",
+    "priority": "P1"
+  },
+  {
+    "name": "patched_conics",
+    "category": "Spaceflight & Maneuvers",
+    "description": "Sequential planet-centered hyperbolic flyby maps",
+    "parameters": [
+      {
+        "name": "trajectory",
+        "kind": "value",
+        "required": true
+      },
+      {
+        "name": "encounters",
+        "kind": "value",
+        "required": true
+      }
+    ],
+    "returns": "structured data / typed quantities",
+    "visualization": "panel",
+    "model": "Prescribed encounter states; instantaneous sphere-of-influence patches; no ephemeris optimization",
+    "formula": "Sequential planet-centered hyperbolic flyby maps",
+    "source": "https://orbital-mechanics.space/",
+    "aliases": [],
+    "example": "patched_conics({velocity:[15 km/s,0,0]},[{planet:jupiter,planet_velocity:[0,0,0],periapsis:1e8 m,normal:[0,0,1]}])",
+    "priority": "P1"
+  },
+  {
+    "name": "position",
+    "category": "Astronomy Observation",
+    "description": "Astropy get_body → apparent GCRS → topocentric AltAz",
+    "parameters": [
+      {
+        "name": "body",
+        "kind": "body",
+        "required": true
+      },
+      {
+        "name": "at",
+        "kind": "datetime",
+        "required": true
+      },
+      {
+        "name": "observer",
+        "kind": "observer",
+        "required": true
+      }
+    ],
+    "returns": "structured data / typed quantities",
+    "visualization": "panel",
+    "model": "JPL DE440s ephemeris; GCRS apparent RA/Dec and unrefracted AltAz; bundled IERS Earth orientation",
+    "formula": "Astropy get_body → apparent GCRS → topocentric AltAz",
+    "source": "https://docs.astropy.org/en/stable/coordinates/",
+    "aliases": [],
+    "example": "position(moon,\"2026-11-11T12:00:00\",{longitude:121.56 deg,latitude:25.03 deg})",
+    "priority": "P1"
+  },
+  {
+    "name": "ra_dec",
+    "category": "Astronomy Observation",
+    "description": "Apparent equatorial right ascension and declination",
+    "parameters": [
+      {
+        "name": "body",
+        "kind": "body",
+        "required": true
+      },
+      {
+        "name": "at",
+        "kind": "datetime",
+        "required": true
+      },
+      {
+        "name": "observer",
+        "kind": "observer",
+        "required": true
+      }
+    ],
+    "returns": "structured data / typed quantities",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "Apparent equatorial right ascension and declination",
+    "source": "https://docs.astropy.org/en/stable/coordinates/",
+    "aliases": [],
+    "example": "ra_dec(moon,\"2026-11-11\",{longitude:0 deg,latitude:51 deg})",
+    "priority": "P1"
+  },
+  {
+    "name": "alt_az",
+    "category": "Astronomy Observation",
+    "description": "Topocentric horizontal altitude and azimuth",
+    "parameters": [
+      {
+        "name": "body",
+        "kind": "body",
+        "required": true
+      },
+      {
+        "name": "at",
+        "kind": "datetime",
+        "required": true
+      },
+      {
+        "name": "observer",
+        "kind": "observer",
+        "required": true
+      }
+    ],
+    "returns": "structured data / typed quantities",
+    "visualization": "sky",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "Topocentric horizontal altitude and azimuth",
+    "source": "https://docs.astropy.org/en/stable/coordinates/",
+    "aliases": [],
+    "example": "alt_az(moon,\"2026-11-11\",{longitude:121 deg,latitude:25 deg})",
+    "priority": "P1"
+  },
+  {
+    "name": "angular_separation",
+    "category": "Astronomy Observation",
+    "description": "cos θ = sin δ₁ sin δ₂ + cos δ₁ cos δ₂ cos(α₁−α₂)",
+    "parameters": [
+      {
+        "name": "body1",
+        "kind": "body",
+        "required": true
+      },
+      {
+        "name": "body2",
+        "kind": "body",
+        "required": true
+      },
+      {
+        "name": "at",
+        "kind": "datetime",
+        "required": true
+      },
+      {
+        "name": "observer",
+        "kind": "observer",
+        "required": true
+      }
+    ],
+    "returns": "angle",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "cos θ = sin δ₁ sin δ₂ + cos δ₁ cos δ₂ cos(α₁−α₂)",
+    "source": "https://docs.astropy.org/en/stable/coordinates/",
+    "aliases": [],
+    "example": "angular_separation(sun,moon,\"2026-11-11\",{longitude:0 deg,latitude:0 deg})",
+    "priority": "P1"
+  },
+  {
+    "name": "angular_size",
+    "category": "Astronomy Observation",
+    "description": "θ = 2 asin(R/d)",
+    "parameters": [
+      {
+        "name": "body",
+        "kind": "body",
+        "required": true
+      },
+      {
+        "name": "observer",
+        "kind": "observer",
+        "required": true
+      },
+      {
+        "name": "at",
+        "kind": "datetime",
+        "required": true
+      }
+    ],
+    "returns": "angle",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "θ = 2 asin(R/d)",
+    "source": "https://docs.astropy.org/en/stable/coordinates/",
+    "aliases": [],
+    "example": "angular_size(moon,{longitude:0 deg,latitude:0 deg},\"2026-11-11\")",
+    "priority": "P1"
+  },
+  {
+    "name": "rise_set",
+    "category": "Astronomy Observation",
+    "description": "Bracket and solve vacuum center altitude = 0° across one UTC day",
+    "parameters": [
+      {
+        "name": "body",
+        "kind": "body",
+        "required": true
+      },
+      {
+        "name": "date",
+        "kind": "value",
+        "required": true
+      },
+      {
+        "name": "observer",
+        "kind": "observer",
+        "required": true
+      }
+    ],
+    "returns": "structured data / typed quantities",
+    "visualization": "panel",
+    "model": "Geometric body center; no refraction, horizon dip, limb radius or terrain",
+    "formula": "Bracket and solve vacuum center altitude = 0° across one UTC day",
+    "source": "https://docs.astropy.org/en/stable/coordinates/",
+    "aliases": [],
+    "example": "rise_set(moon,\"2026-11-11\",{longitude:121 deg,latitude:25 deg})",
+    "priority": "P1"
+  },
+  {
+    "name": "transit_time",
+    "category": "Astronomy Observation",
+    "description": "Maximize altitude in the specified UTC day",
+    "parameters": [
+      {
+        "name": "body",
+        "kind": "body",
+        "required": true
+      },
+      {
+        "name": "date",
+        "kind": "value",
+        "required": true
+      },
+      {
+        "name": "observer",
+        "kind": "observer",
+        "required": true
+      }
+    ],
+    "returns": "structured data / typed quantities",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "Maximize altitude in the specified UTC day",
+    "source": "https://docs.astropy.org/en/stable/coordinates/",
+    "aliases": [],
+    "example": "transit_time(sun,\"2026-11-11\",{longitude:121 deg,latitude:25 deg})",
+    "priority": "P1"
+  },
+  {
+    "name": "hour_angle",
+    "category": "Astronomy Observation",
+    "description": "H = local apparent sidereal time − topocentric CIRS right ascension",
+    "parameters": [
+      {
+        "name": "body",
+        "kind": "body",
+        "required": true
+      },
+      {
+        "name": "at",
+        "kind": "datetime",
+        "required": true
+      },
+      {
+        "name": "observer",
+        "kind": "observer",
+        "required": true
+      }
+    ],
+    "returns": "angle",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "H = local apparent sidereal time − topocentric CIRS right ascension",
+    "source": "https://docs.astropy.org/en/stable/coordinates/",
+    "aliases": [],
+    "example": "hour_angle(moon,\"2026-11-11\",{longitude:121 deg,latitude:25 deg})",
+    "priority": "P1"
+  },
+  {
+    "name": "airmass",
+    "category": "Astronomy Observation",
+    "description": "X = 1/[cos z + 0.50572(96.07995−z_deg)^−1.6364]",
+    "parameters": [
+      {
+        "name": "body",
+        "kind": "body",
+        "required": true
+      },
+      {
+        "name": "at",
+        "kind": "datetime",
+        "required": true
+      },
+      {
+        "name": "observer",
+        "kind": "observer",
+        "required": true
+      }
+    ],
+    "returns": "dimensionless",
+    "visualization": "panel",
+    "model": "Kasten–Young 1989 optical relative airmass; vacuum altitude; above horizon only",
+    "formula": "X = 1/[cos z + 0.50572(96.07995−z_deg)^−1.6364]",
+    "source": "https://docs.astropy.org/en/stable/coordinates/",
+    "aliases": [],
+    "example": "airmass(moon,\"2026-11-11\",{longitude:121 deg,latitude:25 deg})",
+    "priority": "P1"
+  },
+  {
+    "name": "sky_map",
+    "category": "Astronomy Observation",
+    "description": "Project topocentric AltAz positions onto the horizon dome",
+    "parameters": [
+      {
+        "name": "observer",
+        "kind": "observer",
+        "required": true
+      },
+      {
+        "name": "at",
+        "kind": "datetime",
+        "required": true
+      }
+    ],
+    "returns": "structured data / typed quantities",
+    "visualization": "sky",
+    "model": "Builtin solar-system ephemeris and five fixed ICRS reference stars; no comprehensive star catalogue",
+    "formula": "Project topocentric AltAz positions onto the horizon dome",
+    "source": "https://docs.astropy.org/en/stable/coordinates/",
+    "aliases": [],
+    "example": "sky_map({longitude:121.56 deg,latitude:25.03 deg},\"2026-11-11T12:00:00\")",
+    "priority": "P0"
+  },
+  {
+    "name": "conjunction",
+    "category": "Astronomy Observation",
+    "description": "Minimize apparent angular separation over date range",
+    "parameters": [
+      {
+        "name": "body1",
+        "kind": "body",
+        "required": true
+      },
+      {
+        "name": "body2",
+        "kind": "body",
+        "required": true
+      },
+      {
+        "name": "date_range",
+        "kind": "value",
+        "required": true
+      }
+    ],
+    "returns": "structured data / typed quantities",
+    "visualization": "panel",
+    "model": "Geocentric apparent closest approaches, not exact ecliptic-longitude conjunctions",
+    "formula": "Minimize apparent angular separation over date range",
+    "source": "https://docs.astropy.org/en/stable/coordinates/",
+    "aliases": [],
+    "example": "conjunction(venus,jupiter,[\"2026-01-01\",\"2027-01-01\"])",
+    "priority": "P1"
+  },
+  {
+    "name": "opposition",
+    "category": "Astronomy Observation",
+    "description": "Maximize angular separation from Sun",
+    "parameters": [
+      {
+        "name": "body",
+        "kind": "body",
+        "required": true
+      },
+      {
+        "name": "date_range",
+        "kind": "value",
+        "required": true
+      }
+    ],
+    "returns": "structured data / typed quantities",
+    "visualization": "panel",
+    "model": "Geocentric maximum solar separation; not exact ecliptic-longitude opposition",
+    "formula": "Maximize angular separation from Sun",
+    "source": "https://docs.astropy.org/en/stable/coordinates/",
+    "aliases": [],
+    "example": "opposition(mars,[\"2026-01-01\",\"2028-01-01\"])",
+    "priority": "P1"
+  },
+  {
+    "name": "elongation",
+    "category": "Astronomy Observation",
+    "description": "Elongation = angular separation from Sun",
+    "parameters": [
+      {
+        "name": "body",
+        "kind": "body",
+        "required": true
+      },
+      {
+        "name": "at",
+        "kind": "datetime",
+        "required": true
+      },
+      {
+        "name": "observer",
+        "kind": "observer",
+        "required": true
+      }
+    ],
+    "returns": "angle",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "Elongation = angular separation from Sun",
+    "source": "https://docs.astropy.org/en/stable/coordinates/",
+    "aliases": [],
+    "example": "elongation(venus,\"2026-11-11\",{longitude:0 deg,latitude:0 deg})",
+    "priority": "P1"
+  },
+  {
+    "name": "moon_phase",
+    "category": "Astronomy Observation",
+    "description": "Geocentric ecliptic longitude difference (Moon − Sun) mod 360°",
+    "parameters": [
+      {
+        "name": "at",
+        "kind": "datetime",
+        "required": true
+      }
+    ],
+    "returns": "angle",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "Geocentric ecliptic longitude difference (Moon − Sun) mod 360°",
+    "source": "https://docs.astropy.org/en/stable/coordinates/",
+    "aliases": [],
+    "example": "moon_phase(\"2026-11-11\")",
+    "priority": "P1"
+  },
+  {
+    "name": "moon_illumination",
+    "category": "Astronomy Observation",
+    "description": "Illuminated fraction k = (1 + cos phase_angle_at_moon)/2",
+    "parameters": [
+      {
+        "name": "at",
+        "kind": "datetime",
+        "required": true
+      }
+    ],
+    "returns": "dimensionless",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "Illuminated fraction k = (1 + cos phase_angle_at_moon)/2",
+    "source": "https://docs.astropy.org/en/stable/coordinates/",
+    "aliases": [],
+    "example": "moon_illumination(\"2026-11-11\")",
+    "priority": "P1"
+  },
+  {
+    "name": "solar_eclipse",
+    "category": "Astronomy Observation",
+    "description": "Compare topocentric Sun–Moon separation with their angular radii",
+    "parameters": [
+      {
+        "name": "date_range",
+        "kind": "value",
+        "required": true
+      },
+      {
+        "name": "observer",
+        "kind": "observer",
+        "required": true
+      }
+    ],
+    "returns": "structured data / typed quantities",
+    "visualization": "panel",
+    "model": "Geometric candidate screening with JPL DE440s ephemeris; no Besselian elements, limb profile, ΔT prediction or certified contact times",
+    "formula": "Compare topocentric Sun–Moon separation with their angular radii",
+    "source": "https://docs.astropy.org/en/stable/coordinates/",
+    "aliases": [],
+    "example": "solar_eclipse([\"2026-08-12\",\"2026-08-13\"],{longitude:-20 deg,latitude:65 deg})",
+    "priority": "P1"
+  },
+  {
+    "name": "lunar_eclipse",
+    "category": "Astronomy Observation",
+    "description": "Moon distance from anti-solar Earth shadow axis versus umbral radius",
+    "parameters": [
+      {
+        "name": "date_range",
+        "kind": "value",
+        "required": true
+      },
+      {
+        "name": "observer",
+        "kind": "observer",
+        "required": true
+      }
+    ],
+    "returns": "structured data / typed quantities",
+    "visualization": "panel",
+    "model": "Spherical Earth geometric umbra/penumbra screening; no atmospheric enlargement; approximate ephemerides",
+    "formula": "Moon distance from anti-solar Earth shadow axis versus umbral radius",
+    "source": "https://docs.astropy.org/en/stable/coordinates/",
+    "aliases": [],
+    "example": "lunar_eclipse([\"2026-03-03\",\"2026-03-04\"],{longitude:121 deg,latitude:25 deg})",
+    "priority": "P1"
+  },
+  {
+    "name": "coordinate_transform",
+    "category": "Astronomy Observation",
+    "description": "Astropy coordinate frame transform",
+    "parameters": [
+      {
+        "name": "coordinates",
+        "kind": "value",
+        "required": true
+      },
+      {
+        "name": "from_frame",
+        "kind": "value",
+        "required": true
+      },
+      {
+        "name": "to_frame",
+        "kind": "value",
+        "required": true
+      },
+      {
+        "name": "at",
+        "kind": "datetime",
+        "required": false,
+        "default": "J2000"
+      }
+    ],
+    "returns": "structured data / typed quantities",
+    "visualization": "panel",
+    "model": "Astropy/ERFA frame transforms; time required for time-dependent frames",
+    "formula": "Astropy coordinate frame transform",
+    "source": "https://docs.astropy.org/en/stable/coordinates/",
+    "aliases": [],
+    "example": "coordinate_transform({ra:266.4 deg,dec:-28.94 deg},icrs,galactic)",
+    "priority": "P1"
+  },
+  {
+    "name": "proper_motion",
+    "category": "Astronomy Observation",
+    "description": "Propagate ICRS position with proper motion and optional radial velocity",
+    "parameters": [
+      {
+        "name": "position",
+        "kind": "value",
+        "required": true
+      },
+      {
+        "name": "motion",
+        "kind": "value",
+        "required": true
+      },
+      {
+        "name": "elapsed_time",
+        "kind": "time",
+        "required": true
+      }
+    ],
+    "returns": "structured data / typed quantities",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "Propagate ICRS position with proper motion and optional radial velocity",
+    "source": "https://docs.astropy.org/en/stable/coordinates/",
+    "aliases": [],
+    "example": "proper_motion({ra:10 deg,dec:20 deg},{pm_ra_cosdec:100 mas/yr,pm_dec:50 mas/yr},10 yr)",
+    "priority": "P1"
+  },
+  {
+    "name": "parallax_distance",
+    "category": "Astronomy Observation",
+    "description": "d_pc = 1/p_arcsec",
+    "parameters": [
+      {
+        "name": "parallax",
+        "kind": "parallax",
+        "required": true
+      }
+    ],
+    "returns": "length",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "d_pc = 1/p_arcsec",
+    "source": "https://docs.astropy.org/en/stable/coordinates/",
+    "aliases": [],
+    "example": "parallax_distance(100 mas)",
+    "priority": "P1"
+  },
+  {
+    "name": "julian_date",
+    "category": "Astronomical Time",
+    "description": "UTC Julian Date using Astropy Time",
+    "parameters": [
+      {
+        "name": "datetime",
+        "kind": "datetime",
+        "required": true
+      }
+    ],
+    "returns": "dimensionless",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "UTC Julian Date using Astropy Time",
+    "source": "https://docs.astropy.org/en/stable/time/",
+    "aliases": [],
+    "example": "julian_date(\"2000-01-01T12:00:00\")",
+    "priority": "P1"
+  },
+  {
+    "name": "modified_julian_date",
+    "category": "Astronomical Time",
+    "description": "MJD = JD − 2400000.5",
+    "parameters": [
+      {
+        "name": "datetime",
+        "kind": "datetime",
+        "required": true
+      }
+    ],
+    "returns": "dimensionless",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "MJD = JD − 2400000.5",
+    "source": "https://docs.astropy.org/en/stable/time/",
+    "aliases": [],
+    "example": "modified_julian_date(\"2000-01-01T12:00:00\")",
+    "priority": "P1"
+  },
+  {
+    "name": "julian_centuries",
+    "category": "Astronomical Time",
+    "description": "T = (JD_TT − 2451545.0)/36525",
+    "parameters": [
+      {
+        "name": "datetime",
+        "kind": "datetime",
+        "required": true
+      }
+    ],
+    "returns": "dimensionless",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "T = (JD_TT − 2451545.0)/36525",
+    "source": "https://docs.astropy.org/en/stable/time/",
+    "aliases": [],
+    "example": "julian_centuries(\"2000-01-01T12:00:00\")",
+    "priority": "P1"
+  },
+  {
+    "name": "sidereal_time",
+    "category": "Astronomical Time",
+    "description": "IAU 2006 apparent sidereal time at longitude",
+    "parameters": [
+      {
+        "name": "datetime",
+        "kind": "datetime",
+        "required": true
+      },
+      {
+        "name": "longitude",
+        "kind": "value",
+        "required": true
+      }
+    ],
+    "returns": "angle",
+    "visualization": "panel",
+    "model": "ERFA IAU 2006/2000A; UT1 from bundled IERS",
+    "formula": "IAU 2006 apparent sidereal time at longitude",
+    "source": "https://docs.astropy.org/en/stable/time/",
+    "aliases": [],
+    "example": "sidereal_time(\"2026-11-11T12:00:00\",121 deg)",
+    "priority": "P1"
+  },
+  {
+    "name": "local_sidereal_time",
+    "category": "Astronomical Time",
+    "description": "Local apparent sidereal time from geodetic longitude",
+    "parameters": [
+      {
+        "name": "datetime",
+        "kind": "datetime",
+        "required": true
+      },
+      {
+        "name": "observer",
+        "kind": "observer",
+        "required": true
+      }
+    ],
+    "returns": "angle",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "Local apparent sidereal time from geodetic longitude",
+    "source": "https://docs.astropy.org/en/stable/time/",
+    "aliases": [],
+    "example": "local_sidereal_time(\"2026-11-11\",{longitude:121 deg,latitude:25 deg})",
+    "priority": "P1"
+  },
+  {
+    "name": "time_scale_convert",
+    "category": "Astronomical Time",
+    "description": "ERFA conversion between UTC, TAI, TT, TDB, UT1, TCG and TCB",
+    "parameters": [
+      {
+        "name": "datetime",
+        "kind": "datetime",
+        "required": true
+      },
+      {
+        "name": "from_scale",
+        "kind": "value",
+        "required": true
+      },
+      {
+        "name": "to_scale",
+        "kind": "value",
+        "required": true
+      }
+    ],
+    "returns": "structured data / typed quantities",
+    "visualization": "panel",
+    "model": "Astropy Time leap-second-aware conversions; TDB geocenter unless observer specified separately",
+    "formula": "ERFA conversion between UTC, TAI, TT, TDB, UT1, TCG and TCB",
+    "source": "https://docs.astropy.org/en/stable/time/",
+    "aliases": [],
+    "example": "time_scale_convert(\"2017-01-01T00:00:00\",utc,tt)",
+    "priority": "P1"
+  },
+  {
+    "name": "barycentric_julian_date",
+    "category": "Astronomical Time",
+    "description": "BJD_TDB = JD_TDB + r_observer,bary · n/c",
+    "parameters": [
+      {
+        "name": "datetime",
+        "kind": "datetime",
+        "required": true
+      },
+      {
+        "name": "target",
+        "kind": "body",
+        "required": true
+      },
+      {
+        "name": "observer",
+        "kind": "observer",
+        "required": true
+      }
+    ],
+    "returns": "structured data / typed quantities",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "BJD_TDB = JD_TDB + r_observer,bary · n/c",
+    "source": "https://docs.astropy.org/en/stable/time/",
+    "aliases": [],
+    "example": "barycentric_julian_date(\"2026-11-11\",sirius,{longitude:121 deg,latitude:25 deg})",
+    "priority": "P1"
+  },
+  {
+    "name": "heliocentric_julian_date",
+    "category": "Astronomical Time",
+    "description": "HJD_TDB = JD_TDB + r_observer,helio · n/c",
+    "parameters": [
+      {
+        "name": "datetime",
+        "kind": "datetime",
+        "required": true
+      },
+      {
+        "name": "target",
+        "kind": "body",
+        "required": true
+      },
+      {
+        "name": "observer",
+        "kind": "observer",
+        "required": true
+      }
+    ],
+    "returns": "structured data / typed quantities",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "HJD_TDB = JD_TDB + r_observer,helio · n/c",
+    "source": "https://docs.astropy.org/en/stable/time/",
+    "aliases": [],
+    "example": "heliocentric_julian_date(\"2026-11-11\",sirius,{longitude:121 deg,latitude:25 deg})",
+    "priority": "P1"
+  },
+  {
+    "name": "precession_matrix",
+    "category": "Astronomical Time",
+    "description": "P(epoch₂) P(epoch₁)ᵀ, IAU 2006 precession-bias matrices",
+    "parameters": [
+      {
+        "name": "epoch1",
+        "kind": "value",
+        "required": true
+      },
+      {
+        "name": "epoch2",
+        "kind": "value",
+        "required": true
+      }
+    ],
+    "returns": "structured data / typed quantities",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "P(epoch₂) P(epoch₁)ᵀ, IAU 2006 precession-bias matrices",
+    "source": "https://docs.astropy.org/en/stable/time/",
+    "aliases": [],
+    "example": "precession_matrix(\"J2000\",\"J2050\")",
+    "priority": "P1"
+  },
+  {
+    "name": "nutation_angles",
+    "category": "Astronomical Time",
+    "description": "IAU 2000A nutation with IAU 2006 adjustments",
+    "parameters": [
+      {
+        "name": "datetime",
+        "kind": "datetime",
+        "required": true
+      }
+    ],
+    "returns": "structured data / typed quantities",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "IAU 2000A nutation with IAU 2006 adjustments",
+    "source": "https://docs.astropy.org/en/stable/time/",
+    "aliases": [],
+    "example": "nutation_angles(\"2026-11-11\")",
+    "priority": "P1"
+  },
+  {
+    "name": "atmospheric_refraction",
+    "category": "Astronomical Time",
+    "description": "R_arcmin = 1.02/tan(h+10.3/(h+5.11)) × (P/1010) × 283/(273+T_C)",
+    "parameters": [
+      {
+        "name": "altitude",
+        "kind": "angle",
+        "required": true
+      },
+      {
+        "name": "conditions",
+        "kind": "value",
+        "required": true
+      }
+    ],
+    "returns": "angle",
+    "visualization": "panel",
+    "model": "Saemundsson optical approximation; geometric altitude > −1°; weather dependent",
+    "formula": "R_arcmin = 1.02/tan(h+10.3/(h+5.11)) × (P/1010) × 283/(273+T_C)",
+    "source": "https://docs.astropy.org/en/stable/time/",
+    "aliases": [],
+    "example": "atmospheric_refraction(30 deg,{pressure:1010 hPa,temperature:283.15 K})",
+    "priority": "P1"
+  },
+  {
+    "name": "barycentric_velocity_correction",
+    "category": "Astronomical Time",
+    "description": "Astropy barycentric radial-velocity correction",
+    "parameters": [
+      {
+        "name": "target",
+        "kind": "body",
+        "required": true
+      },
+      {
+        "name": "datetime",
+        "kind": "datetime",
+        "required": true
+      },
+      {
+        "name": "observer",
+        "kind": "observer",
+        "required": true
+      }
+    ],
+    "returns": "structured data / typed quantities",
+    "visualization": "panel",
+    "model": "Optical-convention barycentric correction; JPL DE440s ephemeris and IERS",
+    "formula": "Astropy barycentric radial-velocity correction",
+    "source": "https://docs.astropy.org/en/stable/time/",
+    "aliases": [],
+    "example": "barycentric_velocity_correction(sirius,\"2026-11-11\",{longitude:121 deg,latitude:25 deg})",
+    "priority": "P1"
+  },
+  {
+    "name": "stellar_luminosity",
+    "category": "Stellar Astrophysics",
+    "description": "L = 4πR²σT⁴",
+    "parameters": [
+      {
+        "name": "radius",
+        "kind": "radius",
+        "required": true
+      },
+      {
+        "name": "temperature",
+        "kind": "temperature",
+        "required": true
+      }
+    ],
+    "returns": "power",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "L = 4πR²σT⁴",
+    "source": "https://docs.astropy.org/en/stable/modeling/physical_models.html",
+    "aliases": [],
+    "example": "stellar_luminosity(1 R_sun,5772 K)",
+    "priority": "P0"
+  },
+  {
+    "name": "stellar_radius",
+    "category": "Stellar Astrophysics",
+    "description": "R = √(L/(4πσT⁴))",
+    "parameters": [
+      {
+        "name": "luminosity",
+        "kind": "luminosity",
+        "required": true
+      },
+      {
+        "name": "temperature",
+        "kind": "temperature",
+        "required": true
+      }
+    ],
+    "returns": "length",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "R = √(L/(4πσT⁴))",
+    "source": "https://docs.astropy.org/en/stable/modeling/physical_models.html",
+    "aliases": [],
+    "example": "stellar_radius(1 L_sun,5772 K)",
+    "priority": "P1"
+  },
+  {
+    "name": "effective_temperature",
+    "category": "Stellar Astrophysics",
+    "description": "T_eff = (L/(4πσR²))^(1/4)",
+    "parameters": [
+      {
+        "name": "luminosity",
+        "kind": "luminosity",
+        "required": true
+      },
+      {
+        "name": "radius",
+        "kind": "radius",
+        "required": true
+      }
+    ],
+    "returns": "temperature",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "T_eff = (L/(4πσR²))^(1/4)",
+    "source": "https://docs.astropy.org/en/stable/modeling/physical_models.html",
+    "aliases": [],
+    "example": "effective_temperature(1 L_sun,1 R_sun)",
+    "priority": "P1"
+  },
+  {
+    "name": "stellar_density",
+    "category": "Stellar Astrophysics",
+    "description": "ρ = 3M/(4πR³)",
+    "parameters": [
+      {
+        "name": "mass",
+        "kind": "mass",
+        "required": true
+      },
+      {
+        "name": "radius",
+        "kind": "radius",
+        "required": true
+      }
+    ],
+    "returns": "density",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "ρ = 3M/(4πR³)",
+    "source": "https://docs.astropy.org/en/stable/modeling/physical_models.html",
+    "aliases": [],
+    "example": "stellar_density(1 M_sun,1 R_sun)",
+    "priority": "P1"
+  },
+  {
+    "name": "wien_peak",
+    "category": "Stellar Astrophysics",
+    "description": "λ_max T = 2.897771955×10⁻³ m K",
+    "parameters": [
+      {
+        "name": "temperature",
+        "kind": "temperature",
+        "required": true
+      }
+    ],
+    "returns": "length",
+    "visualization": "blackbody",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "λ_max T = 2.897771955×10⁻³ m K",
+    "source": "https://docs.astropy.org/en/stable/modeling/physical_models.html",
+    "aliases": [
+      "wien",
+      "peak_wavelength"
+    ],
+    "example": "wien_peak(5772 K)",
+    "priority": "P0"
+  },
+  {
+    "name": "blackbody_radiance",
+    "category": "Stellar Astrophysics",
+    "description": "B_λ = 2hc²/[λ⁵(expm1(hc/(λkT)))]",
+    "parameters": [
+      {
+        "name": "wavelength",
+        "kind": "wavelength",
+        "required": true
+      },
+      {
+        "name": "temperature",
+        "kind": "temperature",
+        "required": true
+      }
+    ],
+    "returns": "spectral radiance per wavelength",
+    "visualization": "panel",
+    "model": "Planck spectral radiance per wavelength per steradian; not observer flux",
+    "formula": "B_λ = 2hc²/[λ⁵(expm1(hc/(λkT)))]",
+    "source": "https://docs.astropy.org/en/stable/modeling/physical_models.html",
+    "aliases": [],
+    "example": "blackbody_radiance(500 nm,5772 K)",
+    "priority": "P1"
+  },
+  {
+    "name": "blackbody_spectrum",
+    "category": "Stellar Astrophysics",
+    "description": "Sample Planck B_λ across 0.1–10 times the Wien wavelength",
+    "parameters": [
+      {
+        "name": "temperature",
+        "kind": "temperature",
+        "required": true
+      }
+    ],
+    "returns": "structured data / typed quantities",
+    "visualization": "blackbody",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "Sample Planck B_λ across 0.1–10 times the Wien wavelength",
+    "source": "https://docs.astropy.org/en/stable/modeling/physical_models.html",
+    "aliases": [
+      "blackbody"
+    ],
+    "example": "blackbody_spectrum(5772 K)",
+    "priority": "P0"
+  },
+  {
+    "name": "stefan_boltzmann_flux",
+    "category": "Stellar Astrophysics",
+    "description": "F = σT⁴",
+    "parameters": [
+      {
+        "name": "temperature",
+        "kind": "temperature",
+        "required": true
+      }
+    ],
+    "returns": "energy flux",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "F = σT⁴",
+    "source": "https://docs.astropy.org/en/stable/modeling/physical_models.html",
+    "aliases": [],
+    "example": "stefan_boltzmann_flux(5772 K)",
+    "priority": "P1"
+  },
+  {
+    "name": "flux_from_luminosity",
+    "category": "Stellar Astrophysics",
+    "description": "F = L/(4πd²)",
+    "parameters": [
+      {
+        "name": "luminosity",
+        "kind": "luminosity",
+        "required": true
+      },
+      {
+        "name": "distance",
+        "kind": "length",
+        "required": true
+      }
+    ],
+    "returns": "energy flux",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "F = L/(4πd²)",
+    "source": "https://docs.astropy.org/en/stable/modeling/physical_models.html",
+    "aliases": [
+      "brightness",
+      "flux"
+    ],
+    "example": "flux_from_luminosity(1 L_sun,1 AU)",
+    "priority": "P1"
+  },
+  {
+    "name": "apparent_magnitude",
+    "category": "Stellar Astrophysics",
+    "description": "m = M + 5 log₁₀(d/10pc) + A",
+    "parameters": [
+      {
+        "name": "absolute_mag",
+        "kind": "value",
+        "required": true
+      },
+      {
+        "name": "distance",
+        "kind": "length",
+        "required": true
+      },
+      {
+        "name": "extinction",
+        "kind": "value",
+        "required": false,
+        "default": "0"
+      }
+    ],
+    "returns": "dimensionless",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "m = M + 5 log₁₀(d/10pc) + A",
+    "source": "https://docs.astropy.org/en/stable/modeling/physical_models.html",
+    "aliases": [],
+    "example": "apparent_magnitude(4.83,10 pc)",
+    "priority": "P1"
+  },
+  {
+    "name": "absolute_magnitude",
+    "category": "Stellar Astrophysics",
+    "description": "M = m − 5 log₁₀(d/10pc) − A",
+    "parameters": [
+      {
+        "name": "apparent_mag",
+        "kind": "value",
+        "required": true
+      },
+      {
+        "name": "distance",
+        "kind": "length",
+        "required": false,
+        "default": "None"
+      },
+      {
+        "name": "extinction",
+        "kind": "value",
+        "required": false,
+        "default": "0"
+      }
+    ],
+    "returns": "dimensionless",
+    "visualization": "panel",
+    "model": "Distance modulus in the supplied passband; named stars use approximate static V-band catalogue magnitudes",
+    "formula": "M = m − 5 log₁₀(d/10pc) − A",
+    "source": "https://docs.astropy.org/en/stable/modeling/physical_models.html",
+    "aliases": [],
+    "example": "absolute_magnitude(9.83,100 pc)",
+    "priority": "P1"
+  },
+  {
+    "name": "distance_modulus",
+    "category": "Stellar Astrophysics",
+    "description": "μ = 5 log₁₀(d/10pc)",
+    "parameters": [
+      {
+        "name": "distance",
+        "kind": "length",
+        "required": true
+      }
+    ],
+    "returns": "dimensionless",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "μ = 5 log₁₀(d/10pc)",
+    "source": "https://docs.astropy.org/en/stable/modeling/physical_models.html",
+    "aliases": [],
+    "example": "distance_modulus(100 pc)",
+    "priority": "P1"
+  },
+  {
+    "name": "bolometric_magnitude",
+    "category": "Stellar Astrophysics",
+    "description": "M_bol = 4.74 − 2.5 log₁₀(L/L☉)",
+    "parameters": [
+      {
+        "name": "luminosity",
+        "kind": "luminosity",
+        "required": true
+      }
+    ],
+    "returns": "dimensionless",
+    "visualization": "panel",
+    "model": "IAU bolometric zero point, solar M_bol=4.74",
+    "formula": "M_bol = 4.74 − 2.5 log₁₀(L/L☉)",
+    "source": "https://docs.astropy.org/en/stable/modeling/physical_models.html",
+    "aliases": [],
+    "example": "bolometric_magnitude(1 L_sun)",
+    "priority": "P1"
+  },
+  {
+    "name": "color_index",
+    "category": "Stellar Astrophysics",
+    "description": "Color index = m₁ − m₂",
+    "parameters": [
+      {
+        "name": "magnitude1",
+        "kind": "value",
+        "required": true
+      },
+      {
+        "name": "magnitude2",
+        "kind": "value",
+        "required": true
+      }
+    ],
+    "returns": "dimensionless",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "Color index = m₁ − m₂",
+    "source": "https://docs.astropy.org/en/stable/modeling/physical_models.html",
+    "aliases": [],
+    "example": "color_index(1.2,0.5)",
+    "priority": "P1"
+  },
+  {
+    "name": "hr_position",
+    "category": "Stellar Astrophysics",
+    "description": "Place (T_eff, L/L☉) in H–R diagram",
+    "parameters": [
+      {
+        "name": "star",
+        "kind": "star",
+        "required": true
+      }
+    ],
+    "returns": "structured data / typed quantities",
+    "visualization": "hr",
+    "model": "Catalogue estimates; schematic main-sequence reference, not a stellar evolution track",
+    "formula": "Place (T_eff, L/L☉) in H–R diagram",
+    "source": "https://docs.astropy.org/en/stable/modeling/physical_models.html",
+    "aliases": [],
+    "example": "hr_position(sun)",
+    "priority": "P0"
+  },
+  {
+    "name": "main_sequence_luminosity",
+    "category": "Stellar Astrophysics",
+    "description": "L/L☉ ≈ 0.23m^2.3 (m<0.43), m⁴ (m<2), 1.4m^3.5 (m<55), 32000m",
+    "parameters": [
+      {
+        "name": "mass",
+        "kind": "mass",
+        "required": true
+      },
+      {
+        "name": "model",
+        "kind": "model_main_sequence_luminosity",
+        "required": false,
+        "default": "piecewise"
+      }
+    ],
+    "returns": "structured data / typed quantities",
+    "visualization": "panel",
+    "model": "Piecewise empirical main-sequence mass–luminosity scaling; approximate solar metallicity",
+    "formula": "L/L☉ ≈ 0.23m^2.3 (m<0.43), m⁴ (m<2), 1.4m^3.5 (m<55), 32000m",
+    "source": "https://docs.astropy.org/en/stable/modeling/physical_models.html",
+    "aliases": [],
+    "example": "main_sequence_luminosity(1 M_sun)",
+    "priority": "P1"
+  },
+  {
+    "name": "stellar_lifetime",
+    "category": "Stellar Astrophysics",
+    "description": "t_MS ≈ 10¹⁰ yr (M/M☉)/(L/L☉)",
+    "parameters": [
+      {
+        "name": "mass",
+        "kind": "mass",
+        "required": true
+      },
+      {
+        "name": "metallicity",
+        "kind": "value",
+        "required": true
+      },
+      {
+        "name": "model",
+        "kind": "model_stellar_lifetime",
+        "required": false,
+        "default": "fuel_scaling"
+      }
+    ],
+    "returns": "time",
+    "visualization": "panel",
+    "model": "Solar-metallicity main-sequence fuel/luminosity scaling; not evolutionary tracks",
+    "formula": "t_MS ≈ 10¹⁰ yr (M/M☉)/(L/L☉)",
+    "source": "https://docs.astropy.org/en/stable/modeling/physical_models.html",
+    "aliases": [],
+    "example": "stellar_lifetime(1 M_sun,0.014)",
+    "priority": "P1"
+  },
+  {
+    "name": "habitable_zone",
+    "category": "Stellar Astrophysics",
+    "description": "r_inner = √(L/L☉ / 1.107) AU; r_outer = √(L/L☉ / 0.356) AU",
+    "parameters": [
+      {
+        "name": "luminosity",
+        "kind": "luminosity",
+        "required": true
+      },
+      {
+        "name": "model",
+        "kind": "model_habitable_zone",
+        "required": false,
+        "default": "solar_flux"
+      }
+    ],
+    "returns": "structured data / typed quantities",
+    "visualization": "habitable",
+    "model": "Solar-spectrum conservative runaway-greenhouse / maximum-greenhouse flux thresholds; luminosity scaling only",
+    "formula": "r_inner = √(L/L☉ / 1.107) AU; r_outer = √(L/L☉ / 0.356) AU",
+    "source": "https://docs.astropy.org/en/stable/modeling/physical_models.html",
+    "aliases": [],
+    "example": "habitable_zone(1 L_sun)",
+    "priority": "P1"
+  },
+  {
+    "name": "stellar_escape_velocity",
+    "category": "Stellar Astrophysics",
+    "description": "v_esc = √(2GM/R)",
+    "parameters": [
+      {
+        "name": "mass",
+        "kind": "mass",
+        "required": true
+      },
+      {
+        "name": "radius",
+        "kind": "radius",
+        "required": true
+      }
+    ],
+    "returns": "speed",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "v_esc = √(2GM/R)",
+    "source": "https://docs.astropy.org/en/stable/modeling/physical_models.html",
+    "aliases": [],
+    "example": "stellar_escape_velocity(1 M_sun,1 R_sun)",
+    "priority": "P1"
+  },
+  {
+    "name": "stellar_surface_gravity",
+    "category": "Stellar Astrophysics",
+    "description": "g = GM/R²",
+    "parameters": [
+      {
+        "name": "mass",
+        "kind": "mass",
+        "required": true
+      },
+      {
+        "name": "radius",
+        "kind": "radius",
+        "required": true
+      }
+    ],
+    "returns": "acceleration",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "g = GM/R²",
+    "source": "https://docs.astropy.org/en/stable/modeling/physical_models.html",
+    "aliases": [],
+    "example": "stellar_surface_gravity(1 M_sun,1 R_sun)",
+    "priority": "P1"
+  },
+  {
+    "name": "schwarzschild_radius",
+    "category": "Black Holes & Relativity",
+    "description": "r_s = 2GM/c²",
+    "parameters": [
+      {
+        "name": "mass",
+        "kind": "mass",
+        "required": true
+      }
+    ],
+    "returns": "length",
+    "visualization": "black_hole",
+    "model": "Schwarzschild: nonrotating, uncharged, isolated black hole",
+    "formula": "r_s = 2GM/c²",
+    "source": "https://arxiv.org/abs/gr-qc/9712019",
+    "aliases": [
+      "schwarzschild",
+      "event_horizon",
+      "black_hole"
+    ],
+    "example": "schwarzschild_radius(10 M_sun)",
+    "priority": "P0"
+  },
+  {
+    "name": "photon_sphere_radius",
+    "category": "Black Holes & Relativity",
+    "description": "r_ph = 3GM/c² = 1.5r_s",
+    "parameters": [
+      {
+        "name": "mass",
+        "kind": "mass",
+        "required": true
+      }
+    ],
+    "returns": "length",
+    "visualization": "panel",
+    "model": "Schwarzschild only; Kerr has no single spherical photon orbit",
+    "formula": "r_ph = 3GM/c² = 1.5r_s",
+    "source": "https://arxiv.org/abs/gr-qc/9712019",
+    "aliases": [],
+    "example": "photon_sphere_radius(10 M_sun)",
+    "priority": "P1"
+  },
+  {
+    "name": "isco_radius",
+    "category": "Black Holes & Relativity",
+    "description": "r_ISCO = (GM/c²)[3+Z₂−sgn(a*)√((3−Z₁)(3+Z₁+2Z₂))]",
+    "parameters": [
+      {
+        "name": "mass",
+        "kind": "mass",
+        "required": true
+      },
+      {
+        "name": "spin",
+        "kind": "value",
+        "required": false,
+        "default": "0"
+      }
+    ],
+    "returns": "length",
+    "visualization": "black_hole",
+    "model": "Kerr equatorial test-particle ISCO; positive spin prograde, negative retrograde",
+    "formula": "r_ISCO = (GM/c²)[3+Z₂−sgn(a*)√((3−Z₁)(3+Z₁+2Z₂))]",
+    "source": "https://arxiv.org/abs/gr-qc/9712019",
+    "aliases": [],
+    "example": "isco_radius(10 M_sun,0.5)",
+    "priority": "P1"
+  },
+  {
+    "name": "kerr_horizon_radius",
+    "category": "Black Holes & Relativity",
+    "description": "r₊ = (GM/c²)(1+√(1−a*²))",
+    "parameters": [
+      {
+        "name": "mass",
+        "kind": "mass",
+        "required": true
+      },
+      {
+        "name": "spin",
+        "kind": "value",
+        "required": true
+      }
+    ],
+    "returns": "length",
+    "visualization": "black_hole",
+    "model": "Kerr Boyer–Lindquist outer horizon radius; no single photon sphere",
+    "formula": "r₊ = (GM/c²)(1+√(1−a*²))",
+    "source": "https://arxiv.org/abs/gr-qc/9712019",
+    "aliases": [],
+    "example": "kerr_horizon_radius(10 M_sun,0.9)",
+    "priority": "P1"
+  },
+  {
+    "name": "gravitational_redshift",
+    "category": "Black Holes & Relativity",
+    "description": "1+z = √[(1−r_s/r_observer)/(1−r_s/r_emitter)]",
+    "parameters": [
+      {
+        "name": "mass",
+        "kind": "mass",
+        "required": true
+      },
+      {
+        "name": "r_emitter",
+        "kind": "length",
+        "required": true
+      },
+      {
+        "name": "r_observer",
+        "kind": "length",
+        "required": true
+      }
+    ],
+    "returns": "dimensionless",
+    "visualization": "panel",
+    "model": "Static observers in Schwarzschild exterior; positive z is redshift",
+    "formula": "1+z = √[(1−r_s/r_observer)/(1−r_s/r_emitter)]",
+    "source": "https://arxiv.org/abs/gr-qc/9712019",
+    "aliases": [],
+    "example": "gravitational_redshift(sun,1 R_sun,1 AU)",
+    "priority": "P1"
+  },
+  {
+    "name": "gravitational_time_dilation",
+    "category": "Black Holes & Relativity",
+    "description": "dτ/dt = √(1−2GM/(rc²))",
+    "parameters": [
+      {
+        "name": "mass",
+        "kind": "mass",
+        "required": true
+      },
+      {
+        "name": "radius",
+        "kind": "radius",
+        "required": true
+      }
+    ],
+    "returns": "dimensionless",
+    "visualization": "panel",
+    "model": "Static Schwarzschild observer relative to infinity",
+    "formula": "dτ/dt = √(1−2GM/(rc²))",
+    "source": "https://arxiv.org/abs/gr-qc/9712019",
+    "aliases": [],
+    "example": "gravitational_time_dilation(sun,1 R_sun)",
+    "priority": "P1"
+  },
+  {
+    "name": "gravitational_lensing_angle",
+    "category": "Black Holes & Relativity",
+    "description": "α = 4GM/(bc²)",
+    "parameters": [
+      {
+        "name": "mass",
+        "kind": "mass",
+        "required": true
+      },
+      {
+        "name": "impact_parameter",
+        "kind": "length",
+        "required": true
+      }
+    ],
+    "returns": "angle",
+    "visualization": "panel",
+    "model": "Weak-field point lens, b ≫ r_s",
+    "formula": "α = 4GM/(bc²)",
+    "source": "https://arxiv.org/abs/gr-qc/9712019",
+    "aliases": [],
+    "example": "gravitational_lensing_angle(sun,1 R_sun)",
+    "priority": "P1"
+  },
+  {
+    "name": "einstein_radius",
+    "category": "Black Holes & Relativity",
+    "description": "θ_E = √[(4GM/c²)(D_s−D_l)/(D_l D_s)]",
+    "parameters": [
+      {
+        "name": "lens_mass",
+        "kind": "mass",
+        "required": true
+      },
+      {
+        "name": "lens_distance",
+        "kind": "length",
+        "required": true
+      },
+      {
+        "name": "source_distance",
+        "kind": "length",
+        "required": true
+      }
+    ],
+    "returns": "angle",
+    "visualization": "panel",
+    "model": "Thin point lens, Euclidean angular-diameter distances",
+    "formula": "θ_E = √[(4GM/c²)(D_s−D_l)/(D_l D_s)]",
+    "source": "https://arxiv.org/abs/gr-qc/9712019",
+    "aliases": [],
+    "example": "einstein_radius(1 M_sun,1 kpc,8 kpc)",
+    "priority": "P1"
+  },
+  {
+    "name": "lorentz_factor",
+    "category": "Black Holes & Relativity",
+    "description": "γ = 1/√(1−v²/c²)",
+    "parameters": [
+      {
+        "name": "velocity",
+        "kind": "speed",
+        "required": true
+      }
+    ],
+    "returns": "dimensionless",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "γ = 1/√(1−v²/c²)",
+    "source": "https://arxiv.org/abs/gr-qc/9712019",
+    "aliases": [],
+    "example": "lorentz_factor(0.8 c)",
+    "priority": "P0"
+  },
+  {
+    "name": "special_relativistic_time_dilation",
+    "category": "Black Holes & Relativity",
+    "description": "Δt = γ Δτ",
+    "parameters": [
+      {
+        "name": "proper_time",
+        "kind": "time",
+        "required": true
+      },
+      {
+        "name": "velocity",
+        "kind": "speed",
+        "required": true
+      }
+    ],
+    "returns": "time",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "Δt = γ Δτ",
+    "source": "https://arxiv.org/abs/gr-qc/9712019",
+    "aliases": [],
+    "example": "special_relativistic_time_dilation(1 s,0.8 c)",
+    "priority": "P1"
+  },
+  {
+    "name": "length_contraction",
+    "category": "Black Holes & Relativity",
+    "description": "L = L₀/γ",
+    "parameters": [
+      {
+        "name": "proper_length",
+        "kind": "length",
+        "required": true
+      },
+      {
+        "name": "velocity",
+        "kind": "speed",
+        "required": true
+      }
+    ],
+    "returns": "length",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "L = L₀/γ",
+    "source": "https://arxiv.org/abs/gr-qc/9712019",
+    "aliases": [],
+    "example": "length_contraction(1 m,0.8 c)",
+    "priority": "P1"
+  },
+  {
+    "name": "relativistic_kinetic_energy",
+    "category": "Black Holes & Relativity",
+    "description": "K = (γ−1)mc², evaluated stably at low velocity",
+    "parameters": [
+      {
+        "name": "mass",
+        "kind": "mass",
+        "required": true
+      },
+      {
+        "name": "velocity",
+        "kind": "speed",
+        "required": true
+      }
+    ],
+    "returns": "energy",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "K = (γ−1)mc², evaluated stably at low velocity",
+    "source": "https://arxiv.org/abs/gr-qc/9712019",
+    "aliases": [],
+    "example": "relativistic_kinetic_energy(1 kg,0.8 c)",
+    "priority": "P1"
+  },
+  {
+    "name": "rest_energy",
+    "category": "Black Holes & Relativity",
+    "description": "E₀ = mc²",
+    "parameters": [
+      {
+        "name": "mass",
+        "kind": "mass",
+        "required": true
+      }
+    ],
+    "returns": "energy",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "E₀ = mc²",
+    "source": "https://arxiv.org/abs/gr-qc/9712019",
+    "aliases": [],
+    "example": "rest_energy(1 kg)",
+    "priority": "P0"
+  },
+  {
+    "name": "relativistic_doppler",
+    "category": "Black Holes & Relativity",
+    "description": "ν_observer = ν_source/[γ(1+β cos θ)]",
+    "parameters": [
+      {
+        "name": "frequency",
+        "kind": "frequency",
+        "required": true
+      },
+      {
+        "name": "velocity",
+        "kind": "speed",
+        "required": true
+      },
+      {
+        "name": "angle",
+        "kind": "angle",
+        "required": true
+      }
+    ],
+    "returns": "frequency",
+    "visualization": "panel",
+    "model": "θ between recession velocity and source-to-observer line, source emission-angle convention; θ=0 receding",
+    "formula": "ν_observer = ν_source/[γ(1+β cos θ)]",
+    "source": "https://arxiv.org/abs/gr-qc/9712019",
+    "aliases": [],
+    "example": "relativistic_doppler(500 THz,0.1 c,0 deg)",
+    "priority": "P1"
+  },
+  {
+    "name": "hawking_temperature",
+    "category": "Black Holes & Relativity",
+    "description": "T_H = ℏc³/(8πGMk_B)",
+    "parameters": [
+      {
+        "name": "mass",
+        "kind": "mass",
+        "required": true
+      }
+    ],
+    "returns": "temperature",
+    "visualization": "panel",
+    "model": "Nonrotating uncharged black hole; semiclassical Hawking temperature",
+    "formula": "T_H = ℏc³/(8πGMk_B)",
+    "source": "https://arxiv.org/abs/gr-qc/9712019",
+    "aliases": [],
+    "example": "hawking_temperature(1 M_sun)",
+    "priority": "P1"
+  },
+  {
+    "name": "black_hole_entropy",
+    "category": "Black Holes & Relativity",
+    "description": "S = 4πk_B GM²/(ℏc)",
+    "parameters": [
+      {
+        "name": "mass",
+        "kind": "mass",
+        "required": true
+      }
+    ],
+    "returns": "entropy",
+    "visualization": "panel",
+    "model": "Schwarzschild Bekenstein–Hawking entropy",
+    "formula": "S = 4πk_B GM²/(ℏc)",
+    "source": "https://arxiv.org/abs/gr-qc/9712019",
+    "aliases": [],
+    "example": "black_hole_entropy(1 M_sun)",
+    "priority": "P1"
+  },
+  {
+    "name": "black_hole_evaporation_time",
+    "category": "Black Holes & Relativity",
+    "description": "t_evap = 5120πG²M³/(ℏc⁴)",
+    "parameters": [
+      {
+        "name": "mass",
+        "kind": "mass",
+        "required": true
+      }
+    ],
+    "returns": "time",
+    "visualization": "panel",
+    "model": "Idealized isolated Schwarzschild black hole; no accretion or greybody/species corrections",
+    "formula": "t_evap = 5120πG²M³/(ℏc⁴)",
+    "source": "https://arxiv.org/abs/gr-qc/9712019",
+    "aliases": [],
+    "example": "black_hole_evaporation_time(1 M_sun)",
+    "priority": "P1"
+  },
+  {
+    "name": "tidal_acceleration",
+    "category": "Black Holes & Relativity",
+    "description": "Δa ≈ 2GMℓ/r³",
+    "parameters": [
+      {
+        "name": "mass",
+        "kind": "mass",
+        "required": true
+      },
+      {
+        "name": "radius",
+        "kind": "radius",
+        "required": true
+      },
+      {
+        "name": "separation",
+        "kind": "length",
+        "required": true
+      }
+    ],
+    "returns": "acceleration",
+    "visualization": "panel",
+    "model": "Newtonian radial linear tidal gradient, ℓ ≪ r; no strong-field relativistic correction",
+    "formula": "Δa ≈ 2GMℓ/r³",
+    "source": "https://arxiv.org/abs/gr-qc/9712019",
+    "aliases": [],
+    "example": "tidal_acceleration(10 M_sun,100 km,2 m)",
+    "priority": "P1"
+  },
+  {
+    "name": "transit_depth",
+    "category": "Exoplanets",
+    "description": "δ = (R_p/R_s)²",
+    "parameters": [
+      {
+        "name": "planet_radius",
+        "kind": "radius",
+        "required": true
+      },
+      {
+        "name": "star_radius",
+        "kind": "radius",
+        "required": true
+      }
+    ],
+    "returns": "dimensionless",
+    "visualization": "panel",
+    "model": "Uniform stellar disk, small opaque planet, central transit; ignores limb darkening",
+    "formula": "δ = (R_p/R_s)²",
+    "source": "https://lkreidberg.github.io/batman/docs/html/",
+    "aliases": [],
+    "example": "transit_depth(earth,sun)",
+    "priority": "P1"
+  },
+  {
+    "name": "transit_duration",
+    "category": "Exoplanets",
+    "description": "T₁₄ ≈ (P/π) asin[(R_s/a)√((1+k)²−b²)/sin i] √(1−e²)/(1+e sin ω)",
+    "parameters": [
+      {
+        "name": "orbit",
+        "kind": "orbit_object",
+        "required": true
+      },
+      {
+        "name": "planet",
+        "kind": "body",
+        "required": true
+      },
+      {
+        "name": "star",
+        "kind": "star",
+        "required": true
+      },
+      {
+        "name": "geometry",
+        "kind": "value",
+        "required": true
+      }
+    ],
+    "returns": "time",
+    "visualization": "panel",
+    "model": "Keplerian transit duration approximation; projected chord geometry",
+    "formula": "T₁₄ ≈ (P/π) asin[(R_s/a)√((1+k)²−b²)/sin i] √(1−e²)/(1+e sin ω)",
+    "source": "https://lkreidberg.github.io/batman/docs/html/",
+    "aliases": [],
+    "example": "transit_duration(earth_orbit,earth,sun,{inclination:90 deg})",
+    "priority": "P1"
+  },
+  {
+    "name": "transit_probability",
+    "category": "Exoplanets",
+    "description": "P_tr = (R_s+R_p)/a × (1+e sin ω)/(1−e²)",
+    "parameters": [
+      {
+        "name": "orbit",
+        "kind": "orbit_object",
+        "required": true
+      },
+      {
+        "name": "star_radius",
+        "kind": "radius",
+        "required": true
+      },
+      {
+        "name": "planet_radius",
+        "kind": "radius",
+        "required": true
+      }
+    ],
+    "returns": "dimensionless",
+    "visualization": "panel",
+    "model": "Random viewing orientation; eccentric Keplerian orbit",
+    "formula": "P_tr = (R_s+R_p)/a × (1+e sin ω)/(1−e²)",
+    "source": "https://lkreidberg.github.io/batman/docs/html/",
+    "aliases": [],
+    "example": "transit_probability(earth_orbit,sun,earth)",
+    "priority": "P1"
+  },
+  {
+    "name": "transit_light_curve",
+    "category": "Exoplanets",
+    "description": "batman quadratic-limb-darkened Keplerian occultation model",
+    "parameters": [
+      {
+        "name": "planet",
+        "kind": "body",
+        "required": true
+      },
+      {
+        "name": "star",
+        "kind": "star",
+        "required": true
+      },
+      {
+        "name": "orbit",
+        "kind": "orbit_object",
+        "required": true
+      },
+      {
+        "name": "times",
+        "kind": "data",
+        "required": true
+      },
+      {
+        "name": "geometry",
+        "kind": "value",
+        "required": false,
+        "default": "None"
+      }
+    ],
+    "returns": "structured data / typed quantities",
+    "visualization": "transit",
+    "model": "batman analytic occultation; default i=90°, u=[0.3,0.2], epoch=0; explicit observer geometry",
+    "formula": "batman quadratic-limb-darkened Keplerian occultation model",
+    "source": "https://lkreidberg.github.io/batman/docs/html/",
+    "aliases": [],
+    "example": "transit_light_curve(earth,sun,earth_orbit,[-0.3 day,-0.1 day,0 day,0.1 day,0.3 day])",
+    "priority": "P1"
+  },
+  {
+    "name": "transit_times",
+    "category": "Exoplanets",
+    "description": "t_n = t_ref + nP",
+    "parameters": [
+      {
+        "name": "orbit",
+        "kind": "orbit_object",
+        "required": true
+      },
+      {
+        "name": "reference_time",
+        "kind": "datetime",
+        "required": true
+      },
+      {
+        "name": "count",
+        "kind": "value",
+        "required": true
+      }
+    ],
+    "returns": "structured data / typed quantities",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "t_n = t_ref + nP",
+    "source": "https://lkreidberg.github.io/batman/docs/html/",
+    "aliases": [],
+    "example": "transit_times(earth_orbit,\"2026-01-01\",3)",
+    "priority": "P1"
+  },
+  {
+    "name": "impact_parameter",
+    "category": "Exoplanets",
+    "description": "b = a cos i / R_s × (1−e²)/(1+e sin ω)",
+    "parameters": [
+      {
+        "name": "orbit",
+        "kind": "orbit_object",
+        "required": true
+      },
+      {
+        "name": "inclination",
+        "kind": "angle",
+        "required": true
+      },
+      {
+        "name": "star_radius",
+        "kind": "radius",
+        "required": true
+      }
+    ],
+    "returns": "dimensionless",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "b = a cos i / R_s × (1−e²)/(1+e sin ω)",
+    "source": "https://lkreidberg.github.io/batman/docs/html/",
+    "aliases": [],
+    "example": "impact_parameter(earth_orbit,89.9 deg,sun)",
+    "priority": "P1"
+  },
+  {
+    "name": "radial_velocity_amplitude",
+    "category": "Exoplanets",
+    "description": "K = (2πG/P)^(1/3) M_p sin i / [(M_s+M_p)^(2/3)√(1−e²)]",
+    "parameters": [
+      {
+        "name": "orbit",
+        "kind": "orbit_object",
+        "required": true
+      },
+      {
+        "name": "planet_mass",
+        "kind": "mass",
+        "required": true
+      },
+      {
+        "name": "star_mass",
+        "kind": "mass",
+        "required": true
+      }
+    ],
+    "returns": "speed",
+    "visualization": "panel",
+    "model": "Keplerian reflex RV; explicit Orbit inclination is interpreted to sky plane",
+    "formula": "K = (2πG/P)^(1/3) M_p sin i / [(M_s+M_p)^(2/3)√(1−e²)]",
+    "source": "https://lkreidberg.github.io/batman/docs/html/",
+    "aliases": [],
+    "example": "radial_velocity_amplitude({a:1 AU,central_mass:sun,inclination:90 deg},earth,sun)",
+    "priority": "P1"
+  },
+  {
+    "name": "radial_velocity_curve",
+    "category": "Exoplanets",
+    "description": "RV(t) = K[cos(ν+ω)+e cos ω]",
+    "parameters": [
+      {
+        "name": "orbit",
+        "kind": "orbit_object",
+        "required": true
+      },
+      {
+        "name": "planet",
+        "kind": "body",
+        "required": true
+      },
+      {
+        "name": "star",
+        "kind": "star",
+        "required": true
+      },
+      {
+        "name": "times",
+        "kind": "data",
+        "required": true
+      }
+    ],
+    "returns": "structured data / typed quantities",
+    "visualization": "radial_velocity",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "RV(t) = K[cos(ν+ω)+e cos ω]",
+    "source": "https://lkreidberg.github.io/batman/docs/html/",
+    "aliases": [],
+    "example": "radial_velocity_curve({a:1 AU,central_mass:sun,inclination:90 deg},earth,sun,[0 day,90 day,180 day,270 day])",
+    "priority": "P1"
+  },
+  {
+    "name": "minimum_planet_mass",
+    "category": "Exoplanets",
+    "description": "Fit sinusoidal RV at fixed period; solve K=(2πG/P)^(1/3)m/(M+m)^(2/3)",
+    "parameters": [
+      {
+        "name": "rv_data",
+        "kind": "value",
+        "required": true
+      },
+      {
+        "name": "stellar_mass",
+        "kind": "mass",
+        "required": true
+      },
+      {
+        "name": "period",
+        "kind": "time",
+        "required": true
+      }
+    ],
+    "returns": "structured data: minimum mass, RV amplitude and systemic velocity",
+    "visualization": "panel",
+    "model": "Circular orbit sinusoidal fit, sin i=1; no eccentric RV fitting",
+    "formula": "Fit sinusoidal RV at fixed period; solve K=(2πG/P)^(1/3)m/(M+m)^(2/3)",
+    "source": "https://lkreidberg.github.io/batman/docs/html/",
+    "aliases": [],
+    "example": "minimum_planet_mass({time:[0 day,90 day,180 day,270 day],velocity:[0 m/s,10 m/s,0 m/s,-10 m/s]},sun,360 day)",
+    "priority": "P1"
+  },
+  {
+    "name": "planet_radius_from_transit",
+    "category": "Exoplanets",
+    "description": "R_p = R_s √δ",
+    "parameters": [
+      {
+        "name": "depth",
+        "kind": "value",
+        "required": true
+      },
+      {
+        "name": "star_radius",
+        "kind": "radius",
+        "required": true
+      }
+    ],
+    "returns": "length",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "R_p = R_s √δ",
+    "source": "https://lkreidberg.github.io/batman/docs/html/",
+    "aliases": [],
+    "example": "planet_radius_from_transit(0.000084,sun)",
+    "priority": "P1"
+  },
+  {
+    "name": "equilibrium_temperature",
+    "category": "Exoplanets",
+    "description": "T_eq = T_s √(R_s/(2a)) (1−A)^(1/4)",
+    "parameters": [
+      {
+        "name": "star",
+        "kind": "star",
+        "required": true
+      },
+      {
+        "name": "orbit",
+        "kind": "orbit_object",
+        "required": true
+      },
+      {
+        "name": "albedo",
+        "kind": "value",
+        "required": true
+      }
+    ],
+    "returns": "temperature",
+    "visualization": "panel",
+    "model": "Full heat redistribution, blackbody emitter, no greenhouse; uses semimajor axis",
+    "formula": "T_eq = T_s √(R_s/(2a)) (1−A)^(1/4)",
+    "source": "https://lkreidberg.github.io/batman/docs/html/",
+    "aliases": [],
+    "example": "equilibrium_temperature(sun,earth_orbit,0.3)",
+    "priority": "P1"
+  },
+  {
+    "name": "orbital_insolation",
+    "category": "Exoplanets",
+    "description": "S = L/(4πr²)",
+    "parameters": [
+      {
+        "name": "star",
+        "kind": "star",
+        "required": true
+      },
+      {
+        "name": "orbital_distance",
+        "kind": "length",
+        "required": true
+      }
+    ],
+    "returns": "energy flux",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "S = L/(4πr²)",
+    "source": "https://lkreidberg.github.io/batman/docs/html/",
+    "aliases": [],
+    "example": "orbital_insolation(sun,1 AU)",
+    "priority": "P1"
+  },
+  {
+    "name": "planet_density",
+    "category": "Exoplanets",
+    "description": "ρ = 3M/(4πR³)",
+    "parameters": [
+      {
+        "name": "mass",
+        "kind": "mass",
+        "required": true
+      },
+      {
+        "name": "radius",
+        "kind": "radius",
+        "required": true
+      }
+    ],
+    "returns": "density",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "ρ = 3M/(4πR³)",
+    "source": "https://lkreidberg.github.io/batman/docs/html/",
+    "aliases": [],
+    "example": "planet_density(1 M_earth,1 R_earth)",
+    "priority": "P1"
+  },
+  {
+    "name": "atmospheric_scale_height",
+    "category": "Exoplanets",
+    "description": "H = k_B T/(m̄ g)",
+    "parameters": [
+      {
+        "name": "temperature",
+        "kind": "temperature",
+        "required": true
+      },
+      {
+        "name": "gravity",
+        "kind": "acceleration",
+        "required": true
+      },
+      {
+        "name": "mean_molecular_mass",
+        "kind": "value",
+        "required": true
+      }
+    ],
+    "returns": "length",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "H = k_B T/(m̄ g)",
+    "source": "https://lkreidberg.github.io/batman/docs/html/",
+    "aliases": [],
+    "example": "atmospheric_scale_height(288 K,9.81 m/s2,28.97 u)",
+    "priority": "P1"
+  },
+  {
+    "name": "transmission_signal",
+    "category": "Exoplanets",
+    "description": "Δδ ≈ 2 N_H R_p H / R_s²",
+    "parameters": [
+      {
+        "name": "planet",
+        "kind": "body",
+        "required": true
+      },
+      {
+        "name": "star",
+        "kind": "star",
+        "required": true
+      },
+      {
+        "name": "atmosphere",
+        "kind": "value",
+        "required": true
+      }
+    ],
+    "returns": "dimensionless",
+    "visualization": "panel",
+    "model": "Thin isothermal atmosphere, effective absorbing height N_H H",
+    "formula": "Δδ ≈ 2 N_H R_p H / R_s²",
+    "source": "https://lkreidberg.github.io/batman/docs/html/",
+    "aliases": [],
+    "example": "transmission_signal(earth,sun,{temperature:288 K,mean_molecular_mass:28.97 u,scale_heights:5})",
+    "priority": "P1"
+  },
+  {
+    "name": "planet_phase_curve",
+    "category": "Exoplanets",
+    "description": "F_p/F_s = A_g(R_p/a)² [sin α + (π−α) cos α]/π",
+    "parameters": [
+      {
+        "name": "planet",
+        "kind": "body",
+        "required": true
+      },
+      {
+        "name": "star",
+        "kind": "star",
+        "required": true
+      },
+      {
+        "name": "orbit",
+        "kind": "orbit_object",
+        "required": true
+      }
+    ],
+    "returns": "structured data / typed quantities",
+    "visualization": "phase",
+    "model": "Lambertian reflected light only; geometric albedo 0.3, edge-on circular phase; thermal emission excluded",
+    "formula": "F_p/F_s = A_g(R_p/a)² [sin α + (π−α) cos α]/π",
+    "source": "https://lkreidberg.github.io/batman/docs/html/",
+    "aliases": [],
+    "example": "planet_phase_curve(earth,sun,earth_orbit)",
+    "priority": "P1"
+  },
+  {
+    "name": "cosmology",
+    "category": "Cosmology",
+    "description": "FLRW cosmology parameters, including H₀, Ωm, ΩΛ, T_CMB",
+    "parameters": [
+      {
+        "name": "model",
+        "kind": "cosmology_model",
+        "required": false,
+        "default": "Planck18"
+      }
+    ],
+    "returns": "structured data / typed quantities",
+    "visualization": "panel",
+    "model": "Astropy FLRW; default Planck18 explicitly reported",
+    "formula": "FLRW cosmology parameters, including H₀, Ωm, ΩΛ, T_CMB",
+    "source": "https://docs.astropy.org/en/stable/cosmology/",
+    "aliases": [],
+    "example": "cosmology(model=\"Planck18\")",
+    "priority": "P1"
+  },
+  {
+    "name": "age_of_universe",
+    "category": "Cosmology",
+    "description": "t₀ = ∫₀∞ dz/[(1+z)H(z)]",
+    "parameters": [
+      {
+        "name": "model",
+        "kind": "cosmology_model",
+        "required": false,
+        "default": "Planck18"
+      }
+    ],
+    "returns": "time",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "t₀ = ∫₀∞ dz/[(1+z)H(z)]",
+    "source": "https://docs.astropy.org/en/stable/cosmology/",
+    "aliases": [],
+    "example": "age_of_universe(model=\"Planck18\")",
+    "priority": "P1"
+  },
+  {
+    "name": "cosmic_age",
+    "category": "Cosmology",
+    "description": "t(z) = ∫z∞ dz′/[(1+z′)H(z′)]",
+    "parameters": [
+      {
+        "name": "z",
+        "kind": "value",
+        "required": true
+      },
+      {
+        "name": "model",
+        "kind": "cosmology_model",
+        "required": false,
+        "default": "Planck18"
+      }
+    ],
+    "returns": "time",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "t(z) = ∫z∞ dz′/[(1+z′)H(z′)]",
+    "source": "https://docs.astropy.org/en/stable/cosmology/",
+    "aliases": [],
+    "example": "cosmic_age(3)",
+    "priority": "P1"
+  },
+  {
+    "name": "hubble_parameter",
+    "category": "Cosmology",
+    "description": "H(z) = H₀ E(z)",
+    "parameters": [
+      {
+        "name": "z",
+        "kind": "value",
+        "required": true
+      },
+      {
+        "name": "model",
+        "kind": "cosmology_model",
+        "required": false,
+        "default": "Planck18"
+      }
+    ],
+    "returns": "inverse time / Hubble rate",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "H(z) = H₀ E(z)",
+    "source": "https://docs.astropy.org/en/stable/cosmology/",
+    "aliases": [],
+    "example": "hubble_parameter(1)",
+    "priority": "P1"
+  },
+  {
+    "name": "hubble_time",
+    "category": "Cosmology",
+    "description": "t_H = 1/H₀",
+    "parameters": [
+      {
+        "name": "model",
+        "kind": "cosmology_model",
+        "required": false,
+        "default": "Planck18"
+      }
+    ],
+    "returns": "time",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "t_H = 1/H₀",
+    "source": "https://docs.astropy.org/en/stable/cosmology/",
+    "aliases": [],
+    "example": "hubble_time()",
+    "priority": "P1"
+  },
+  {
+    "name": "lookback_time",
+    "category": "Cosmology",
+    "description": "t_L = ∫₀z dz′/[(1+z′)H(z′)]",
+    "parameters": [
+      {
+        "name": "z",
+        "kind": "value",
+        "required": true
+      },
+      {
+        "name": "model",
+        "kind": "cosmology_model",
+        "required": false,
+        "default": "Planck18"
+      }
+    ],
+    "returns": "time",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "t_L = ∫₀z dz′/[(1+z′)H(z′)]",
+    "source": "https://docs.astropy.org/en/stable/cosmology/",
+    "aliases": [],
+    "example": "lookback_time(1)",
+    "priority": "P1"
+  },
+  {
+    "name": "comoving_distance",
+    "category": "Cosmology",
+    "description": "D_C = c ∫₀z dz′/H(z′)",
+    "parameters": [
+      {
+        "name": "z",
+        "kind": "value",
+        "required": true
+      },
+      {
+        "name": "model",
+        "kind": "cosmology_model",
+        "required": false,
+        "default": "Planck18"
+      }
+    ],
+    "returns": "length",
+    "visualization": "cosmology",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "D_C = c ∫₀z dz′/H(z′)",
+    "source": "https://docs.astropy.org/en/stable/cosmology/",
+    "aliases": [],
+    "example": "comoving_distance(1)",
+    "priority": "P1"
+  },
+  {
+    "name": "luminosity_distance",
+    "category": "Cosmology",
+    "description": "D_L = (1+z)D_M",
+    "parameters": [
+      {
+        "name": "z",
+        "kind": "value",
+        "required": true
+      },
+      {
+        "name": "model",
+        "kind": "cosmology_model",
+        "required": false,
+        "default": "Planck18"
+      }
+    ],
+    "returns": "length",
+    "visualization": "cosmology",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "D_L = (1+z)D_M",
+    "source": "https://docs.astropy.org/en/stable/cosmology/",
+    "aliases": [],
+    "example": "luminosity_distance(1)",
+    "priority": "P1"
+  },
+  {
+    "name": "angular_diameter_distance",
+    "category": "Cosmology",
+    "description": "D_A = D_M/(1+z)",
+    "parameters": [
+      {
+        "name": "z",
+        "kind": "value",
+        "required": true
+      },
+      {
+        "name": "model",
+        "kind": "cosmology_model",
+        "required": false,
+        "default": "Planck18"
+      }
+    ],
+    "returns": "length",
+    "visualization": "cosmology",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "D_A = D_M/(1+z)",
+    "source": "https://docs.astropy.org/en/stable/cosmology/",
+    "aliases": [],
+    "example": "angular_diameter_distance(1)",
+    "priority": "P1"
+  },
+  {
+    "name": "light_travel_distance",
+    "category": "Cosmology",
+    "description": "D_LT = c t_L",
+    "parameters": [
+      {
+        "name": "z",
+        "kind": "value",
+        "required": true
+      },
+      {
+        "name": "model",
+        "kind": "cosmology_model",
+        "required": false,
+        "default": "Planck18"
+      }
+    ],
+    "returns": "length",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "D_LT = c t_L",
+    "source": "https://docs.astropy.org/en/stable/cosmology/",
+    "aliases": [],
+    "example": "light_travel_distance(1)",
+    "priority": "P1"
+  },
+  {
+    "name": "distance_between_redshifts",
+    "category": "Cosmology",
+    "description": "ΔD_C = |D_C(z₂) − D_C(z₁)|",
+    "parameters": [
+      {
+        "name": "z1",
+        "kind": "value",
+        "required": true
+      },
+      {
+        "name": "z2",
+        "kind": "value",
+        "required": true
+      },
+      {
+        "name": "model",
+        "kind": "cosmology_model",
+        "required": false,
+        "default": "Planck18"
+      }
+    ],
+    "returns": "length",
+    "visualization": "panel",
+    "model": "Radial comoving separation on same sightline; not angular-diameter lens distance",
+    "formula": "ΔD_C = |D_C(z₂) − D_C(z₁)|",
+    "source": "https://docs.astropy.org/en/stable/cosmology/",
+    "aliases": [],
+    "example": "distance_between_redshifts(0.5,1)",
+    "priority": "P1"
+  },
+  {
+    "name": "comoving_volume",
+    "category": "Cosmology",
+    "description": "V_C(z) = full-sky comoving volume enclosed by z",
+    "parameters": [
+      {
+        "name": "z",
+        "kind": "value",
+        "required": true
+      },
+      {
+        "name": "model",
+        "kind": "cosmology_model",
+        "required": false,
+        "default": "Planck18"
+      }
+    ],
+    "returns": "volume",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "V_C(z) = full-sky comoving volume enclosed by z",
+    "source": "https://docs.astropy.org/en/stable/cosmology/",
+    "aliases": [],
+    "example": "comoving_volume(1)",
+    "priority": "P1"
+  },
+  {
+    "name": "critical_density",
+    "category": "Cosmology",
+    "description": "ρ_c = 3H(z)²/(8πG)",
+    "parameters": [
+      {
+        "name": "z",
+        "kind": "value",
+        "required": true
+      },
+      {
+        "name": "model",
+        "kind": "cosmology_model",
+        "required": false,
+        "default": "Planck18"
+      }
+    ],
+    "returns": "density",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "ρ_c = 3H(z)²/(8πG)",
+    "source": "https://docs.astropy.org/en/stable/cosmology/",
+    "aliases": [],
+    "example": "critical_density(0)",
+    "priority": "P1"
+  },
+  {
+    "name": "matter_density",
+    "category": "Cosmology",
+    "description": "ρ_m = Ω_m(z)ρ_c(z)",
+    "parameters": [
+      {
+        "name": "z",
+        "kind": "value",
+        "required": true
+      },
+      {
+        "name": "model",
+        "kind": "cosmology_model",
+        "required": false,
+        "default": "Planck18"
+      }
+    ],
+    "returns": "density",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "ρ_m = Ω_m(z)ρ_c(z)",
+    "source": "https://docs.astropy.org/en/stable/cosmology/",
+    "aliases": [],
+    "example": "matter_density(1)",
+    "priority": "P1"
+  },
+  {
+    "name": "dark_energy_density",
+    "category": "Cosmology",
+    "description": "ρ_DE = Ω_DE(z)ρ_c(z)",
+    "parameters": [
+      {
+        "name": "z",
+        "kind": "value",
+        "required": true
+      },
+      {
+        "name": "model",
+        "kind": "cosmology_model",
+        "required": false,
+        "default": "Planck18"
+      }
+    ],
+    "returns": "density",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "ρ_DE = Ω_DE(z)ρ_c(z)",
+    "source": "https://docs.astropy.org/en/stable/cosmology/",
+    "aliases": [],
+    "example": "dark_energy_density(1)",
+    "priority": "P1"
+  },
+  {
+    "name": "density_parameters",
+    "category": "Cosmology",
+    "description": "Ω_i(z) from FLRW model",
+    "parameters": [
+      {
+        "name": "z",
+        "kind": "value",
+        "required": true
+      },
+      {
+        "name": "model",
+        "kind": "cosmology_model",
+        "required": false,
+        "default": "Planck18"
+      }
+    ],
+    "returns": "structured data / typed quantities",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "Ω_i(z) from FLRW model",
+    "source": "https://docs.astropy.org/en/stable/cosmology/",
+    "aliases": [],
+    "example": "density_parameters(1)",
+    "priority": "P1"
+  },
+  {
+    "name": "scale_factor",
+    "category": "Cosmology",
+    "description": "a = 1/(1+z)",
+    "parameters": [
+      {
+        "name": "z",
+        "kind": "value",
+        "required": true
+      }
+    ],
+    "returns": "dimensionless",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "a = 1/(1+z)",
+    "source": "https://docs.astropy.org/en/stable/cosmology/",
+    "aliases": [],
+    "example": "scale_factor(2)",
+    "priority": "P1"
+  },
+  {
+    "name": "redshift_from_scale_factor",
+    "category": "Cosmology",
+    "description": "z = 1/a − 1",
+    "parameters": [
+      {
+        "name": "scale_factor",
+        "kind": "value",
+        "required": true
+      }
+    ],
+    "returns": "dimensionless",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "z = 1/a − 1",
+    "source": "https://docs.astropy.org/en/stable/cosmology/",
+    "aliases": [],
+    "example": "redshift_from_scale_factor(0.5)",
+    "priority": "P1"
+  },
+  {
+    "name": "cmb_temperature",
+    "category": "Cosmology",
+    "description": "T_CMB(z) = T_CMB,0 (1+z)",
+    "parameters": [
+      {
+        "name": "z",
+        "kind": "value",
+        "required": true
+      },
+      {
+        "name": "model",
+        "kind": "cosmology_model",
+        "required": false,
+        "default": "Planck18"
+      }
+    ],
+    "returns": "temperature",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "T_CMB(z) = T_CMB,0 (1+z)",
+    "source": "https://docs.astropy.org/en/stable/cosmology/",
+    "aliases": [],
+    "example": "cmb_temperature(10)",
+    "priority": "P1"
+  },
+  {
+    "name": "cosmological_distance_modulus",
+    "category": "Cosmology",
+    "description": "μ = 5 log₁₀(D_L/10pc)",
+    "parameters": [
+      {
+        "name": "z",
+        "kind": "value",
+        "required": true
+      },
+      {
+        "name": "model",
+        "kind": "cosmology_model",
+        "required": false,
+        "default": "Planck18"
+      }
+    ],
+    "returns": "dimensionless",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "μ = 5 log₁₀(D_L/10pc)",
+    "source": "https://docs.astropy.org/en/stable/cosmology/",
+    "aliases": [],
+    "example": "cosmological_distance_modulus(1)",
+    "priority": "P1"
+  },
+  {
+    "name": "hubble_law_velocity",
+    "category": "Cosmology",
+    "description": "v = H₀d",
+    "parameters": [
+      {
+        "name": "distance",
+        "kind": "length",
+        "required": true
+      },
+      {
+        "name": "H0",
+        "kind": "value",
+        "required": true
+      }
+    ],
+    "returns": "speed",
+    "visualization": "panel",
+    "model": "Low-redshift linear Hubble approximation only; reject implied |v| > 0.1c",
+    "formula": "v = H₀d",
+    "source": "https://docs.astropy.org/en/stable/cosmology/",
+    "aliases": [],
+    "example": "hubble_law_velocity(10 Mpc,70 km/s/Mpc)",
+    "priority": "P1"
+  },
+  {
+    "name": "particle_horizon",
+    "category": "Cosmology",
+    "description": "D_particle = c ∫₀∞ dz/H(z)",
+    "parameters": [
+      {
+        "name": "model",
+        "kind": "cosmology_model",
+        "required": false,
+        "default": "Planck18"
+      }
+    ],
+    "returns": "length",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "D_particle = c ∫₀∞ dz/H(z)",
+    "source": "https://docs.astropy.org/en/stable/cosmology/",
+    "aliases": [],
+    "example": "particle_horizon()",
+    "priority": "P1"
+  },
+  {
+    "name": "galaxy_rotation_curve",
+    "category": "Galaxies & Interstellar Medium",
+    "description": "v_c(r) = √[G M_enclosed(r)/r]",
+    "parameters": [
+      {
+        "name": "radius",
+        "kind": "radius",
+        "required": true
+      },
+      {
+        "name": "mass_model",
+        "kind": "value",
+        "required": true
+      }
+    ],
+    "returns": "structured data / typed quantities",
+    "visualization": "rotation",
+    "model": "Spherical Plummer or point mass; explicit enclosed-mass profile supported",
+    "formula": "v_c(r) = √[G M_enclosed(r)/r]",
+    "source": "https://ned.ipac.caltech.edu/level5/",
+    "aliases": [],
+    "example": "galaxy_rotation_curve([1 kpc,5 kpc,10 kpc],{model:plummer,mass:1e11 M_sun,scale:3 kpc})",
+    "priority": "P2"
+  },
+  {
+    "name": "dynamical_mass",
+    "category": "Galaxies & Interstellar Medium",
+    "description": "M(<r) = v²r/G",
+    "parameters": [
+      {
+        "name": "velocity",
+        "kind": "speed",
+        "required": true
+      },
+      {
+        "name": "radius",
+        "kind": "radius",
+        "required": true
+      }
+    ],
+    "returns": "mass",
+    "visualization": "panel",
+    "model": "Spherical mass distribution, circular orbit",
+    "formula": "M(<r) = v²r/G",
+    "source": "https://ned.ipac.caltech.edu/level5/",
+    "aliases": [],
+    "example": "dynamical_mass(200 km/s,10 kpc)",
+    "priority": "P2"
+  },
+  {
+    "name": "virial_mass",
+    "category": "Galaxies & Interstellar Medium",
+    "description": "M_vir = k σ²R/G",
+    "parameters": [
+      {
+        "name": "velocity_dispersion",
+        "kind": "speed",
+        "required": true
+      },
+      {
+        "name": "radius",
+        "kind": "radius",
+        "required": true
+      },
+      {
+        "name": "model",
+        "kind": "model_virial_mass",
+        "required": false,
+        "default": "uniform_sphere"
+      }
+    ],
+    "returns": "mass",
+    "visualization": "panel",
+    "model": "Uniform spherical system k=5, isotropic 1D dispersion; explicit k object allowed",
+    "formula": "M_vir = k σ²R/G",
+    "source": "https://ned.ipac.caltech.edu/level5/",
+    "aliases": [],
+    "example": "virial_mass(100 km/s,1 kpc)",
+    "priority": "P2"
+  },
+  {
+    "name": "velocity_dispersion",
+    "category": "Galaxies & Interstellar Medium",
+    "description": "σ = √[Σ(v_i−v̄)²/(N−1)]",
+    "parameters": [
+      {
+        "name": "velocities",
+        "kind": "value",
+        "required": true
+      }
+    ],
+    "returns": "speed",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "σ = √[Σ(v_i−v̄)²/(N−1)]",
+    "source": "https://ned.ipac.caltech.edu/level5/",
+    "aliases": [],
+    "example": "velocity_dispersion([10 km/s,20 km/s,30 km/s])",
+    "priority": "P2"
+  },
+  {
+    "name": "surface_brightness",
+    "category": "Galaxies & Interstellar Medium",
+    "description": "I = F/Ω",
+    "parameters": [
+      {
+        "name": "flux",
+        "kind": "data",
+        "required": true
+      },
+      {
+        "name": "angular_area",
+        "kind": "value",
+        "required": true
+      }
+    ],
+    "returns": "energy flux per solid angle",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "I = F/Ω",
+    "source": "https://ned.ipac.caltech.edu/level5/",
+    "aliases": [],
+    "example": "surface_brightness(1e-15 W/m2,10 arcsec2)",
+    "priority": "P2"
+  },
+  {
+    "name": "tully_fisher_distance",
+    "category": "Galaxies & Interstellar Medium",
+    "description": "M = a log₁₀(v/v_ref)+b; d=10pc × 10^[(m−M−A)/5]",
+    "parameters": [
+      {
+        "name": "rotation_speed",
+        "kind": "speed",
+        "required": true
+      },
+      {
+        "name": "magnitude",
+        "kind": "value",
+        "required": true
+      },
+      {
+        "name": "calibration",
+        "kind": "value",
+        "required": true
+      }
+    ],
+    "returns": "structured data / typed quantities",
+    "visualization": "panel",
+    "model": "User-supplied passband calibration; intrinsic scatter not automatically assumed",
+    "formula": "M = a log₁₀(v/v_ref)+b; d=10pc × 10^[(m−M−A)/5]",
+    "source": "https://ned.ipac.caltech.edu/level5/",
+    "aliases": [],
+    "example": "tully_fisher_distance(200 km/s,12,{slope:-10,intercept:-21,reference_speed:200 km/s,extinction:0})",
+    "priority": "P2"
+  },
+  {
+    "name": "star_formation_rate_halpha",
+    "category": "Galaxies & Interstellar Medium",
+    "description": "SFR = C_Hα L_Hα",
+    "parameters": [
+      {
+        "name": "luminosity",
+        "kind": "luminosity",
+        "required": true
+      },
+      {
+        "name": "calibration",
+        "kind": "value",
+        "required": true
+      }
+    ],
+    "returns": "mass flow rate",
+    "visualization": "panel",
+    "model": "Coefficient in (M_sun/yr)/(erg/s), e.g. Kennicutt 1998 Salpeter 7.9e-42; extinction correction required externally",
+    "formula": "SFR = C_Hα L_Hα",
+    "source": "https://ned.ipac.caltech.edu/level5/",
+    "aliases": [],
+    "example": "star_formation_rate_halpha(1e34 W,{coefficient:7.9e-42})",
+    "priority": "P2"
+  },
+  {
+    "name": "metallicity_from_lines",
+    "category": "Galaxies & Interstellar Medium",
+    "description": "12+log(O/H) = a + b N2 or a + b O3N2",
+    "parameters": [
+      {
+        "name": "line_fluxes",
+        "kind": "value",
+        "required": true
+      },
+      {
+        "name": "calibration",
+        "kind": "value",
+        "required": true
+      }
+    ],
+    "returns": "dimensionless",
+    "visualization": "panel",
+    "model": "Explicit strong-line calibration; N2=log[NII]/Hα, O3N2=log(([OIII]/Hβ)/([NII]/Hα))",
+    "formula": "12+log(O/H) = a + b N2 or a + b O3N2",
+    "source": "https://ned.ipac.caltech.edu/level5/",
+    "aliases": [],
+    "example": "metallicity_from_lines({NII:0.1,Halpha:1,OIII:1,Hbeta:0.35},{index:N2,intercept:8.90,slope:0.57})",
+    "priority": "P2"
+  },
+  {
+    "name": "jeans_mass",
+    "category": "Galaxies & Interstellar Medium",
+    "description": "M_J = π^(5/2)c_s³/(6G^(3/2)ρ^(1/2)); c_s²=kT/(μm_p)",
+    "parameters": [
+      {
+        "name": "temperature",
+        "kind": "temperature",
+        "required": true
+      },
+      {
+        "name": "density",
+        "kind": "density",
+        "required": true
+      },
+      {
+        "name": "mean_molecular_weight",
+        "kind": "value",
+        "required": true
+      }
+    ],
+    "returns": "mass",
+    "visualization": "panel",
+    "model": "Homogeneous isothermal ideal gas, dimensionless mean molecular weight",
+    "formula": "M_J = π^(5/2)c_s³/(6G^(3/2)ρ^(1/2)); c_s²=kT/(μm_p)",
+    "source": "https://ned.ipac.caltech.edu/level5/",
+    "aliases": [],
+    "example": "jeans_mass(10 K,1e-17 kg/m3,2.33)",
+    "priority": "P2"
+  },
+  {
+    "name": "jeans_length",
+    "category": "Galaxies & Interstellar Medium",
+    "description": "λ_J = c_s √(π/(Gρ))",
+    "parameters": [
+      {
+        "name": "temperature",
+        "kind": "temperature",
+        "required": true
+      },
+      {
+        "name": "density",
+        "kind": "density",
+        "required": true
+      },
+      {
+        "name": "mean_molecular_weight",
+        "kind": "value",
+        "required": true
+      }
+    ],
+    "returns": "length",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "λ_J = c_s √(π/(Gρ))",
+    "source": "https://ned.ipac.caltech.edu/level5/",
+    "aliases": [],
+    "example": "jeans_length(10 K,1e-17 kg/m3,2.33)",
+    "priority": "P2"
+  },
+  {
+    "name": "free_fall_time",
+    "category": "Galaxies & Interstellar Medium",
+    "description": "t_ff = √(3π/(32Gρ))",
+    "parameters": [
+      {
+        "name": "density",
+        "kind": "density",
+        "required": true
+      }
+    ],
+    "returns": "time",
+    "visualization": "panel",
+    "model": "Pressureless uniform sphere",
+    "formula": "t_ff = √(3π/(32Gρ))",
+    "source": "https://ned.ipac.caltech.edu/level5/",
+    "aliases": [],
+    "example": "free_fall_time(1e-17 kg/m3)",
+    "priority": "P2"
+  },
+  {
+    "name": "optical_depth",
+    "category": "Galaxies & Interstellar Medium",
+    "description": "τ = αℓ",
+    "parameters": [
+      {
+        "name": "absorption_coefficient",
+        "kind": "value",
+        "required": true
+      },
+      {
+        "name": "path_length",
+        "kind": "length",
+        "required": true
+      }
+    ],
+    "returns": "dimensionless",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "τ = αℓ",
+    "source": "https://ned.ipac.caltech.edu/level5/",
+    "aliases": [],
+    "example": "optical_depth(0.01 /m,100 m)",
+    "priority": "P2"
+  },
+  {
+    "name": "virial_temperature",
+    "category": "Galaxies & Interstellar Medium",
+    "description": "T_vir = μm_p GM/(2k_B R)",
+    "parameters": [
+      {
+        "name": "mass",
+        "kind": "mass",
+        "required": true
+      },
+      {
+        "name": "radius",
+        "kind": "radius",
+        "required": true
+      },
+      {
+        "name": "model",
+        "kind": "model_virial_temperature",
+        "required": false,
+        "default": "ionized_primordial"
+      }
+    ],
+    "returns": "temperature",
+    "visualization": "panel",
+    "model": "Spherical halo; fully ionized primordial gas μ=0.59; explicit μ object supported",
+    "formula": "T_vir = μm_p GM/(2k_B R)",
+    "source": "https://ned.ipac.caltech.edu/level5/",
+    "aliases": [],
+    "example": "virial_temperature(1e12 M_sun,200 kpc)",
+    "priority": "P2"
+  },
+  {
+    "name": "eddington_luminosity",
+    "category": "Galaxies & Interstellar Medium",
+    "description": "L_Edd = 4πGMc/κ",
+    "parameters": [
+      {
+        "name": "mass",
+        "kind": "mass",
+        "required": true
+      },
+      {
+        "name": "opacity",
+        "kind": "value",
+        "required": false,
+        "default": "0.034 m2 / kg"
+      }
+    ],
+    "returns": "power",
+    "visualization": "panel",
+    "model": "Spherical radiation-pressure equilibrium; κ=0.034 m²/kg electron scattering default",
+    "formula": "L_Edd = 4πGMc/κ",
+    "source": "https://ned.ipac.caltech.edu/level5/",
+    "aliases": [],
+    "example": "eddington_luminosity(10 M_sun)",
+    "priority": "P2"
+  },
+  {
+    "name": "accretion_luminosity",
+    "category": "Galaxies & Interstellar Medium",
+    "description": "L = η ṁ c²; Eddington ratio also reported",
+    "parameters": [
+      {
+        "name": "mass",
+        "kind": "mass",
+        "required": true
+      },
+      {
+        "name": "accretion_rate",
+        "kind": "mass_flow",
+        "required": true
+      },
+      {
+        "name": "efficiency",
+        "kind": "value",
+        "required": true
+      }
+    ],
+    "returns": "structured data / typed quantities",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "L = η ṁ c²; Eddington ratio also reported",
+    "source": "https://ned.ipac.caltech.edu/level5/",
+    "aliases": [],
+    "example": "accretion_luminosity(10 M_sun,1e-8 M_sun/yr,0.1)",
+    "priority": "P2"
+  },
+  {
+    "name": "bondi_radius",
+    "category": "Galaxies & Interstellar Medium",
+    "description": "r_B = 2GM/c_s²",
+    "parameters": [
+      {
+        "name": "mass",
+        "kind": "mass",
+        "required": true
+      },
+      {
+        "name": "sound_speed",
+        "kind": "speed",
+        "required": true
+      }
+    ],
+    "returns": "length",
+    "visualization": "panel",
+    "model": "Bondi capture radius convention with factor 2",
+    "formula": "r_B = 2GM/c_s²",
+    "source": "https://ned.ipac.caltech.edu/level5/",
+    "aliases": [],
+    "example": "bondi_radius(10 M_sun,10 km/s)",
+    "priority": "P2"
+  },
+  {
+    "name": "tidal_disruption_radius",
+    "category": "Galaxies & Interstellar Medium",
+    "description": "r_t ≈ R_s(M_BH/M_s)^(1/3)",
+    "parameters": [
+      {
+        "name": "black_hole_mass",
+        "kind": "mass",
+        "required": true
+      },
+      {
+        "name": "star_mass",
+        "kind": "mass",
+        "required": true
+      },
+      {
+        "name": "star_radius",
+        "kind": "radius",
+        "required": true
+      }
+    ],
+    "returns": "length",
+    "visualization": "panel",
+    "model": "Newtonian disruption estimate; capture may occur inside horizon",
+    "formula": "r_t ≈ R_s(M_BH/M_s)^(1/3)",
+    "source": "https://ned.ipac.caltech.edu/level5/",
+    "aliases": [],
+    "example": "tidal_disruption_radius(1e6 M_sun,sun,sun)",
+    "priority": "P2"
+  },
+  {
+    "name": "wavelength_to_frequency",
+    "category": "Spectroscopy & Photometry",
+    "description": "ν = c/λ",
+    "parameters": [
+      {
+        "name": "wavelength",
+        "kind": "wavelength",
+        "required": true
+      }
+    ],
+    "returns": "frequency",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "ν = c/λ",
+    "source": "https://docs.astropy.org/en/stable/units/",
+    "aliases": [],
+    "example": "wavelength_to_frequency(500 nm)",
+    "priority": "P1"
+  },
+  {
+    "name": "frequency_to_wavelength",
+    "category": "Spectroscopy & Photometry",
+    "description": "λ = c/ν",
+    "parameters": [
+      {
+        "name": "frequency",
+        "kind": "frequency",
+        "required": true
+      }
+    ],
+    "returns": "length",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "λ = c/ν",
+    "source": "https://docs.astropy.org/en/stable/units/",
+    "aliases": [],
+    "example": "frequency_to_wavelength(600 THz)",
+    "priority": "P1"
+  },
+  {
+    "name": "photon_energy",
+    "category": "Spectroscopy & Photometry",
+    "description": "E = hc/λ",
+    "parameters": [
+      {
+        "name": "wavelength",
+        "kind": "wavelength",
+        "required": true
+      }
+    ],
+    "returns": "energy",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "E = hc/λ",
+    "source": "https://docs.astropy.org/en/stable/units/",
+    "aliases": [],
+    "example": "photon_energy(500 nm)",
+    "priority": "P1"
+  },
+  {
+    "name": "redshift",
+    "category": "Spectroscopy & Photometry",
+    "description": "z = (λ_observed − λ_emitted)/λ_emitted",
+    "parameters": [
+      {
+        "name": "emitted_wavelength",
+        "kind": "wavelength",
+        "required": true
+      },
+      {
+        "name": "observed_wavelength",
+        "kind": "wavelength",
+        "required": true
+      }
+    ],
+    "returns": "dimensionless",
+    "visualization": "spectrum",
+    "model": "Dimensionless spectral redshift; not automatically a recession velocity",
+    "formula": "z = (λ_observed − λ_emitted)/λ_emitted",
+    "source": "https://docs.astropy.org/en/stable/units/",
+    "aliases": [],
+    "example": "redshift(500 nm,600 nm)",
+    "priority": "P0"
+  },
+  {
+    "name": "doppler_shift",
+    "category": "Spectroscopy & Photometry",
+    "description": "λ_obs = λ_emit √[(1+β)/(1−β)] (relativistic) or λ_emit(1+β)",
+    "parameters": [
+      {
+        "name": "wavelength",
+        "kind": "wavelength",
+        "required": true
+      },
+      {
+        "name": "velocity",
+        "kind": "speed",
+        "required": true
+      },
+      {
+        "name": "model",
+        "kind": "model_doppler_shift",
+        "required": false,
+        "default": "relativistic"
+      }
+    ],
+    "returns": "structured data / typed quantities",
+    "visualization": "spectrum",
+    "model": "Line-of-sight recession positive; relativistic default, classical optional",
+    "formula": "λ_obs = λ_emit √[(1+β)/(1−β)] (relativistic) or λ_emit(1+β)",
+    "source": "https://docs.astropy.org/en/stable/units/",
+    "aliases": [],
+    "example": "doppler_shift(500 nm,30 km/s)",
+    "priority": "P1"
+  },
+  {
+    "name": "radial_velocity_from_shift",
+    "category": "Spectroscopy & Photometry",
+    "description": "v/c = [(λ_obs/λ_emit)²−1]/[(λ_obs/λ_emit)²+1]",
+    "parameters": [
+      {
+        "name": "emitted_wavelength",
+        "kind": "wavelength",
+        "required": true
+      },
+      {
+        "name": "observed_wavelength",
+        "kind": "wavelength",
+        "required": true
+      }
+    ],
+    "returns": "speed",
+    "visualization": "panel",
+    "model": "Special-relativistic longitudinal Doppler only; cosmological and gravitational shifts excluded",
+    "formula": "v/c = [(λ_obs/λ_emit)²−1]/[(λ_obs/λ_emit)²+1]",
+    "source": "https://docs.astropy.org/en/stable/units/",
+    "aliases": [],
+    "example": "radial_velocity_from_shift(500 nm,600 nm)",
+    "priority": "P1"
+  },
+  {
+    "name": "spectral_resolution",
+    "category": "Spectroscopy & Photometry",
+    "description": "R = λ/Δλ",
+    "parameters": [
+      {
+        "name": "wavelength",
+        "kind": "wavelength",
+        "required": true
+      },
+      {
+        "name": "delta_wavelength",
+        "kind": "wavelength",
+        "required": true
+      }
+    ],
+    "returns": "dimensionless",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "R = λ/Δλ",
+    "source": "https://docs.astropy.org/en/stable/units/",
+    "aliases": [],
+    "example": "spectral_resolution(500 nm,0.1 nm)",
+    "priority": "P1"
+  },
+  {
+    "name": "equivalent_width",
+    "category": "Spectroscopy & Photometry",
+    "description": "EW = ∫(1−Fλ/F_cont) dλ",
+    "parameters": [
+      {
+        "name": "spectrum",
+        "kind": "value",
+        "required": true
+      },
+      {
+        "name": "continuum",
+        "kind": "value",
+        "required": true
+      },
+      {
+        "name": "interval",
+        "kind": "value",
+        "required": true
+      }
+    ],
+    "returns": "length",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "EW = ∫(1−Fλ/F_cont) dλ",
+    "source": "https://docs.astropy.org/en/stable/units/",
+    "aliases": [],
+    "example": "equivalent_width({wavelength:[499 nm,500 nm,501 nm],flux:[1,0.5,1]},1,[499 nm,501 nm])",
+    "priority": "P1"
+  },
+  {
+    "name": "line_broadening",
+    "category": "Spectroscopy & Photometry",
+    "description": "Δv_FWHM = c Δλ_FWHM/λ₀",
+    "parameters": [
+      {
+        "name": "line_width",
+        "kind": "wavelength",
+        "required": true
+      },
+      {
+        "name": "rest_wavelength",
+        "kind": "wavelength",
+        "required": true
+      },
+      {
+        "name": "model",
+        "kind": "model_line_broadening",
+        "required": false,
+        "default": "velocity"
+      }
+    ],
+    "returns": "speed or temperature, by model",
+    "visualization": "panel",
+    "model": "Velocity FWHM or pure thermal Doppler temperature with explicit atomic mass; instrumental width not subtracted",
+    "formula": "Δv_FWHM = c Δλ_FWHM/λ₀",
+    "source": "https://docs.astropy.org/en/stable/units/",
+    "aliases": [],
+    "example": "line_broadening(0.1 nm,500 nm)",
+    "priority": "P1"
+  },
+  {
+    "name": "flux_to_magnitude",
+    "category": "Spectroscopy & Photometry",
+    "description": "m = −2.5 log₁₀(F/F₀)",
+    "parameters": [
+      {
+        "name": "flux",
+        "kind": "data",
+        "required": true
+      },
+      {
+        "name": "zero_point",
+        "kind": "value",
+        "required": true
+      }
+    ],
+    "returns": "dimensionless",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "m = −2.5 log₁₀(F/F₀)",
+    "source": "https://docs.astropy.org/en/stable/units/",
+    "aliases": [],
+    "example": "flux_to_magnitude(1e-12 W/m2,1e-8 W/m2)",
+    "priority": "P1"
+  },
+  {
+    "name": "magnitude_to_flux",
+    "category": "Spectroscopy & Photometry",
+    "description": "F = F₀ 10^(−0.4m)",
+    "parameters": [
+      {
+        "name": "magnitude",
+        "kind": "value",
+        "required": true
+      },
+      {
+        "name": "zero_point",
+        "kind": "value",
+        "required": true
+      }
+    ],
+    "returns": "same unit as zero_point",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "F = F₀ 10^(−0.4m)",
+    "source": "https://docs.astropy.org/en/stable/units/",
+    "aliases": [],
+    "example": "magnitude_to_flux(10,1e-8 W/m2)",
+    "priority": "P1"
+  },
+  {
+    "name": "magnitude_difference",
+    "category": "Spectroscopy & Photometry",
+    "description": "m₁−m₂ = −2.5 log₁₀(F₁/F₂)",
+    "parameters": [
+      {
+        "name": "flux1",
+        "kind": "value",
+        "required": true
+      },
+      {
+        "name": "flux2",
+        "kind": "value",
+        "required": true
+      }
+    ],
+    "returns": "dimensionless",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "m₁−m₂ = −2.5 log₁₀(F₁/F₂)",
+    "source": "https://docs.astropy.org/en/stable/units/",
+    "aliases": [],
+    "example": "magnitude_difference(100,10)",
+    "priority": "P1"
+  },
+  {
+    "name": "extinction_correct",
+    "category": "Spectroscopy & Photometry",
+    "description": "F_intrinsic = F_observed 10^(0.4A)",
+    "parameters": [
+      {
+        "name": "flux",
+        "kind": "data",
+        "required": true
+      },
+      {
+        "name": "extinction",
+        "kind": "value",
+        "required": true
+      }
+    ],
+    "returns": "same unit as flux",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "F_intrinsic = F_observed 10^(0.4A)",
+    "source": "https://docs.astropy.org/en/stable/units/",
+    "aliases": [],
+    "example": "extinction_correct(1e-12 W/m2,0.5)",
+    "priority": "P1"
+  },
+  {
+    "name": "signal_to_noise",
+    "category": "Spectroscopy & Photometry",
+    "description": "SNR = signal / noise",
+    "parameters": [
+      {
+        "name": "signal",
+        "kind": "value",
+        "required": true
+      },
+      {
+        "name": "noise",
+        "kind": "value",
+        "required": true
+      }
+    ],
+    "returns": "dimensionless",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "SNR = signal / noise",
+    "source": "https://docs.astropy.org/en/stable/units/",
+    "aliases": [],
+    "example": "signal_to_noise(100,10)",
+    "priority": "P1"
+  },
+  {
+    "name": "telescope_magnification",
+    "category": "Telescope & Optics",
+    "description": "M = f_objective/f_eyepiece",
+    "parameters": [
+      {
+        "name": "focal_length",
+        "kind": "length",
+        "required": true
+      },
+      {
+        "name": "eyepiece_focal_length",
+        "kind": "length",
+        "required": true
+      }
+    ],
+    "returns": "dimensionless",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "M = f_objective/f_eyepiece",
+    "source": "https://www.stsci.edu/hst/instrumentation/reference-data-for-calibration-and-tools",
+    "aliases": [],
+    "example": "telescope_magnification(1000 mm,25 mm)",
+    "priority": "P1"
+  },
+  {
+    "name": "focal_ratio",
+    "category": "Telescope & Optics",
+    "description": "f-number = f/D",
+    "parameters": [
+      {
+        "name": "focal_length",
+        "kind": "length",
+        "required": true
+      },
+      {
+        "name": "aperture",
+        "kind": "length",
+        "required": true
+      }
+    ],
+    "returns": "dimensionless",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "f-number = f/D",
+    "source": "https://www.stsci.edu/hst/instrumentation/reference-data-for-calibration-and-tools",
+    "aliases": [],
+    "example": "focal_ratio(1000 mm,200 mm)",
+    "priority": "P1"
+  },
+  {
+    "name": "aperture_area",
+    "category": "Telescope & Optics",
+    "description": "A = πD²/4",
+    "parameters": [
+      {
+        "name": "diameter",
+        "kind": "value",
+        "required": true
+      }
+    ],
+    "returns": "area",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "A = πD²/4",
+    "source": "https://www.stsci.edu/hst/instrumentation/reference-data-for-calibration-and-tools",
+    "aliases": [],
+    "example": "aperture_area(200 mm)",
+    "priority": "P1"
+  },
+  {
+    "name": "rayleigh_resolution",
+    "category": "Telescope & Optics",
+    "description": "θ = 1.22 λ/D",
+    "parameters": [
+      {
+        "name": "aperture",
+        "kind": "length",
+        "required": true
+      },
+      {
+        "name": "wavelength",
+        "kind": "wavelength",
+        "required": true
+      }
+    ],
+    "returns": "angle",
+    "visualization": "panel",
+    "model": "Circular unobstructed aperture, Rayleigh first-minimum criterion",
+    "formula": "θ = 1.22 λ/D",
+    "source": "https://www.stsci.edu/hst/instrumentation/reference-data-for-calibration-and-tools",
+    "aliases": [],
+    "example": "rayleigh_resolution(200 mm,550 nm)",
+    "priority": "P1"
+  },
+  {
+    "name": "diffraction_limit",
+    "category": "Telescope & Optics",
+    "description": "θ = 1.22 λ/D",
+    "parameters": [
+      {
+        "name": "aperture",
+        "kind": "length",
+        "required": true
+      },
+      {
+        "name": "wavelength",
+        "kind": "wavelength",
+        "required": true
+      }
+    ],
+    "returns": "angle",
+    "visualization": "panel",
+    "model": "Rayleigh criterion, circular unobstructed aperture",
+    "formula": "θ = 1.22 λ/D",
+    "source": "https://www.stsci.edu/hst/instrumentation/reference-data-for-calibration-and-tools",
+    "aliases": [],
+    "example": "diffraction_limit(200 mm,550 nm)",
+    "priority": "P1"
+  },
+  {
+    "name": "field_of_view",
+    "category": "Telescope & Optics",
+    "description": "FOV = 2 atan(s/(2f))",
+    "parameters": [
+      {
+        "name": "focal_length",
+        "kind": "length",
+        "required": true
+      },
+      {
+        "name": "sensor_size",
+        "kind": "length",
+        "required": true
+      }
+    ],
+    "returns": "angle",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "FOV = 2 atan(s/(2f))",
+    "source": "https://www.stsci.edu/hst/instrumentation/reference-data-for-calibration-and-tools",
+    "aliases": [],
+    "example": "field_of_view(1000 mm,36 mm)",
+    "priority": "P1"
+  },
+  {
+    "name": "pixel_scale",
+    "category": "Telescope & Optics",
+    "description": "Pixel scale = p/f radians per pixel",
+    "parameters": [
+      {
+        "name": "pixel_size",
+        "kind": "length",
+        "required": true
+      },
+      {
+        "name": "focal_length",
+        "kind": "length",
+        "required": true
+      }
+    ],
+    "returns": "angle per pixel",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "Pixel scale = p/f radians per pixel",
+    "source": "https://www.stsci.edu/hst/instrumentation/reference-data-for-calibration-and-tools",
+    "aliases": [],
+    "example": "pixel_scale(3.76 um,1000 mm)",
+    "priority": "P1"
+  },
+  {
+    "name": "plate_scale",
+    "category": "Telescope & Optics",
+    "description": "Plate scale = 1/f radians per meter",
+    "parameters": [
+      {
+        "name": "focal_length",
+        "kind": "length",
+        "required": true
+      }
+    ],
+    "returns": "angle per length",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "Plate scale = 1/f radians per meter",
+    "source": "https://www.stsci.edu/hst/instrumentation/reference-data-for-calibration-and-tools",
+    "aliases": [],
+    "example": "plate_scale(1000 mm)",
+    "priority": "P1"
+  },
+  {
+    "name": "light_gathering_power",
+    "category": "Telescope & Optics",
+    "description": "Light gathering ratio = (D/D_ref)²",
+    "parameters": [
+      {
+        "name": "aperture",
+        "kind": "length",
+        "required": true
+      },
+      {
+        "name": "reference_aperture",
+        "kind": "value",
+        "required": true
+      }
+    ],
+    "returns": "dimensionless",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "Light gathering ratio = (D/D_ref)²",
+    "source": "https://www.stsci.edu/hst/instrumentation/reference-data-for-calibration-and-tools",
+    "aliases": [],
+    "example": "light_gathering_power(200 mm,7 mm)",
+    "priority": "P1"
+  },
+  {
+    "name": "limiting_magnitude",
+    "category": "Telescope & Optics",
+    "description": "m_lim ≈ 2 + 5 log₁₀(D_mm) − extinction",
+    "parameters": [
+      {
+        "name": "aperture",
+        "kind": "length",
+        "required": true
+      },
+      {
+        "name": "conditions",
+        "kind": "value",
+        "required": true
+      },
+      {
+        "name": "model",
+        "kind": "model_limiting_magnitude",
+        "required": false,
+        "default": "visual_dark_sky"
+      }
+    ],
+    "returns": "dimensionless",
+    "visualization": "panel",
+    "model": "Empirical visual dark-sky estimate; observer, seeing, magnification and sky brightness not independently fitted",
+    "formula": "m_lim ≈ 2 + 5 log₁₀(D_mm) − extinction",
+    "source": "https://www.stsci.edu/hst/instrumentation/reference-data-for-calibration-and-tools",
+    "aliases": [],
+    "example": "limiting_magnitude(200 mm,{extinction:0.2})",
+    "priority": "P1"
+  },
+  {
+    "name": "exposure_time",
+    "category": "Telescope & Optics",
+    "description": "SNR = St/√[(S+B)t+N_pix N_exp RN²]; solve quadratic for t",
+    "parameters": [
+      {
+        "name": "target_snr",
+        "kind": "value",
+        "required": true
+      },
+      {
+        "name": "source",
+        "kind": "value",
+        "required": true
+      },
+      {
+        "name": "instrument",
+        "kind": "value",
+        "required": true
+      },
+      {
+        "name": "conditions",
+        "kind": "value",
+        "required": true
+      }
+    ],
+    "returns": "time",
+    "visualization": "panel",
+    "model": "Poisson source + sky + dark, independent read noise; rates are electron counts per second",
+    "formula": "SNR = St/√[(S+B)t+N_pix N_exp RN²]; solve quadratic for t",
+    "source": "https://www.stsci.edu/hst/instrumentation/reference-data-for-calibration-and-tools",
+    "aliases": [],
+    "example": "exposure_time(10,{rate:10 /s},{pixels:10,read_noise:3},{sky_rate:1 /s})",
+    "priority": "P1"
+  },
+  {
+    "name": "telescope_snr",
+    "category": "Telescope & Optics",
+    "description": "SNR = St / √[(S+B)t + N_pix N_exp RN²]",
+    "parameters": [
+      {
+        "name": "source",
+        "kind": "value",
+        "required": true
+      },
+      {
+        "name": "instrument",
+        "kind": "value",
+        "required": true
+      },
+      {
+        "name": "exposure",
+        "kind": "time",
+        "required": true
+      },
+      {
+        "name": "conditions",
+        "kind": "value",
+        "required": true
+      }
+    ],
+    "returns": "dimensionless",
+    "visualization": "panel",
+    "model": "Poisson source, sky and dark current plus independent read noise",
+    "formula": "SNR = St / √[(S+B)t + N_pix N_exp RN²]",
+    "source": "https://www.stsci.edu/hst/instrumentation/reference-data-for-calibration-and-tools",
+    "aliases": [],
+    "example": "telescope_snr({rate:10 /s},{pixels:10,read_noise:3},100 s,{sky_rate:1 /s})",
+    "priority": "P1"
+  },
+  {
+    "name": "nyquist_sampling",
+    "category": "Telescope & Optics",
+    "description": "Sampling = FWHM/pixel_scale; Nyquist requires ≥ 2 pixels",
+    "parameters": [
+      {
+        "name": "fwhm",
+        "kind": "value",
+        "required": true
+      },
+      {
+        "name": "pixel_scale",
+        "kind": "value",
+        "required": true
+      }
+    ],
+    "returns": "structured data / typed quantities",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "Sampling = FWHM/pixel_scale; Nyquist requires ≥ 2 pixels",
+    "source": "https://www.stsci.edu/hst/instrumentation/reference-data-for-calibration-and-tools",
+    "aliases": [],
+    "example": "nyquist_sampling(2 arcsec,1 arcsec/pixel)",
+    "priority": "P1"
+  },
+  {
+    "name": "detect_sources",
+    "category": "Astronomical Data Analysis",
+    "description": "DAOStarFinder detects local peaks after Gaussian convolution",
+    "parameters": [
+      {
+        "name": "image",
+        "kind": "image",
+        "required": true
+      },
+      {
+        "name": "threshold",
+        "kind": "value",
+        "required": true
+      },
+      {
+        "name": "method",
+        "kind": "value",
+        "required": false,
+        "default": "dao"
+      }
+    ],
+    "returns": "structured data / typed quantities",
+    "visualization": "image",
+    "model": "DAOStarFinder Gaussian FWHM=3px; background should be removed first",
+    "formula": "DAOStarFinder detects local peaks after Gaussian convolution",
+    "source": "https://photutils.readthedocs.io/en/stable/",
+    "aliases": [],
+    "example": "detect_sources([[0,0,0,0,0],[0,1,3,1,0],[0,3,10,3,0],[0,1,3,1,0],[0,0,0,0,0]],2)",
+    "priority": "P2"
+  },
+  {
+    "name": "estimate_background",
+    "category": "Astronomical Data Analysis",
+    "description": "Sigma-clipped median and robust MAD RMS or Background2D mesh",
+    "parameters": [
+      {
+        "name": "image",
+        "kind": "image",
+        "required": true
+      },
+      {
+        "name": "method",
+        "kind": "value",
+        "required": false,
+        "default": "sigma_clip"
+      }
+    ],
+    "returns": "structured data / typed quantities",
+    "visualization": "image",
+    "model": "Sigma-clipped scalar background or median mesh; 3σ clipping",
+    "formula": "Sigma-clipped median and robust MAD RMS or Background2D mesh",
+    "source": "https://photutils.readthedocs.io/en/stable/",
+    "aliases": [],
+    "example": "estimate_background([[1,1,1],[1,100,1],[1,1,1]])",
+    "priority": "P2"
+  },
+  {
+    "name": "centroid",
+    "category": "Astronomical Data Analysis",
+    "description": "Centroid = Σ xI/ΣI, Σ yI/ΣI after regional median subtraction",
+    "parameters": [
+      {
+        "name": "image",
+        "kind": "image",
+        "required": true
+      },
+      {
+        "name": "region",
+        "kind": "value",
+        "required": true
+      }
+    ],
+    "returns": "structured data / typed quantities",
+    "visualization": "image",
+    "model": "Positive center-of-mass estimator after median background subtraction",
+    "formula": "Centroid = Σ xI/ΣI, Σ yI/ΣI after regional median subtraction",
+    "source": "https://photutils.readthedocs.io/en/stable/",
+    "aliases": [],
+    "example": "centroid([[0,0,0],[0,10,0],[0,0,0]],{x:0,y:0,width:3,height:3})",
+    "priority": "P2"
+  },
+  {
+    "name": "aperture_photometry",
+    "category": "Astronomical Data Analysis",
+    "description": "Flux = Σ w_i(I_i−background); exact circular overlap weights",
+    "parameters": [
+      {
+        "name": "image",
+        "kind": "image",
+        "required": true
+      },
+      {
+        "name": "aperture",
+        "kind": "length",
+        "required": true
+      },
+      {
+        "name": "background",
+        "kind": "value",
+        "required": false,
+        "default": "0"
+      }
+    ],
+    "returns": "structured data / typed quantities",
+    "visualization": "image",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "Flux = Σ w_i(I_i−background); exact circular overlap weights",
+    "source": "https://photutils.readthedocs.io/en/stable/",
+    "aliases": [],
+    "example": "aperture_photometry([[0,0,0],[0,10,0],[0,0,0]],{x:1,y:1,radius:1},background=0)",
+    "priority": "P2"
+  },
+  {
+    "name": "psf_photometry",
+    "category": "Astronomical Data Analysis",
+    "description": "Fit circular Gaussian PSF simultaneously in local source cutouts",
+    "parameters": [
+      {
+        "name": "image",
+        "kind": "image",
+        "required": true
+      },
+      {
+        "name": "psf_model",
+        "kind": "value",
+        "required": true
+      },
+      {
+        "name": "positions",
+        "kind": "value",
+        "required": true
+      }
+    ],
+    "returns": "structured data / typed quantities",
+    "visualization": "image",
+    "model": "photutils CircularGaussianPRF; fixed FWHM, fitted x,y and integrated flux",
+    "formula": "Fit circular Gaussian PSF simultaneously in local source cutouts",
+    "source": "https://photutils.readthedocs.io/en/stable/",
+    "aliases": [],
+    "example": "psf_photometry([[0,0,0,0,0],[0,1,3,1,0],[0,3,10,3,0],[0,1,3,1,0],[0,0,0,0,0]],{fwhm:2,fit_size:5},[[2,2]])",
+    "priority": "P2"
+  },
+  {
+    "name": "photometric_calibration",
+    "category": "Astronomical Data Analysis",
+    "description": "Zero point = weighted mean(m_ref + 2.5log₁₀ F)",
+    "parameters": [
+      {
+        "name": "measurements",
+        "kind": "value",
+        "required": true
+      },
+      {
+        "name": "reference_catalog",
+        "kind": "value",
+        "required": true
+      }
+    ],
+    "returns": "structured data / typed quantities",
+    "visualization": "panel",
+    "model": "Matched reference stars in same passband, no color/airmass term; scatter reported",
+    "formula": "Zero point = weighted mean(m_ref + 2.5log₁₀ F)",
+    "source": "https://photutils.readthedocs.io/en/stable/",
+    "aliases": [],
+    "example": "photometric_calibration([1000,100,10],[10,12.5,15])",
+    "priority": "P2"
+  },
+  {
+    "name": "world_to_pixel",
+    "category": "Astronomical Data Analysis",
+    "description": "FITS WCS all_world2pix, zero-based pixels",
+    "parameters": [
+      {
+        "name": "sky_coordinate",
+        "kind": "value",
+        "required": true
+      },
+      {
+        "name": "wcs",
+        "kind": "value",
+        "required": true
+      }
+    ],
+    "returns": "structured data / typed quantities",
+    "visualization": "panel",
+    "model": "FITS WCS, zero-based pixel output",
+    "formula": "FITS WCS all_world2pix, zero-based pixels",
+    "source": "https://photutils.readthedocs.io/en/stable/",
+    "aliases": [],
+    "example": "world_to_pixel({ra:10 deg,dec:20 deg},{CTYPE1:\"RA---TAN\",CTYPE2:\"DEC--TAN\",CRPIX1:1,CRPIX2:1,CRVAL1:10,CRVAL2:20,CDELT1:-0.001,CDELT2:0.001})",
+    "priority": "P2"
+  },
+  {
+    "name": "pixel_to_world",
+    "category": "Astronomical Data Analysis",
+    "description": "FITS WCS all_pix2world, zero-based input pixels",
+    "parameters": [
+      {
+        "name": "pixel_coordinate",
+        "kind": "value",
+        "required": true
+      },
+      {
+        "name": "wcs",
+        "kind": "value",
+        "required": true
+      }
+    ],
+    "returns": "structured data / typed quantities",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "FITS WCS all_pix2world, zero-based input pixels",
+    "source": "https://photutils.readthedocs.io/en/stable/",
+    "aliases": [],
+    "example": "pixel_to_world([0,0],{CTYPE1:\"RA---TAN\",CTYPE2:\"DEC--TAN\",CRPIX1:1,CRPIX2:1,CRVAL1:10,CRVAL2:20,CDELT1:-0.001,CDELT2:0.001})",
+    "priority": "P2"
+  },
+  {
+    "name": "align_images",
+    "category": "Astronomical Data Analysis",
+    "description": "FFT phase correlation estimates translation; spline resampling aligns frames",
+    "parameters": [
+      {
+        "name": "images",
+        "kind": "image",
+        "required": true
+      },
+      {
+        "name": "reference",
+        "kind": "value",
+        "required": true
+      }
+    ],
+    "returns": "structured data / typed quantities",
+    "visualization": "image",
+    "model": "Translation-only integer phase correlation; constant-zero fill, cubic interpolation; no rotation or distortion",
+    "formula": "FFT phase correlation estimates translation; spline resampling aligns frames",
+    "source": "https://photutils.readthedocs.io/en/stable/",
+    "aliases": [],
+    "example": "align_images([[[0,0,0],[0,1,0],[0,0,0]],[[0,0,0],[0,0,1],[0,0,0]]],0)",
+    "priority": "P2"
+  },
+  {
+    "name": "stack_images",
+    "category": "Astronomical Data Analysis",
+    "description": "Pixelwise median or mean over aligned images",
+    "parameters": [
+      {
+        "name": "images",
+        "kind": "image",
+        "required": true
+      },
+      {
+        "name": "method",
+        "kind": "value",
+        "required": false,
+        "default": "median"
+      }
+    ],
+    "returns": "structured data / typed quantities",
+    "visualization": "image",
+    "model": "Requires aligned equal-size frames; median or mean; no automatic registration",
+    "formula": "Pixelwise median or mean over aligned images",
+    "source": "https://photutils.readthedocs.io/en/stable/",
+    "aliases": [],
+    "example": "stack_images([[[1,2],[3,4]],[[3,4],[5,6]]])",
+    "priority": "P2"
+  },
+  {
+    "name": "light_curve",
+    "category": "Astronomical Data Analysis",
+    "description": "Sort paired observation time and flux; preserve measured flux",
+    "parameters": [
+      {
+        "name": "time",
+        "kind": "data",
+        "required": true
+      },
+      {
+        "name": "flux",
+        "kind": "data",
+        "required": true
+      }
+    ],
+    "returns": "structured data / typed quantities",
+    "visualization": "light_curve",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "Sort paired observation time and flux; preserve measured flux",
+    "source": "https://photutils.readthedocs.io/en/stable/",
+    "aliases": [],
+    "example": "light_curve([0 day,1 day,2 day],[1,0.99,1])",
+    "priority": "P2"
+  },
+  {
+    "name": "periodogram",
+    "category": "Astronomical Data Analysis",
+    "description": "Generalized weighted floating-mean Lomb–Scargle periodogram",
+    "parameters": [
+      {
+        "name": "time",
+        "kind": "data",
+        "required": true
+      },
+      {
+        "name": "flux",
+        "kind": "data",
+        "required": true
+      },
+      {
+        "name": "errors",
+        "kind": "value",
+        "required": false,
+        "default": "None"
+      }
+    ],
+    "returns": "structured data / typed quantities",
+    "visualization": "periodogram",
+    "model": "Astropy LombScargle automatic frequency grid; uncertainties optional, false-alarm probability reported",
+    "formula": "Generalized weighted floating-mean Lomb–Scargle periodogram",
+    "source": "https://photutils.readthedocs.io/en/stable/",
+    "aliases": [],
+    "example": "periodogram([0 day,0.2 day,0.5 day,0.7 day,1 day,1.3 day],[0,1,0,-1,0,1])",
+    "priority": "P2"
+  },
+  {
+    "name": "phase_fold",
+    "category": "Astronomical Data Analysis",
+    "description": "φ = ((t−epoch)/P) mod 1",
+    "parameters": [
+      {
+        "name": "time",
+        "kind": "data",
+        "required": true
+      },
+      {
+        "name": "flux",
+        "kind": "data",
+        "required": true
+      },
+      {
+        "name": "period",
+        "kind": "time",
+        "required": true
+      },
+      {
+        "name": "epoch",
+        "kind": "value",
+        "required": false,
+        "default": "0"
+      }
+    ],
+    "returns": "structured data / typed quantities",
+    "visualization": "phase",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "φ = ((t−epoch)/P) mod 1",
+    "source": "https://photutils.readthedocs.io/en/stable/",
+    "aliases": [],
+    "example": "phase_fold([0 day,1 day,2 day],[1,0.9,1],2 day)",
+    "priority": "P2"
+  },
+  {
+    "name": "fit_transit",
+    "category": "Astronomical Data Analysis",
+    "description": "Least-squares batman transit fit in radius ratio, epoch and inclination",
+    "parameters": [
+      {
+        "name": "time",
+        "kind": "data",
+        "required": true
+      },
+      {
+        "name": "flux",
+        "kind": "data",
+        "required": true
+      },
+      {
+        "name": "model",
+        "kind": "model_fit_transit",
+        "required": true
+      },
+      {
+        "name": "parameters",
+        "kind": "value",
+        "required": true
+      }
+    ],
+    "returns": "structured data / typed quantities",
+    "visualization": "transit",
+    "model": "Quadratic limb-darkened batman, fixed period and a/Rstar; bounded least squares",
+    "formula": "Least-squares batman transit fit in radius ratio, epoch and inclination",
+    "source": "https://photutils.readthedocs.io/en/stable/",
+    "aliases": [],
+    "example": "fit_transit([-0.3 day,-0.1 day,0 day,0.1 day,0.3 day],[1,0.99,0.99,0.99,1],{period:3 day,a_over_rstar:8},{radius_ratio:0.1,epoch:0 day,inclination:90 deg})",
+    "priority": "P2"
+  },
+  {
+    "name": "fit_spectrum",
+    "category": "Astronomical Data Analysis",
+    "description": "Fit Gaussian line + constant continuum, or scaled Planck continuum",
+    "parameters": [
+      {
+        "name": "wavelengths",
+        "kind": "value",
+        "required": true
+      },
+      {
+        "name": "fluxes",
+        "kind": "value",
+        "required": true
+      },
+      {
+        "name": "model",
+        "kind": "model_fit_spectrum",
+        "required": true
+      }
+    ],
+    "returns": "structured data / typed quantities",
+    "visualization": "spectrum_curve",
+    "model": "Unweighted least squares; Gaussian line or scaled blackbody; no instrument response correction",
+    "formula": "Fit Gaussian line + constant continuum, or scaled Planck continuum",
+    "source": "https://photutils.readthedocs.io/en/stable/",
+    "aliases": [],
+    "example": "fit_spectrum([499 nm,499.5 nm,500 nm,500.5 nm,501 nm],[1,2,3,2,1],gaussian)",
+    "priority": "P2"
+  },
+  {
+    "name": "fit_orbit",
+    "category": "Astronomical Data Analysis",
+    "description": "Fit initial Cartesian r,v to 3D timed positions under two-body dynamics",
+    "parameters": [
+      {
+        "name": "observations",
+        "kind": "value",
+        "required": true
+      },
+      {
+        "name": "initial_model",
+        "kind": "value",
+        "required": true
+      }
+    ],
+    "returns": "structured data / typed quantities",
+    "visualization": "orbit",
+    "model": "Newtonian Cartesian least squares, central mass fixed; input positions in m, times in s, initial epoch t=0",
+    "formula": "Fit initial Cartesian r,v to 3D timed positions under two-body dynamics",
+    "source": "https://photutils.readthedocs.io/en/stable/",
+    "aliases": [],
+    "example": "fit_orbit({time:[0 s,100 s,200 s],positions:[[7000000,0,0],[6995930,749855,0],[6983720,1498840,0]]},{r:[7000000,0,0],v:[0,7500,0],central_mass:earth})",
+    "priority": "P2"
+  },
+  {
+    "name": "cross_match_catalog",
+    "category": "Astronomical Data Analysis",
+    "description": "Nearest-neighbor spherical catalogue match within tolerance",
+    "parameters": [
+      {
+        "name": "catalog1",
+        "kind": "value",
+        "required": true
+      },
+      {
+        "name": "catalog2",
+        "kind": "value",
+        "required": true
+      },
+      {
+        "name": "tolerance",
+        "kind": "value",
+        "required": true
+      }
+    ],
+    "returns": "structured data / typed quantities",
+    "visualization": "panel",
+    "model": "ICRS nearest-neighbor angular match, many-to-one; epochs/proper motion must be aligned first",
+    "formula": "Nearest-neighbor spherical catalogue match within tolerance",
+    "source": "https://photutils.readthedocs.io/en/stable/",
+    "aliases": [],
+    "example": "cross_match_catalog([{ra:10 deg,dec:20 deg}],[{ra:10.0001 deg,dec:20 deg}],1 arcsec)",
+    "priority": "P2"
+  },
+  {
+    "name": "propagate_uncertainty",
+    "category": "Astronomical Data Analysis",
+    "description": "σ_f² = J C Jᵀ; central numerical derivatives, optional full covariance",
+    "parameters": [
+      {
+        "name": "expression",
+        "kind": "value",
+        "required": true
+      },
+      {
+        "name": "measurements",
+        "kind": "value",
+        "required": true
+      }
+    ],
+    "returns": "structured data / typed quantities",
+    "visualization": "panel",
+    "model": "First-order Gaussian propagation; independent inputs unless covariance supplied; nonlinear large-error cases may require Monte Carlo",
+    "formula": "σ_f² = J C Jᵀ; central numerical derivatives, optional full covariance",
+    "source": "https://photutils.readthedocs.io/en/stable/",
+    "aliases": [],
+    "example": "propagate_uncertainty(\"m/r^2\",{m:{value:10 kg,sigma:1 kg},r:{value:2 m,sigma:0.1 m}})",
+    "priority": "P2"
+  },
+  {
+    "name": "chirp_mass",
+    "category": "Gravitational Waves",
+    "description": "M_chirp = (m₁m₂)^(3/5)/(m₁+m₂)^(1/5)",
+    "parameters": [
+      {
+        "name": "mass1",
+        "kind": "mass",
+        "required": true
+      },
+      {
+        "name": "mass2",
+        "kind": "mass",
+        "required": true
+      }
+    ],
+    "returns": "mass",
+    "visualization": "panel",
+    "model": "SI constants (CODATA/IAU); inputs treated as exact unless uncertainties supplied",
+    "formula": "M_chirp = (m₁m₂)^(3/5)/(m₁+m₂)^(1/5)",
+    "source": "https://arxiv.org/abs/1310.1528",
+    "aliases": [],
+    "example": "chirp_mass(30 M_sun,30 M_sun)",
+    "priority": "P2"
+  },
+  {
+    "name": "gravitational_wave_frequency",
+    "category": "Gravitational Waves",
+    "description": "f_GW = 2/P_orbit",
+    "parameters": [
+      {
+        "name": "orbit",
+        "kind": "orbit_object",
+        "required": true
+      }
+    ],
+    "returns": "frequency",
+    "visualization": "panel",
+    "model": "Dominant quadrupole harmonic of a circular Newtonian binary",
+    "formula": "f_GW = 2/P_orbit",
+    "source": "https://arxiv.org/abs/1310.1528",
+    "aliases": [],
+    "example": "gravitational_wave_frequency(earth_orbit)",
+    "priority": "P2"
+  },
+  {
+    "name": "gravitational_wave_strain",
+    "category": "Gravitational Waves",
+    "description": "h₀ = 4G²m₁m₂/(c⁴ad)",
+    "parameters": [
+      {
+        "name": "binary",
+        "kind": "value",
+        "required": true
+      },
+      {
+        "name": "distance",
+        "kind": "length",
+        "required": true
+      },
+      {
+        "name": "model",
+        "kind": "model_gravitational_wave_strain",
+        "required": false,
+        "default": "quadrupole"
+      }
+    ],
+    "returns": "dimensionless",
+    "visualization": "panel",
+    "model": "Leading quadrupole circular binary, face-on optimal strain amplitude; local source-frame parameters",
+    "formula": "h₀ = 4G²m₁m₂/(c⁴ad)",
+    "source": "https://arxiv.org/abs/1310.1528",
+    "aliases": [],
+    "example": "gravitational_wave_strain({mass1:30 M_sun,mass2:30 M_sun,separation:1000 km},100 Mpc)",
+    "priority": "P2"
+  },
+  {
+    "name": "inspiral_time",
+    "category": "Gravitational Waves",
+    "description": "Peters 1964 eccentric inspiral integral; circular t = 5c⁵a⁴/[256G³m₁m₂(m₁+m₂)]",
+    "parameters": [
+      {
+        "name": "mass1",
+        "kind": "mass",
+        "required": true
+      },
+      {
+        "name": "mass2",
+        "kind": "mass",
+        "required": true
+      },
+      {
+        "name": "separation",
+        "kind": "length",
+        "required": true
+      },
+      {
+        "name": "eccentricity",
+        "kind": "value",
+        "required": false,
+        "default": "0"
+      }
+    ],
+    "returns": "time",
+    "visualization": "panel",
+    "model": "Orbit-averaged quadrupole radiation reaction, point masses; no spin or merger dynamics",
+    "formula": "Peters 1964 eccentric inspiral integral; circular t = 5c⁵a⁴/[256G³m₁m₂(m₁+m₂)]",
+    "source": "https://arxiv.org/abs/1310.1528",
+    "aliases": [],
+    "example": "inspiral_time(30 M_sun,30 M_sun,1000 km,0.2)",
+    "priority": "P2"
+  },
+  {
+    "name": "gravitational_wave_energy_loss",
+    "category": "Gravitational Waves",
+    "description": "P = (32/5)G⁴ m₁²m₂²(m₁+m₂)/(c⁵a⁵)",
+    "parameters": [
+      {
+        "name": "binary",
+        "kind": "value",
+        "required": true
+      }
+    ],
+    "returns": "power",
+    "visualization": "panel",
+    "model": "Circular Newtonian quadrupole emitted power, positive energy loss rate",
+    "formula": "P = (32/5)G⁴ m₁²m₂²(m₁+m₂)/(c⁵a⁵)",
+    "source": "https://arxiv.org/abs/1310.1528",
+    "aliases": [],
+    "example": "gravitational_wave_energy_loss({mass1:30 M_sun,mass2:30 M_sun,separation:1000 km})",
+    "priority": "P2"
+  },
+  {
+    "name": "merger_frequency",
+    "category": "Gravitational Waves",
+    "description": "f_GW,ISCO = c³/[πGM(r_ISCO^(3/2)+χ_eff)]; χ_eff=(m₁χ₁+m₂χ₂)/M",
+    "parameters": [
+      {
+        "name": "mass1",
+        "kind": "mass",
+        "required": true
+      },
+      {
+        "name": "mass2",
+        "kind": "mass",
+        "required": true
+      },
+      {
+        "name": "spins",
+        "kind": "value",
+        "required": true
+      },
+      {
+        "name": "model",
+        "kind": "model_merger_frequency",
+        "required": false,
+        "default": "kerr_isco"
+      }
+    ],
+    "returns": "frequency",
+    "visualization": "panel",
+    "model": "Effective-spin Kerr ISCO proxy, aligned spin components; not a calibrated full-GR merger-peak frequency",
+    "formula": "f_GW,ISCO = c³/[πGM(r_ISCO^(3/2)+χ_eff)]; χ_eff=(m₁χ₁+m₂χ₂)/M",
+    "source": "https://arxiv.org/abs/1310.1528",
+    "aliases": [],
+    "example": "merger_frequency(30 M_sun,30 M_sun,[0,0])",
+    "priority": "P2"
+  },
+  {
+    "name": "ringdown_frequency",
+    "category": "Gravitational Waves",
+    "description": "f_220 = c³/(2πGM) [1.5251−1.1568(1−a*)^0.1292]",
+    "parameters": [
+      {
+        "name": "final_mass",
+        "kind": "mass",
+        "required": true
+      },
+      {
+        "name": "final_spin",
+        "kind": "value",
+        "required": true
+      },
+      {
+        "name": "mode",
+        "kind": "value",
+        "required": false,
+        "default": "220"
+      }
+    ],
+    "returns": "frequency",
+    "visualization": "panel",
+    "model": "Berti et al. fundamental Kerr l=m=2,n=0 fit; 0 ≤ spin < 0.99",
+    "formula": "f_220 = c³/(2πGM) [1.5251−1.1568(1−a*)^0.1292]",
+    "source": "https://arxiv.org/abs/1310.1528",
+    "aliases": [],
+    "example": "ringdown_frequency(60 M_sun,0.7)",
+    "priority": "P2"
+  },
+  {
+    "name": "gravitational_waveform",
+    "category": "Gravitational Waves",
+    "description": "Leading chirp f(t), h_+(t)=A(t) cos φ(t), dφ/dt=2πf(t)",
+    "parameters": [
+      {
+        "name": "binary",
+        "kind": "value",
+        "required": true
+      },
+      {
+        "name": "times",
+        "kind": "data",
+        "required": true
+      },
+      {
+        "name": "model",
+        "kind": "model_gravitational_waveform",
+        "required": false,
+        "default": "quadrupole"
+      }
+    ],
+    "returns": "structured data / typed quantities",
+    "visualization": "waveform",
+    "model": "Leading Newtonian circular face-on inspiral only, terminated at Schwarzschild ISCO; no merger, ringdown or detector response",
+    "formula": "Leading chirp f(t), h_+(t)=A(t) cos φ(t), dφ/dt=2πf(t)",
+    "source": "https://arxiv.org/abs/1310.1528",
+    "aliases": [],
+    "example": "gravitational_waveform({mass1:30 M_sun,mass2:30 M_sun,separation:1000 km,distance:100 Mpc},[0 s,0.01 s,0.02 s,0.03 s])",
+    "priority": "P2"
+  }
+]

@@ -20,6 +20,7 @@ struct Details {
     var graph: Graph? = nil      // none for a value worked out, which has nothing to plot
     var whole: String? = nil     // what copying any line of the solutions gives, where they are one value over several lines
     var chromaticity: Chromaticity? = nil   // a colour's place on the CIE 1931 diagram, drawn in place of the graph
+    var diagram: AstroDiagram? = nil        // an orbit, a star on the H–R diagram, a black hole, a spectrum, drawn above the graph
 
     struct Presentation {
         var steps: [Step]
@@ -63,6 +64,9 @@ struct Graph {
     var yName: String
     var curves: [Curve]
     var points: [CGPoint]
+    // The window to open on, where the curve's own scale would leave the point lost: an orbit
+    // measured in astronomical units against years, a spectrum in nanometres.
+    var frame: (x: ClosedRange<Double>, y: ClosedRange<Double>)? = nil
 }
 
 extension Expr {

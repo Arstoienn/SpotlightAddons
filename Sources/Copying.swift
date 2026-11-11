@@ -74,12 +74,27 @@ final class ClickTargetView: NSView {
     }
 }
 
-// Return, while it is ours to take. Spotlight has the keyboard, and Return there opens the first
-// thing in its list; with the pointer resting on the card, Return copies the answer instead and
-// goes no further. Every other key, and Return at any other time, passes untouched and unread.
-// The tap is only switched on while the card is up.
-final class ReturnKey {
-    var take: () -> Bool = { false }   // true if Return was used, and is not to reach Spotlight
+// Keys, while they are ours to take. Spotlight has the keyboard: Return there opens the first thing
+// in its list, the arrows move through it and Escape closes it. With the pointer resting on the
+// card, Return copies the answer instead and goes no further; while a list of completions is open
+// on the card, the arrows, Tab, Return and Escape work it. Every other key, and these at any other
+// time, pass untouched and unread. The tap is only switched on while the card is up.
+final class KeyTap {
+    enum Key {
+        case returnKey, tab, escape, up, down
+        init?(code: Int64) {
+            switch code {
+            case 36, 76: self = .returnKey   // Return, and Enter on the keypad
+            case 48: self = .tab
+            case 53: self = .escape
+            case 126: self = .up
+            case 125: self = .down
+            default: return nil
+            }
+        }
+    }
+
+    var take: (Key) -> Bool = { _ in false }   // true if the key was used, and is not to reach Spotlight
     private var tap: CFMachPort?
 
     var isOn = false {
@@ -92,23 +107,23 @@ final class ReturnKey {
 
     private func create() {
         let callback: CGEventTapCallBack = { _, type, event, refcon in
-            let key = Unmanaged<ReturnKey>.fromOpaque(refcon!).takeUnretainedValue()
+            let keys = Unmanaged<KeyTap>.fromOpaque(refcon!).takeUnretainedValue()
             // The system switches a tap off if it is slow, or on some input; put it back.
             if type == .tapDisabledByTimeout || type == .tapDisabledByUserInput {
-                if key.isOn, let tap = key.tap { CGEvent.tapEnable(tap: tap, enable: true) }
+                if keys.isOn, let tap = keys.tap { CGEvent.tapEnable(tap: tap, enable: true) }
                 return Unmanaged.passUnretained(event)
             }
-            let code = event.getIntegerValueField(.keyboardEventKeycode)
             let held = event.flags.intersection([.maskCommand, .maskControl, .maskAlternate, .maskShift])
-            guard type == .keyDown, code == 36 || code == 76, held.isEmpty, key.take() else { return Unmanaged.passUnretained(event) }
+            guard type == .keyDown, held.isEmpty, let key = Key(code: event.getIntegerValueField(.keyboardEventKeycode)), keys.take(key)
+            else { return Unmanaged.passUnretained(event) }
             return nil
         }
         tap = CGEvent.tapCreate(tap: .cgSessionEventTap, place: .headInsertEventTap, options: .defaultTap,
                                 eventsOfInterest: CGEventMask(1 << CGEventType.keyDown.rawValue), callback: callback,
                                 userInfo: Unmanaged.passUnretained(self).toOpaque())
-        guard let tap else { return Log.note("Return could not be watched: no event tap") }
+        guard let tap else { return Log.note("keys could not be watched: no event tap") }
         CFRunLoopAddSource(CFRunLoopGetMain(), CFMachPortCreateRunLoopSource(nil, tap, 0), .commonModes)
-        Log.note("watching for Return while the card is up")
+        Log.note("watching for Return, and the keys of a list, while the card is up")
     }
 }
 

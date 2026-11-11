@@ -342,6 +342,9 @@ struct Colour {
                 at += 1
             }
             word = word.trimmingCharacters(in: .whitespaces)
+            // In an arithmetic expression tan is the trigonometric function awaiting its input.
+            // The colour remains available by itself or as an explicit CSS value.
+            if word.lowercased() == "tan" { return nil }
             if let v = Double(word) { return .number(v) }
             if word.hasSuffix("%"), let v = Double(word.dropLast()) { return .number(v / 100) }
             switch read(word) {

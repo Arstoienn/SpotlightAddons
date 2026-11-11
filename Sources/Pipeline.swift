@@ -110,6 +110,8 @@ extension Solver {
         // Running a command copies nothing, and leaves ans as it was.
         case .command(let command): answer = Answer(command.solution, details: { nil }, copy: { nil }, values: { [] })
         case .place(let place): answer = Answer(place.solution, details: { nil }, copy: { nil }, values: { [] })
+        case .astronomy(let sky):
+            answer = Answer(sky.solution, details: { sky.details }, copy: { sky.copy }, values: { sky.value.map { [$0] } ?? [] })
         case .money(let money):
             answer = Answer(money.solution, details: { money.details }, copy: { money.copyText }, values: { money.value.isFinite ? [money.value] : [] })
         case .digest(let hash): answer = Answer(hash.solution, details: { hash.details }, copy: { hash.written }, values: { [] })

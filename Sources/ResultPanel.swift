@@ -188,6 +188,10 @@ struct CardFace: View {
     var showInput = true
 
     var body: some View {
+        if let list = answer.list { CompletionFace(list: list, symbol: answer.symbol).frame(height: answer.height) } else { face }
+    }
+
+    private var face: some View {
         HStack(alignment: .answerLine, spacing: 0) {
             // Close beside the answer it is the sign of, in a box just wide enough for the widest sign.
             Group {
@@ -279,6 +283,7 @@ struct CardText {
     var verbatim = false   // a line for Terminal: drawn as typed, in monospace, never as mathematics
     var symbol = "function"   // the sign on the card's left, for what kind of answer it is
     var swatch: Swatch?        // a colour, drawn in place of the sign
+    var list: Completion.List? // completions offered for what is being typed, shown in place of an answer
 
     static let inputSize: CGFloat = 14, answerSize: CGFloat = 22
 
@@ -326,10 +331,74 @@ struct CardText {
     // The input's own line, without the gap under it.
     var inputHeight: CGFloat { input.map { tall($0, CardText.inputSize) } ?? 0 }
 
+    // The card for a list of completions: what fits where the caret is, with the chosen one marked.
+    static func offering(_ list: Completion.List) -> CardText {
+        CardText(solution: Solution(exact: "", approx: nil), symbol: "moon.stars", list: list)
+    }
+
     var height: CGFloat {
+        if let list { return CompletionFace.height(list) }
         let inputHeight = input.map { tall($0, CardText.inputSize) + 2 } ?? 0
         let answerHeight = answer.map { tall($0, CardText.answerSize) } ?? 27
         let total = 20 + inputHeight + answerHeight + (solution.approx == nil ? 0 : 19)
         return min(max(Chrome.cardHeight, total), 160)
+    }
+}
+
+// The completions offered as a call after @ is typed: a heading saying what is being chosen, a few
+// rows at a time with the chosen one marked as Spotlight marks its own, and the keys that work it.
+// The rows scroll with the choice, so the chosen one is always in view.
+struct CompletionFace: View {
+    let list: Completion.List
+    let symbol: String
+
+    static let rows = 6, rowHeight: CGFloat = 28
+    static func height(_ list: Completion.List) -> CGFloat {
+        20 + 18 + CGFloat(min(list.items.count, rows)) * rowHeight + 20
+    }
+
+    private var heading: String {
+        switch list.stage {
+        case .function: return list.fragment.isEmpty ? "Astronomy: choose a function" : "Functions matching “\(list.fragment)”"
+        case .argument(let function, _, let first):
+            let parameter = list.parameter ?? first
+            return "\(function): \(parameter.name), \(Kind.of(parameter.kind).title)"
+        }
+    }
+
+    var body: some View {
+        let first = max(0, min(list.selected - CompletionFace.rows / 2, list.items.count - CompletionFace.rows))
+        let shown = Array(list.items.enumerated()).dropFirst(first).prefix(CompletionFace.rows)
+        HStack(alignment: .top, spacing: 0) {
+            Image(systemName: symbol)
+                .font(.system(size: 17, weight: .medium))
+                .foregroundStyle(.secondary)
+                .frame(width: 26, height: 30)
+                .padding(.leading, 16)
+                .padding(.trailing, 6)
+            VStack(alignment: .leading, spacing: 0) {
+                Text(heading).font(.system(size: 11, weight: .semibold)).foregroundStyle(.secondary).lineLimit(1)
+                    .frame(height: 18, alignment: .center)
+                ForEach(Array(shown), id: \.offset) { i, item in
+                    let chosen = i == list.selected
+                    HStack(spacing: 12) {
+                        Text(verbatim: item.title).font(.system(size: 15, design: .monospaced)).lineLimit(1).layoutPriority(1)
+                        Spacer(minLength: 8)
+                        Text(subscripted(item.detail, size: 12)).font(.system(size: 12)).lineLimit(1).truncationMode(.tail)
+                            .foregroundStyle(chosen ? AnyShapeStyle(Color.white.opacity(0.85)) : AnyShapeStyle(.secondary))
+                    }
+                    .foregroundStyle(chosen ? AnyShapeStyle(Color.white) : AnyShapeStyle(.primary))
+                    .padding(.horizontal, 10)
+                    .frame(height: CompletionFace.rowHeight)
+                    .background(RoundedRectangle(cornerRadius: 7, style: .continuous).fill(chosen ? Color.accentColor : Color.clear))
+                }
+                Text("↑ ↓ to choose · Tab or Return to complete · Esc to close")
+                    .font(.system(size: 11)).foregroundStyle(.tertiary).lineLimit(1)
+                    .frame(height: 20, alignment: .center)
+            }
+            .padding(.trailing, 16)
+        }
+        .padding(.vertical, 10)
+        .frame(maxWidth: .infinity, alignment: .topLeading)
     }
 }
