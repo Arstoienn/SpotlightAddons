@@ -19,6 +19,22 @@ enum Rates {
             }
         }
         var name: String { self == .fiat ? "currency" : self == .metals ? "metal" : "coin" }
+        var title: String {
+            switch self {
+            case .fiat: "Currencies"
+            case .crypto: "Cryptocurrency (Coinbase)"
+            case .moreCrypto: "Cryptocurrency (Kraken)"
+            case .metals: "Precious metals"
+            }
+        }
+        var explanation: String {
+            switch self {
+            case .fiat: "National currencies, such as USD, TWD, EUR and JPY."
+            case .crypto: "Bitcoin, Ethereum and other digital currencies."
+            case .moreCrypto: "Additional digital currencies, including Monero."
+            case .metals: "Gold, silver, platinum and palladium, priced per troy ounce."
+            }
+        }
     }
 
     struct Saved: Codable {
@@ -35,7 +51,17 @@ enum Rates {
     }()
     private static var failed: Set<Group> = []
     private static var lastTry: [Group: Date] = [:]
-    private static var fetching = false
+    private static var fetching: Set<Group> = []
+    private static var errors: [Group: String] = [:]
+    static var isRefreshing: Bool { !fetching.isEmpty }
+    // Injectable transport and storage let the retry path be checked without real requests or
+    // overwriting anyone's saved rates.
+    static var transport: (URLRequest, @escaping (Data?, URLResponse?, Error?) -> Void) -> Void = { request, complete in
+        URLSession.shared.dataTask(with: request, completionHandler: complete).resume()
+    }
+    static var persist: (Saved) -> Void = { saved in
+        if let data = try? JSONEncoder().encode(saved) { UserDefaults.standard.set(data, forKey: "rates") }
+    }
     // Set by the tests, which are to ask nothing of the network.
     static var fixed = false
 
@@ -58,8 +84,8 @@ enum Rates {
         codes.compactMap { saved?.recorded[group(of: $0).rawValue] }.min().map { Date(timeIntervalSince1970: $0) }
     }
     // For the status page: when this group was last had, and whether the last try failed.
-    static func state(_ g: Group) -> (recorded: Date?, offline: Bool) {
-        (saved?.recorded[g.rawValue].map { Date(timeIntervalSince1970: $0) }, failed.contains(g))
+    static func state(_ g: Group) -> (recorded: Date?, offline: Bool, updating: Bool, error: String?) {
+        (saved?.recorded[g.rawValue].map { Date(timeIntervalSince1970: $0) }, failed.contains(g), fetching.contains(g), errors[g])
     }
     static func sources(_ codes: [String]) -> [String] {
         var out: [String] = []
@@ -73,8 +99,9 @@ enum Rates {
         let stamp = recorded.timeIntervalSince1970
         saved = Saved(recorded: Dictionary(uniqueKeysWithValues: Group.allCases.map { ($0.rawValue, stamp) }), perDollar: perDollar)
         failed = offline ? Set(Group.allCases) : []
+        lastTry = [:]; errors = [:]; fetching = []
     }
-    static func installNothing(offline: Bool) { fixed = true; saved = nil; failed = offline ? Set(Group.allCases) : [] }
+    static func installNothing(offline: Bool) { fixed = true; saved = nil; failed = offline ? Set(Group.allCases) : []; lastTry = [:]; errors = [:]; fetching = [] }
 
     // How long before a group is asked for again. The currencies come from a source that has them
     // once a day and asks to be asked no oftener than once an hour (a request too soon is refused for
@@ -89,26 +116,31 @@ enum Rates {
     }
 
     // Asks for fresh rates, those of each group that have not been asked for lately. Never waits for them.
-    static func refresh() {
+    static func refresh(_ group: Group? = nil, force: Bool = false) {
         let now = Date()
-        let due = Group.allCases.filter { now.timeIntervalSince(lastTry[$0] ?? .distantPast) > wait($0) }
-        guard !fixed, !fetching, !due.isEmpty else { return }
-        fetching = true
+        let due = (group.map { [$0] } ?? Group.allCases).filter { !fetching.contains($0) && (force || now.timeIntervalSince(lastTry[$0] ?? .distantPast) > wait($0)) }
+        guard !fixed, !due.isEmpty else { return }
+        fetching.formUnion(due)
         for g in due { lastTry[g] = now }
+        NotificationCenter.default.post(name: changed, object: nil)
         let lock = NSLock(), done = DispatchGroup()
         var got: [Group: [String: Double]] = [:]
+        var problems: [Group: String] = [:]
 
         func ask(_ address: String, _ then: @escaping (Any) -> [String: Double]?, group: Group) {
             guard let url = URL(string: address) else { return }
             var request = URLRequest(url: url, timeoutInterval: 6)
             request.cachePolicy = .reloadIgnoringLocalCacheData
             done.enter()
-            URLSession.shared.dataTask(with: request) { data, response, _ in
+            transport(request) { data, response, error in
                 defer { done.leave() }
-                guard let data, (response as? HTTPURLResponse)?.statusCode == 200,
-                      let object = try? JSONSerialization.jsonObject(with: data), let rates = then(object) else { return }
+                func failed(_ reason: String) { lock.lock(); problems[group] = reason; lock.unlock() }
+                if let error { failed(error.localizedDescription); return }
+                guard let status = (response as? HTTPURLResponse)?.statusCode else { failed("The source did not return a valid response."); return }
+                guard status == 200 else { failed(status == 429 ? "The source is limiting requests. Try again later." : "The source returned HTTP \(status)."); return }
+                guard let data, let object = try? JSONSerialization.jsonObject(with: data), let rates = then(object) else { failed("The source did not return usable rates."); return }
                 lock.lock(); got[group, default: [:]].merge(rates) { $1 }; lock.unlock()
-            }.resume()
+            }
         }
         if due.contains(.fiat) { ask("https://open.er-api.com/v6/latest/USD", { object in
             guard let o = object as? [String: Any], o["result"] as? String == "success", let r = o["rates"] as? [String: Double], r["USD"] == 1 else { return nil }
@@ -138,8 +170,7 @@ enum Rates {
             }, group: .metals)
         }
         done.notify(queue: .main) {
-            fetching = false
-            let before = (failed, saved?.recorded)
+            fetching.subtract(due)
             var next = saved ?? Saved(recorded: [:], perDollar: [:])
             for g in due {
                 // Metals are had only if every one of them has come.
@@ -148,14 +179,15 @@ enum Rates {
                     next.perDollar.merge(rates) { $1 }
                     next.recorded[g.rawValue] = Date().timeIntervalSince1970
                     failed.remove(g)
+                    errors[g] = nil
                 } else {
                     failed.insert(g)
+                    errors[g] = problems[g] ?? "The source returned incomplete rates."
                 }
             }
             saved = next
-            if let data = try? JSONEncoder().encode(next) { UserDefaults.standard.set(data, forKey: "rates") }
-            // The card is made again only if something it shows has changed.
-            if before.0 != failed || before.1 != saved?.recorded { NotificationCenter.default.post(name: changed, object: nil) }
+            persist(next)
+            NotificationCenter.default.post(name: changed, object: nil)
         }
     }
 }
@@ -298,7 +330,7 @@ enum Currency {
         return f.string(from: date)
     }
 
-    static func conversion(_ typed: String) -> Conversion? { Options.conversions ? parse(typed) : nil }
+    static func conversion(_ typed: String) -> Conversion? { parse(typed) }
 
     static func parse(_ input: String) -> Conversion? {
         var text = input.trimmingCharacters(in: .whitespaces)

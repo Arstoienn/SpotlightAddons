@@ -137,6 +137,12 @@ extension Expr {
                 guard !y.negative, y.digitCount <= 5, let n = Int(y.description), n <= 100_000,
                       x.digitCount * n <= 400 else { return nil }
                 return x.power(n)
+            // gcd and lcm of whole numbers each held in 64 bits, the lcm in full where it is not.
+            case "⊓", "⊔":
+                guard let p = Int(x.description.replacingOccurrences(of: "−", with: "-")),
+                      let q = Int(y.description.replacingOccurrences(of: "−", with: "-")), abs(p) < 1_000_000_000_000_000, abs(q) < 1_000_000_000_000_000 else { return nil }
+                if o == "⊓" { return BigInt(gcd(p, q)) }
+                return p == 0 || q == 0 ? BigInt(0) : BigInt(abs(p) / gcd(p, q)) * BigInt(abs(q))
             default: return nil
             }
         case .call("fact", let a):

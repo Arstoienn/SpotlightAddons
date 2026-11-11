@@ -31,6 +31,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     // closed on it. Until something else is typed, that same text still reads ans as it was
     // before, so that ans+1 does not climb each time it is looked at again.
     var shown: String?         // the text the card last answered
+    var pointerAtCard = NSPoint(x: -1e6, y: -1e6)   // where the pointer was when the card last came up or changed
     var remembered: String?    // the text whose answer ans is
     var ansBefore: [Double] = []   // what ans was until then
     var ansNow: [Double] = (UserDefaults.standard.array(forKey: "answers") as? [Double])
@@ -44,24 +45,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         return false
     }
 
-    // One of the app's own entries, chosen in Spotlight's list.
-    func application(_ application: NSApplication, continue userActivity: NSUserActivity,
-                     restorationHandler: @escaping ([any NSUserActivityRestoring]) -> Void) -> Bool {
-        guard let entry = Entry.chosen(userActivity) else { return false }
-        switch entry {
-        case .settings: settings.show()
-        }
-        Entry.index()
-        return true
-    }
-
     func applicationDidFinishLaunching(_ notification: Notification) {
+        Crash.watch()
         SettingsButton.open = { [weak self] in self?.settings.show() }
         // Opened by hand, it shows its preferences; opened by the login, it keeps quiet but for its note.
         let launch = NSAppleEventManager.shared().currentAppleEvent?.paramDescriptor(forKeyword: 0x70726474)   // 'prdt'
         let atLogin = launch?.enumCodeValue == 0x6C676974                                                   // 'lgit'
-        if !atLogin { DispatchQueue.main.async { [weak self] in self?.settings.show(status: true) } }
-        Entry.index()
+        if !atLogin, !Crash.reopened { DispatchQueue.main.async { [weak self] in self?.settings.show(status: true) } }
+        Entry.removeAll()
         let prompt = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true] as CFDictionary
         if AXIsProcessTrustedWithOptions(prompt) {
             welcome.show(.running)
@@ -85,11 +76,31 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         panel.onHover = { [weak self] in self?.expand() }
         Copying.shared.text = { [weak self] in self.flatMap { Solver.copy($0.text) } }
         Copying.shared.copied = { [weak self] in self?.remember() }
-        Copying.shared.go = { [weak self] in self.flatMap { Location.parse($0.text) }?.show() }
+        Command.report = { Log.note($0) }
+        // The button, or Return: a command is typed in Terminal, to be run there, and Spotlight's
+        // field emptied; Terminal coming to the front then closes Spotlight. A path is shown.
+        Copying.shared.go = { [weak self] in
+            guard let self else { return }
+            if let command = Command.parse(text) {
+                if command.type() { watcher.clear() }
+            } else {
+                Location.parse(text)?.show()
+            }
+        }
         // Return copies only with the pointer resting on the card or its panel.
         returnKey.take = { [weak self] in
             guard let self, panel.isVisible else { return false }
+            // A line after > is no search: Return types it in Terminal wherever the pointer is,
+            // unless that is turned off. Nothing is run by it, only typed at the prompt.
+            if let command = Command.parse(text), command.typeable, Options.commandReturn { return Copying.shared.copy() }
             guard Prefs.returnCopies, detail.isOpen || panel.frame.contains(NSEvent.mouseLocation) else { return false }
+            // Otherwise a command is typed in Terminal only for a pointer moved onto the card, as
+            // expand() asks, never one the card came up under. One that cannot be typed is taken
+            // and does nothing, so that Spotlight does not open its first result instead.
+            if let command = Command.parse(text), command.typeable {
+                let pointer = NSEvent.mouseLocation
+                guard hypot(pointer.x - pointerAtCard.x, pointer.y - pointerAtCard.y) > 2 else { return false }
+            }
             return Copying.shared.copy()
         }
         // Rates come in after the card was made from the last had, or the connection is found
@@ -139,19 +150,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     // Puts the card up for the text as it stands, if Spotlight is there with room for it.
     func present() -> Bool {
-        guard let solution = Solver.solve(text), let geometry = watcher.geometry(),
+        guard let card = CardText.of(text), let geometry = watcher.geometry(),
               (SpotlightWatcher.alpha() ?? 0) > 0
         else { return false }
         placement = geometry.placement
         spotlight = geometry.window
         // Everything has an answer to copy but a number typed by itself. (Working out what the
         // answer is waits until it is asked for: this runs at every keystroke.)
-        let place = Location.parse(text)
+        // A command has a button to type it in Terminal, but none where it cannot be typed.
+        let command = Command.parse(text)
+        let place = command == nil ? Location.parse(text) : nil
+        Copying.shared.isCommand = command != nil
         Copying.shared.isPlace = place != nil
-        Copying.shared.symbol = place.map { $0.isFolder ? "folder" : "doc" } ?? "function"
-        Copying.shared.available = Copying.shared.isPlace || NumberFacts.parse(Latex.plain(text)) == nil
+        Copying.shared.available = command.map(\.typeable) ?? (Copying.shared.isPlace || NumberFacts.parse(Latex.plain(text)) == nil)
         shown = text
-        panel.show(solution, window: geometry.window)
+        pointerAtCard = NSEvent.mouseLocation
+        panel.show(card, window: geometry.window)
         returnKey.isOn = true
         watch()
         return true
@@ -226,7 +240,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func expand() {
         // Not while Spotlight is being dragged, or has only just been put down.
         guard Date().timeIntervalSince(lastMove) > 0.3 else { return }
-        guard !detail.isOpen, let answer = Solver.solve(text), let details = Solver.details(text) else { return }
+        // Not for a pointer that has stayed where it was since the card came up or changed, as it
+        // does at each key and when Spotlight opens again on what was typed before: the card came
+        // to the pointer, not the pointer to the card.
+        let pointer = NSEvent.mouseLocation
+        guard hypot(pointer.x - pointerAtCard.x, pointer.y - pointerAtCard.y) > 2 else { return }
+        guard !detail.isOpen, let answer = CardText.of(text), let details = Solver.details(text) else { return }
         // Spotlight as it is now: its list grows and shrinks with what is typed without moving it.
         let now = placement.flatMap { SpotlightWatcher.panel($0)?.rect } ?? spotlight
         let primary = NSScreen.screens.first?.frame.height ?? 0
@@ -247,9 +266,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 }
 
-// Its entries taken out of Spotlight's list again, for when the app is to be removed:
-//     "/Applications/Spotlight Add-ons.app/Contents/MacOS/SpotlightAddons" --forget-entries
-if CommandLine.arguments.contains("--forget-entries") { Entry.forget() }
 
 Prefs.bringOver()
 let app = NSApplication.shared

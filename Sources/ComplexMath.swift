@@ -20,7 +20,10 @@ struct Complex: Equatable {
     static func exp(_ z: Complex) -> Complex { Complex(Foundation.exp(z.re) * cos(z.im), Foundation.exp(z.re) * sin(z.im)) }
     static func log(_ z: Complex) -> Complex { Complex(Foundation.log(z.modulus), z.argument) }
     static func pow(_ a: Complex, _ b: Complex) -> Complex {
-        if a.re == 0, a.im == 0 { return b.re == 0 && b.im == 0 ? Complex(1) : Complex(0) }
+        if a.re == 0, a.im == 0 {
+            if b.re == 0 && b.im == 0 { return Complex(1) }
+            return b.im == 0 && b.re > 0 ? Complex(0) : Complex(.nan, .nan)
+        }
         // A whole power is repeated multiplication, which is exact where the polar form is not.
         if b.im == 0, b.re == b.re.rounded(), abs(b.re) <= 64 {
             var r = Complex(1)
@@ -30,9 +33,13 @@ struct Complex: Equatable {
         return exp(b * log(a))
     }
     static func sqrt(_ z: Complex) -> Complex {
+        if z.re == 0 && z.im == 0 { return Complex(0) }
         let m = z.modulus
-        let re = ((m + z.re) / 2).squareRoot(), im = ((m - z.re) / 2).squareRoot()
-        return Complex(re, z.im < 0 ? -im : im)
+        // Halve before adding to avoid overflow; derive the small component by division to
+        // avoid subtracting nearly equal magnitudes. The real component is non-negative.
+        let large = (m / 2 + abs(z.re) / 2).squareRoot()
+        if z.re >= 0 { return Complex(large, z.im / (2 * large)) }
+        return Complex(abs(z.im) / (2 * large), z.im < 0 ? -large : large)
     }
 }
 
@@ -45,7 +52,8 @@ struct ComplexValue {
         guard Options.arithmetic, !input.contains("="), !input.contains(",") else { return nil }
         guard var tokens = try? Parser.tokenize(input), !tokens.isEmpty else { return nil }
         let hasI = tokens.contains(.letter("i"))
-        guard hasI || force else { return nil }
+        let hasCis = tokens.contains(.function("cis"))
+        guard hasI || hasCis || force else { return nil }
         tokens = tokens.map { $0 == .letter("e") ? .constant(M_E) : $0 }
         guard !tokens.contains(where: { if case .letter(let s) = $0 { s != "i" } else { false } }),
               !tokens.contains(where: { if case .named = $0 { true } else { false } }) || true else { return nil }
@@ -55,7 +63,7 @@ struct ComplexValue {
         guard input.contains(where: { $0.isNumber || "+-*/^()".contains($0) }) else { return nil }
         guard let z = evaluate(expr), z.isFinite else { return nil }
         // Nothing complex in it, and a real answer: the ordinary path has it.
-        if !hasI, abs(z.im) < 1e-12 { return nil }
+        if !hasI, !hasCis, abs(z.im) < 1e-12 { return nil }
         return ComplexValue(value: snapped(z), expr: expr)
     }
 
@@ -89,6 +97,7 @@ struct ComplexValue {
             switch f {
             case "sqrt": return Complex.sqrt(z)
             case "exp": return Complex.exp(z)
+            case "cis": return Complex.exp(Complex(0, 1) * z)
             case "ln": return z.re == 0 && z.im == 0 ? nil : Complex.log(z)
             case "log": return z.re == 0 && z.im == 0 ? nil : Complex.log(z) / Complex(Foundation.log(10))
             case "abs": return Complex(z.modulus)
@@ -111,7 +120,7 @@ struct ComplexValue {
     }
 
     private static func part(_ x: Double) -> String {
-        if abs(x) < 1e-12 { return "0" }
+        if x == 0 { return "0" }
         if Options.exact, abs(x) < 1e7, let (p, q) = rational(x), q <= 1000, abs(Double(p) / Double(q) - x) <= 1e-12 * max(1, abs(x)) {
             return fraction(p, q)
         }

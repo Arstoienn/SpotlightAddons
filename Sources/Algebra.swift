@@ -8,6 +8,9 @@ struct Algebra {
     var details: Details
     var copyText: String
     var values: [Double]
+    // Calculus, a derivative, integral or limit, as against an expression multiplied out or
+    // factorised: the card's sign is ƒ(x) for the one and ( ) for the other.
+    var calculus = true
 
     private enum Kind { case expand, factor, derivative, integral, limit }
 
@@ -15,7 +18,7 @@ struct Algebra {
 
     static func parse(_ input: String) -> Algebra? {
         let (order, typed) = orderOfDerivative(input.trimmingCharacters(in: .whitespaces))
-        guard Options.algebra, let (kind, arguments, variable) = read(typed),
+        guard let (kind, arguments, variable) = read(typed),
               let first = arguments.first, !first.isEmpty else { return nil }
         var rest = Array(arguments.dropFirst())
         // integrate(f, x, 0, 1): the letter may be named before the limits.
@@ -32,8 +35,8 @@ struct Algebra {
         if named == nil || named != "e" { tokens = tokens.map { $0 == .letter("e") && named != "e" ? .constant(M_E) : $0 } }
         letters.removeAll { $0 == "e" && named != "e" }
         switch kind {
-        case .expand: return expand(tokens, letters)
-        case .factor: return factor(first, tokens, letters)
+        case .expand: return expand(tokens, letters).map { var a = $0; a.calculus = false; return a }
+        case .factor: return factor(first, tokens, letters).map { var a = $0; a.calculus = false; return a }
         case .limit:
             // limit(f, x, a): the letter, then where it goes.
             guard rest.count == 2, rest[0].range(of: "^[A-Za-z]$", options: .regularExpression) != nil,
@@ -224,20 +227,55 @@ struct Algebra {
         let expanded = typeset(expr, name)
         let irreducible = roots.isEmpty && cn == 1 && cd == 1
         if cn != 1 || cd != 1 {
-            steps.append(Step(label: "Taking out the common factor", math: row(t(cd == 1 ? "\(cn)" : "\(cn)/\(cd)"), t(" × "), t("("), polyMath(whole.map(Double.init), name), t(")"))))
+            steps.append(Step(label: "Taking out the common factor", math: row(t(cd == 1 ? minus(cn) : "\(minus(cn))/\(cd)"), t(" × "), t("("), polyMath(whole.map(Double.init), name), t(")"))))
         }
-        if !roots.isEmpty {
+        // A quadratic with two rational roots is factorised by the AC method, as it is by hand;
+        // not x² or x² + 3x, where x is a common factor and there is no ac to split.
+        let byAC = whole.count == 3 && whole[0] != 0 && ordered.count == 2 && leftover.isEmpty
+        var last = irreducible ? "Testing for rational roots" : "Writing as a product of factors"
+        if byAC {
+            let (worked, common) = acSteps(whole, ordered, name)
+            steps += worked
+            last = "Taking out the common factor \(common)"
+        } else if !roots.isEmpty {
             let values = ordered.map { "\(name) = \(fraction($0.0, $0.1))" }
             var seen: [String] = []
             for v in values where !seen.contains(v) { seen.append(v) }
             steps.append(Step(label: "Finding the rational roots", math: t(seen.joined(separator: ", "))))
         }
-        steps.append(Step(label: irreducible ? "Testing for rational roots" : "Writing as a product of factors", math: irreducible ? nil : result,
+        steps.append(Step(label: last, math: irreducible ? nil : result,
                           note: irreducible ? "The polynomial has no rational root and no common factor; it cannot be factorised further over the rational numbers." : (leftover.isEmpty ? nil : "The factor remaining has no rational root.")))
         var d = Details(name: name, equation: expanded, steps: steps, solutions: [result], note: nil, f: { x in p.reversed().reduce(0) { $0 * x + $1 } }, roots: ordered.map { Double($0.0) / Double($0.1) })
         d.graph = nil
         let solution = Solution(exact: result.plain, approx: irreducible ? "Irreducible over the rational numbers" : nil)
         return Algebra(solution: solution, details: d, copyText: plain(result.plain), values: [])
+    }
+
+    // The AC method for ax² + bx + c in whole numbers with roots p₁/q₁ and p₂/q₂: two numbers whose
+    // product is ac and whose sum is b, the middle term split into them, the four terms grouped in
+    // pairs, and the bracket the pairs share taken out. 2x² + 3x − 2: ac = −4 and b = 3 give 4 and
+    // −1; 2x² + 4x − x − 2; 2x(x + 2) − (x + 2); hence (x + 2)(2x − 1). The numbers are taken in the
+    // order that makes the shared bracket the answer's first factor, q₁x − p₁: they are −q₂p₁ and
+    // −q₁p₂, the first pair being q₂x(q₁x − p₁) and the second −p₂(q₁x − p₁). Also the bracket.
+    static func acSteps(_ c: [Int], _ roots: [(Int, Int)], _ name: String) -> ([Step], String) {
+        let ((p1, q1), (p2, q2)) = (roots[0], roots[1])
+        let (a, b, k) = (c[2], c[1], c[0])
+        let (m, n) = (-q2 * p1, -q1 * p2)
+        func bracketed(_ v: Int) -> String { v < 0 ? "(\(minus(v)))" : "\(v)" }
+        // + 4x and − x; + 2 and − 2.
+        func term(_ v: Int) -> String { "\(v < 0 ? " − " : " + ")\(abs(v) == 1 ? "" : "\(abs(v))")\(name)" }
+        func number(_ v: Int) -> String { "\(v < 0 ? " − " : " + ")\(abs(v))" }
+        let common = linearFactor(roots[0], name)
+        let other = -p2
+        // linearFactor writes its own brackets: (x + 2).
+        let firstPair = "\(q2 == 1 ? "" : "\(q2)")\(name)\(common)"
+        let secondPair = "\(other < 0 ? " − " : " + ")\(abs(other) == 1 ? "" : "\(abs(other))")\(common)"
+        return ([
+            Step(label: "Finding two numbers with product ac and sum b", math: t("ac = \(minus(a * k)),  b = \(minus(b)):  \(minus(m)) and \(minus(n))"),
+                 note: "\(minus(m)) × \(bracketed(n)) = \(minus(a * k)), and \(minus(m)) + \(bracketed(n)) = \(minus(b))."),
+            Step(label: "Splitting the middle term", math: row(polyMath([0, 0, Double(a)], name), t(term(m) + term(n) + number(k)))),
+            Step(label: "Grouping in pairs", math: t(firstPair + secondPair)),
+        ], common)
     }
 
     // A rational root p/q of the polynomial with whole coefficients (lowest power first), found
@@ -283,9 +321,16 @@ struct Algebra {
 
     private static func derivative(_ expr: Expr, _ name: String, point: String?, order: Int = 1) -> Algebra? {
         guard var raw = differentiated(expr) else { return nil }
+        var steps = Working.derivative(expr, name)
+        if order > 1 { steps.insert(Step(label: "Derivative 1 of \(order)", math: nil, note: "Differentiate the original expression first, then differentiate each result in turn."), at: 0) }
         // Again for each order more, from the tidied form.
         for _ in 1..<max(order, 1) {
-            guard let next = differentiated(cleaned(raw)) else { return nil }
+            let previous = cleaned(raw)
+            guard let next = differentiated(previous) else { return nil }
+            if steps.count < 60 {
+                steps.append(Step(label: "Differentiating once more", math: row(t("d/d\(name) "), .group(typeset(previous, name)))))
+                steps += Working.derivative(previous, name)
+            }
             raw = next
         }
         let result = cleaned(raw)
@@ -297,12 +342,7 @@ struct Algebra {
         }
         let original = typeset(expr, name)
         let operatorName = order > 1 ? "d\(superscript(order))/d\(name)\(superscript(order))" : "d/d\(name)"
-        var steps = [Step(label: "Applying the rules of differentiation", math: row(t("\(operatorName) = "), typeset(cleaned(raw), name)))]
-        _ = steps
-        steps = []
-        let rawShown = typeset(raw, name)
-        if rawShown.plain != shown.plain { steps.append(Step(label: "Applying the rules of differentiation", math: row(t("\(operatorName) = "), rawShown))) }
-        steps.append(Step(label: "Simplifying", math: row(t("\(operatorName) = "), shown)))
+        steps.append(Step(label: "Simplifying the full derivative", math: row(t("\(operatorName) "), .group(original), t(" = "), shown)))
         var d = Details(name: name, equation: row(t("\(operatorName) "), original.plain.contains(" ") ? row(t("("), original, t(")")) : original), steps: steps,
                         solutions: [shown], note: nil, f: { result.eval($0) }, roots: [])
         d.graph = nil
@@ -311,9 +351,9 @@ struct Algebra {
             guard v.isFinite else { return nil }
             let evaluation = Evaluation(name: nil, expr: .num(v))
             let line = evaluation.solution
-            steps.append(Step(label: "Substituting \(name) = \(decimal(x))", math: t("= \(decimal(v))")))
+            steps.append(Step(label: "Substituting \(name) = \(decimal(x))", math: row(typeset(result.substitutingUnknown(at), name), t(" \(isExact(v) ? "=" : "≈") \(decimal(v))"))))
             d.steps = steps
-            d.solutions = [t(line?.exact ?? "= \(decimal(v))")] + (line?.approx.map { [t($0)] } ?? [])
+            d.solutions = line.map(answerLines) ?? [t("= \(decimal(v))")]
             return Algebra(solution: line ?? Solution(exact: "= \(decimal(v))", approx: nil), details: d, copyText: String(format: "%.12g", v), values: [v])
         }
         return Algebra(solution: Solution(exact: shown.plain, approx: order > 1 ? "The derivative of order \(order) with respect to \(name)" : "The derivative with respect to \(name)"), details: d, copyText: plain(shown.plain), values: [])
@@ -439,6 +479,8 @@ struct Algebra {
 
     // Where f settles as x comes in towards a from both sides, or as it grows without bound.
     private static func limit(_ f: Expr, _ name: String, toward typedTarget: String) -> Algebra? {
+        // With a letter in it besides the unknown, sin(ax) − a sin x, the limit is read from the series.
+        if Series.hasLetter(f) { return Series.limitAnswer(f, name, at: typedTarget) }
         // 0+ and 0^+ come in from the right alone, and 0- from the left.
         var target = typedTarget, only: Double?
         if let m = target.range(of: "^(.+?)\\s*\\^?\\s*\\(?\\s*([+−-])\\s*\\)?$", options: .regularExpression), !target[..<target.index(before: target.endIndex)].hasSuffix("(") {
@@ -531,7 +573,7 @@ struct Algebra {
             return Algebra(solution: solution, details: d, copyText: solution.exact, values: [])
         }
         guard let line = Evaluation(name: nil, expr: .num(v)).solution else { return nil }
-        d.solutions = [t(line.exact)] + (line.approx.map { [t($0)] } ?? [])
+        d.solutions = answerLines(line)
         d.steps.append(Step(label: "Hence", math: t(line.exact)))
         return Algebra(solution: line, details: d, copyText: String(format: "%.12g", v), values: [v])
     }
@@ -542,36 +584,201 @@ struct Algebra {
         let antiderivative = integrated(expr).map(cleaned)
         if limits.count == 2 {
             guard let lo = (try? Parser.constant(limits[0]))?.eval(0), let hi = (try? Parser.constant(limits[1]))?.eval(0), lo.isFinite, hi.isFinite else { return nil }
-            var value = antiderivative.map { $0.eval(hi) - $0.eval(lo) } ?? numeric(expr, lo, hi)
-            if !value.isFinite { value = numeric(expr, lo, hi) }
-            value = Double(String(format: "%.13g", value)) ?? value
             let original = typeset(expr, name)
-            var d = Details(name: name, equation: row(t("∫ from \(decimal(lo)) to \(decimal(hi)) of "), original, t(" d\(name)")), steps: [], solutions: [],
+            // The sign with its limits below and above it, as Σ has them, each limit as it was typed: π/2, not 1.5708.
+            func limit(_ typed: String, _ value: Double) -> Math { (try? Parser.constant(typed)).map { typeset($0, "") } ?? t(decimal(value)) }
+            let sign = Math.bigOperator("∫", lower: limit(limits[0], lo), upper: limit(limits[1], hi))
+            var d = Details(name: name, equation: row(sign, termMath(expr, name), t(" d\(name)")), steps: [], solutions: [],
                             note: nil, f: { expr.eval($0) }, roots: [])
-            if let F = antiderivative {
-                d.steps.append(Step(label: "Finding an antiderivative", math: row(t("F(\(name)) = "), typeset(F, name))))
-                d.steps.append(Step(label: "Evaluating F(b) − F(a)", math: t("F(\(decimal(hi))) − F(\(decimal(lo))) = \(decimal(F.eval(hi))) − \(decimal(F.eval(lo)))")))
+            // Where the integrand is unbounded, at a limit or between them, F(b) − F(a) is not the
+            // integral: 1/x² from −1 to 1 is not −2. Each such point is tested for whether F has a
+            // finite limit there, from each side it is approached.
+            let unbounded = poles({ expr.eval($0) }, min(lo, hi), max(lo, hi))
+            var value: Double
+            if !unbounded.isEmpty {
+                // Without an antiderivative, the integral itself stands for one, worked numerically
+                // from the middle of each piece between the points.
+                let primitive: (Double, Double) -> (Double) -> Double
+                let what: String
+                if let F = antiderivative {
+                    d.steps += Working.integral(expr, primitive: F, name: name)
+                    primitive = { _, _ in { F.eval($0) } }
+                    what = "F(\(name))"
+                } else {
+                    primitive = { p, q in let middle = (p + q) / 2; return { numeric(expr, middle, $0) } }
+                    what = "The integral up to \(name), worked numerically,"
+                }
+                switch across(primitive, unbounded, lo, hi) {
+                case .diverges(let point):
+                    let solution = Solution(exact: "Does not converge", approx: "The integrand is unbounded at \(name) = \(decimal(point)), and the integral diverges there.")
+                    d.steps.append(Step(label: "Examining \(name) = \(decimal(point)), where the integrand is unbounded", math: nil,
+                                        note: "\(what) has no finite limit as \(name) approaches \(decimal(point)); hence the integral does not converge."))
+                    d.solutions = [t(solution.exact)]
+                    return Algebra(solution: solution, details: d, copyText: solution.exact, values: [])
+                case .undefined:
+                    // Said as any value with no real number is, below.
+                    value = .nan
+                case .converges(let total):
+                    value = total
+                    let points = unbounded.map(decimal).joined(separator: ", ")
+                    d.steps.append(Step(label: "Taking limits at \(name) = \(points), where the integrand is unbounded", math: nil,
+                                        note: "\(what) has a finite limit as \(name) approaches each of these from either side; hence the integral converges, and is the sum of the changes between them."))
+                }
             } else {
+                value = antiderivative.map { $0.eval(hi) - $0.eval(lo) } ?? numeric(expr, lo, hi)
+                if !value.isFinite { value = numeric(expr, lo, hi) }
+                if let F = antiderivative {
+                    d.steps += Working.integral(expr, primitive: F, name: name)
+                    d.steps.append(Step(label: "Fundamental theorem of calculus", math: row(sign, termMath(expr, name), t(" d\(name) = F(b) − F(a)")),
+                                        note: "Evaluate the antiderivative at the upper limit, then subtract its value at the lower limit."))
+                    d.steps.append(Step(label: "Substituting the integration limits", math: row(t("F(\(limit(limits[1], hi).plain)) − F(\(limit(limits[0], lo).plain)) = "),
+                                        .group(typeset(F.substitutingUnknown((try? Parser.constant(limits[1])) ?? .num(hi)), name)), t(" − "),
+                                        .group(typeset(F.substitutingUnknown((try? Parser.constant(limits[0])) ?? .num(lo)), name)))))
+                }
+            }
+            value = Double(String(format: "%.13g", value)) ?? value
+            if antiderivative == nil, unbounded.isEmpty {
                 d.steps.append(Step(label: "Integrating numerically", math: nil,
                                     note: "No antiderivative in closed form is known to the calculator; the integral is found by adaptive Gauss–Kronrod quadrature."))
             }
             let evaluation = Evaluation(name: nil, expr: .num(value))
             guard let line = evaluation.solution else { return nil }
             d.steps.append(Step(label: "Hence", math: t(line.exact)))
-            d.solutions = [t(line.exact)] + (line.approx.map { [t($0)] } ?? [])
+            d.solutions = answerLines(line)
             return Algebra(solution: line, details: d, copyText: String(format: "%.12g", value), values: [value])
         }
         guard limits.isEmpty, let F = antiderivative else { return nil }
         let shown = typeset(F, name)
         let result = row(shown, t(" + C"))
-        var d = Details(name: name, equation: row(t("∫ "), typeset(expr, name), t(" d\(name)")),
-                        steps: [Step(label: "Integrating term by term", math: result)], solutions: [result], note: nil, f: { expr.eval($0) }, roots: [])
+        var d = Details(name: name, equation: row(t("∫ "), termMath(expr, name), t(" d\(name)")),
+                        steps: Working.integral(expr, primitive: F, name: name) + [Step(label: "Adding the constant of integration", math: result,
+                            note: "The derivative of any constant is zero, so every antiderivative differs by a constant C on the interval considered.")], solutions: [result], note: nil, f: { expr.eval($0) }, roots: [])
         d.graph = nil
         return Algebra(solution: Solution(exact: result.plain, approx: "The integral with respect to \(name), up to a constant C"), details: d, copyText: plain(result.plain), values: [])
     }
 
+    // The points from a to b at which f is unbounded, 1/x² at 0 and 1/√x at 0: the limits where f
+    // grows without bound towards them, and those between where |f| peaks on a grid of a thousand
+    // steps, each found exactly by narrowing in on the peak. A peak that levels off, however
+    // high, 1/(x² + 10⁻⁶), is no such point.
+    static func poles(_ f: (Double) -> Double, _ a: Double, _ b: Double) -> [Double] {
+        let width = b - a
+        guard width > 0 else { return [] }
+        let steps = 1000
+        let xs = (0...steps).map { a + width * Double($0) / Double(steps) }
+        let ys = xs.map { abs(f($0)) }
+        let finite = ys.filter(\.isFinite).sorted()
+        let typical = max(1, finite.isEmpty ? 1 : finite[finite.count / 2])
+        // Unbounded at c: |f| at a hundred-millionth of the width from it is ten times or more what
+        // it is at a ten-thousandth, and large, on whichever side lies within the limits.
+        func unbounded(_ c: Double) -> Bool {
+            if f(c).isInfinite { return true }
+            // A limit is a pole only where the integrand is unbounded at it, not merely large and
+            // growing towards a point beyond it. How far off the pole is, is told by how fast it
+            // grows: tan x at the decimal nearest π/2 is within rounding of its pole, and is one;
+            // 1/x at −10⁻³⁰⁰ is as far from its pole at 0 as from nought itself, and is not.
+            // Where it has no value there, sin(x)/x² at 0, how it grows towards it decides, as below.
+            if c == a || c == b, !f(c).isNaN {
+                let value = abs(f(c))
+                guard value > 1e3 * typical else { return false }
+                let h = 1e-8 * width, inside = abs(f(c == a ? c + h : c - h))
+                guard inside.isFinite, inside > 0 else { return true }
+                return h * inside / value <= 1e-12 * abs(c)
+            }
+            for side in [-1.0, 1.0] where (side < 0 ? c > a : c < b) {
+                let near = abs(f(c + side * 1e-8 * width)), far = abs(f(c + side * 1e-4 * width))
+                if near.isInfinite || (near > 10 * far && near > 1e3 * typical) { return true }
+            }
+            return false
+        }
+        var found: [Double] = []
+        func add(_ c: Double) {
+            let c = abs(c - a) < 1e-12 * width ? a : abs(c - b) < 1e-12 * width ? b : abs(c) < 1e-12 * max(1, width) ? 0 : c
+            if !found.contains(where: { abs($0 - c) <= 1e-9 * width }), unbounded(c) { found.append(c) }
+        }
+        // The peak of |f| between two points, narrowed in on by thirds.
+        func peak(_ from: Double, _ to: Double) -> Double {
+            var (l, r) = (from, to)
+            for _ in 0..<100 {
+                let (m1, m2) = (l + (r - l) / 3, r - (r - l) / 3)
+                let (y1, y2) = (abs(f(m1)), abs(f(m2)))
+                if !y1.isFinite { r = m1; l = m1; break }
+                if !y2.isFinite { l = m2; r = m2; break }
+                if y1 < y2 { l = m1 } else { r = m2 }
+            }
+            return Double(String(format: "%.12g", (l + r) / 2)) ?? (l + r) / 2
+        }
+        add(a)
+        add(b)
+        for i in 1..<steps {
+            if ys[i].isInfinite { add(xs[i]); continue }
+            guard ys[i].isFinite, ys[i] > 100 * typical, ys[i] >= ys[i - 1] || !ys[i - 1].isFinite, ys[i] >= ys[i + 1] || !ys[i + 1].isFinite else { continue }
+            add(peak(xs[i - 1], xs[i + 1]))
+        }
+        // A pole in the first step or the last, between a limit and the grid's next point, as
+        // 1/(x − 0.999999) from −1 to 1 has: no point of the grid is a peak there, |f| rising all
+        // the way to the limit. The peak within that step is a pole where it is short of the limit.
+        for (from, to) in [(xs[0], xs[1]), (xs[steps - 1], xs[steps])] {
+            let c = peak(from, to)
+            if abs(c - a) > 1e-9 * width, abs(c - b) > 1e-9 * width { add(c) }
+        }
+        return found.sorted()
+    }
+
+    // undefined: the antiderivative has no real value at an end that is no pole, as ln x below nought.
+    enum Across { case converges(Double), diverges(at: Double), undefined }
+
+    // ∫ from lo to hi, the integrand being unbounded at these points: the sum of the changes in an
+    // antiderivative between them, each end taken as its limit there, where it has one. The
+    // antiderivative is asked for afresh for each piece, (p, q), as one worked numerically from the
+    // middle of the piece is.
+    static func across(_ primitive: (Double, Double) -> (Double) -> Double, _ points: [Double], _ lo: Double, _ hi: Double) -> Across {
+        let (a, b) = (min(lo, hi), max(lo, hi)), width = b - a
+        let cuts = [a] + points.filter { $0 > a && $0 < b } + [b]
+        let unbounded = Set(points)
+        var total = 0.0
+        for (p, q) in zip(cuts, cuts.dropFirst()) {
+            let F = primitive(p, q)
+            let (startPole, endPole) = (unbounded.contains(p), unbounded.contains(q))
+            if !startPole, !F(p).isFinite { return .undefined }
+            if !endPole, !F(q).isFinite { return .undefined }
+            let start = startPole ? limit(F, p, fromAbove: true, width) : F(p)
+            let end = endPole ? limit(F, q, fromAbove: false, width) : F(q)
+            guard let start, start.isFinite else { return .diverges(at: p) }
+            guard let end, end.isFinite else { return .diverges(at: q) }
+            total += end - start
+        }
+        return .converges(hi >= lo ? total : -total)
+    }
+
+    // F's limit at c from one side, where it has one: F(c ± h) for h a hundredth of the width down
+    // to a ten-billionth, whose differences must shrink, by as much each time, for it to settle.
+    // 2√x settles at 0; ln|x| and −1/x do not.
+    private static func limit(_ F: (Double) -> Double, _ c: Double, fromAbove: Bool, _ width: Double) -> Double? {
+        // Nearer each time; given up as soon as the differences plainly do not shrink, as they do
+        // not for ln|x|, since the nearest points cost the most to integrate numerically.
+        var values: [Double] = []
+        for k in 2...10 {
+            let v = F(fromAbove ? c + width * pow(10, -Double(k)) : c - width * pow(10, -Double(k)))
+            guard v.isFinite else { return nil }
+            values.append(v)
+            if values.count >= 4 {
+                let (first, latest) = (abs(values[1] - values[0]), abs(values[values.count - 1] - values[values.count - 2]))
+                if latest > 1e-13 * max(1, abs(v)), latest >= 0.9 * first { return nil }
+            }
+        }
+        guard let last = values.last else { return nil }
+        let differences = zip(values, values.dropFirst()).map { abs($1 - $0) }
+        guard let first = differences.first, let final = differences.last else { return last }
+        if final <= 1e-13 * max(1, abs(last)) || first == 0 { return last }
+        let ratio = pow(final / first, 1 / Double(differences.count - 1))
+        guard ratio < 0.99 else { return nil }
+        // What is left of a geometric tail, added on.
+        return last + (last - values[values.count - 2]) * ratio / (1 - ratio)
+    }
+
     // The coefficient and constant of a linear expression in the unknown: (2, 3) for 2x + 3.
-    private static func linear(_ g: Expr) -> (a: Double, b: Double)? {
+    static func linear(_ g: Expr) -> (a: Double, b: Double)? {
         guard g.hasUnknown, let p = poly(g).map(trim), p.count == 2 else { return nil }
         return (p[1], p[0])
     }
@@ -590,9 +797,20 @@ struct Algebra {
         case .op("*", let a, let b):
             if !a.hasUnknown { return integrated(b).map { .op("*", a, $0) } }
             if !b.hasUnknown { return integrated(a).map { .op("*", $0, b) } }
-            return nil
+            return product(a, b) ?? product(b, a)
         case .op("/", let a, let b):
             if !b.hasUnknown { return integrated(a).map { .op("/", $0, b) } }
+            if !a.hasUnknown, let p = poly(b).map(trim), p.count == 3, p[1] == 0, p[0] > 0, p[2] > 0 {
+                let k = (p[0] / p[2]).squareRoot()
+                let argument: Expr = k == 1 ? .unknown : .op("/", .unknown, .num(k))
+                return cleaned(.op("*", .op("/", a, .num(p[2] * k)), .call("atan", argument)))
+            }
+            if !a.hasUnknown, case .call("sqrt", let inside) = b, let p = poly(inside).map(trim),
+               p.count == 3, p[1] == 0, p[0] > 0, p[2] == -1 {
+                let k = p[0].squareRoot()
+                let argument: Expr = k == 1 ? .unknown : .op("/", .unknown, .num(k))
+                return cleaned(.op("*", a, .call("asin", argument)))
+            }
             if !a.hasUnknown, let (k, _) = linear(b) { return .op("*", over(a, k), .call("ln", .call("abs", b))) }
             if !a.hasUnknown, case .op("^", .unknown, .num(let n)) = b, n != 1 {
                 if n > 1 { return .neg(.op("/", a, .op("*", .num(n - 1), .op("^", .unknown, .num(n - 1))))) }

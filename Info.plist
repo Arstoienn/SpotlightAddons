@@ -22,5 +22,7 @@
 	<string>26.0</string>
 	<key>LSUIElement</key>
 	<true/>
+	<key>NSAppleEventsUsageDescription</key>
+	<string>Commands typed after &gt; are run in Terminal.</string>
 </dict>
 </plist>

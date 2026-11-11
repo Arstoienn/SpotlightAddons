@@ -1,11 +1,12 @@
 # Spotlight Add-ons
 
 Type an equation into Spotlight and the answer appears on a glass card just above it, as you type,
-the way Spotlight's own calculator answers 2+2. Rest the pointer on the card and it grows into a
+the way Spotlight's own calculator answers 2+2. The card first shows what was typed as it was
+understood, typeset, fractions stacked and the values given after it, and the answer beneath, so
+that a slip in what was typed is seen before the answer is trusted. Rest the pointer on the card and it grows into a
 panel with the working, every solution and a graph; move the pointer off and it shrinks back.
 
-Spotlight Add-ons Preferences, an entry Spotlight Add-ons puts in Spotlight's list itself through
-Core Spotlight, opens the preferences; there is no second app.
+Opening Spotlight Add-ons itself, from Spotlight or Finder, opens the preferences; there is no second app.
 
 ## What it does
 
@@ -21,6 +22,7 @@ Core Spotlight, opens the preferences; there is no second app.
   identities, `sin(x)^2+cos(x)^2` as 1. A sum to a power is multiplied out as it is typed: `(a+b)^2`.
 - **True or false** for statements with numbers alone, joined with `&&`, `||` and `not`.
 - **Digests**, a **path** to a file, `ans` for the last answer and `clip` for the clipboard.
+- A **command for Terminal**, typed after `>`: `> top` is typed at the prompt in a new Terminal window when its card is clicked, and runs when you press Return there. Return over Spotlight types it too. Off unless chosen in the settings.
 - **LaTeX** is read for all of it, as it is usually copied.
 - What is no mathematics is left alone: `r2d2`, `wi-fi 6`, `5 ft 10`, `$100`, `2026-10-06`, `007`.
 
@@ -49,7 +51,7 @@ Everything is typed into Spotlight's search field. Each row gives what is typed,
 | Size | `abs(-5)`, `\|3-7\|` | `\left\| 3-7 \right\|`, `\lvert x \rvert` |
 | Greatest, least | `max(3,5,9)`, `min(3,5)` | `\max(3,5,9)` |
 | Divisors | `gcd(12,18)`, `lcm(4,6)`, `totient(36)`, `nextprime(100)`, `fib(10)` | `\gcd(12,18)`, `\operatorname{lcm}(4,6)` |
-| Choosing, arranging | `nCr(5,2)`, `5C2`, `comb(5,2)`, `nPr(5,2)`, `5P2` | `\binom{5}{2}`, `{5 \choose 2}` |
+| Choosing, arranging | `nCr(5,2)`, `5C2`, `comb(5,2)`, `nPr(5,2)`, `5P2`; any n, as a binomial expansion has it: `nCr(1/2,3)` is 1/16, and `nCr(8,3)(2x)^3` is 448x³ | `\binom{5}{2}`, `{5 \choose 2}` |
 | Bits | `1<<4`, `256>>2`, `12&10`, `xor(12,10)`, `bor(12,10)`, `0xFF`, `0b1010` | |
 | Logarithms | `ln(e)`, `log(1000)`, `log(8,2)`, `log2(8)`, `log10(1000)`, `lg(8)`, `lb(8)` | `\ln e`, `\log 1000`, `\log_2 8`, `\log_{10} 1000` |
 | Trigonometry | `sin`, `cos`, `tan`, `sec`, `csc`, `cot`, `asin`/`arcsin`/`sin^-1`, `sinh`, `asinh`, `atan2(1,1)`, `hypot(3,4)` | `\sin`, `\sec`, `\arcsin`, `\tan^{-1}`, `\sinh` |
@@ -69,15 +71,15 @@ Everything is typed into Spotlight's search field. Each row gives what is typed,
 | One unknown | `2n^2=10`, `x^2-5x+6=0`, `2^x=8`, `log(n)=2`, `sqrt(x)=3`, `20=0.5g*t^2`; with the unknown in a denominator, `1/x+1/(x+1)=1` (exact, and what makes a denominator zero struck out) | `\frac{x}{2}+1=3`, `x^{2}-5x+6=0` |
 | Trigonometric | `sin(x)=0.5`, `2sin(3x+1)=1`, `sin(x deg)=0.5`; answered from 0 to 2π, in radians and in degrees | `\sin x=\frac12` |
 | In a range | `sin(x)=sqrt(3)/2, 0°<=x<360°`, `cos(x)=1/2, x in [0,2π)` (or `x∈[0,2π)`), `x^2=4, x>0`; degrees where the range is in them | `\sin x=\frac{\sqrt{3}}{2},\quad 0^\circ\le x<360^\circ`, `x\in[0,2\pi)` |
-| Systems | `x+y=3, x-y=1`; nonlinear ones too | `\begin{cases} x+y=3 \\ x-y=1 \end{cases}` |
+| Systems | `x+y=3, x-y=1`; nonlinear ones too; with values given, `5.05=f*1.6, f=mgcos(25deg)*mu, m=1.3`, where g is 9.8 as there are more letters than equations | `\begin{cases} x+y=3 \\ x-y=1 \end{cases}` |
 | A sequence from some terms | nothing is said until it is asked: `u_1=12, u_5=29, d` gives the common difference, `…, r` the common ratio (`±√2`, `±(29/12)^(1/4)`), and `u_1=12, u_5=29, u_10=?` or `S_5=?` a term or a sum; `u_1=2, d=3, u_10=?`, `u_1=2, r=3, S_5=?`. A slip for the subscript, `u+1`, `u1`, is read as `u_1` beside `u_5`. The panel draws the terms | `u_{1}=12, u_{5}=29, d` |
-| A formula with values given | `v=u+at, u=2, a=3, t=4`, `E=1/2*m*v^2, m=2, v=3`, `PV=nRT, P=2, V=3, n=1, R=8.314`; an expression is worked out, `mg*1.2+1/2mv^2, m=55, v=0.9`; an angle keeps its unit, `12=1.8+4vcos(theta), theta=30°` (or `30deg`, `pi/6`), and a bare `theta=30` is in radians unless degrees are chosen, the card saying which | |
+| A formula with values given | `v=u+at, u=2, a=3, t=4`, `E=1/2*m*v^2, m=2, v=3`, `PV=nRT, P=2, V=3, n=1, R=8.314`; an expression is worked out, `mg*1.2+1/2mv^2, m=55, v=0.9`, and one with letters left is tidied, `x+y, x=2` being y + 2 and `n(n-1)(n-2)/3!*(-2x)^3, n=1/2` being −x³/2; an angle keeps its unit, `12=1.8+4vcos(theta), theta=30°` (or `30deg`, `pi/6`), and a bare `theta=30` is in radians unless degrees are chosen, the card saying which | |
 | Letters that stand together | one equation in several letters that are only ever multiplied together gives them together: `12=1.8+4vcos(theta)` gives v cos(θ) = 2.55, `0.5mv^2=100` gives mv² = 200 | |
 | A formula turned round | `1/(7b)=11x/y`, `F=ma, a=?`, `F=kq/r^2, r=?` | `\frac{1}{7b}=\frac{11x}{y}, x=?` |
 | Which letter | the unknown is the one letter; `!c` reads c the other way round; Greek names, `theta`, `omega`, …, and subscripts, `F_n`, are letters | `\theta`, `F_{n}` |
 | Inequalities | `x^2>4`, `x^2-4<=0`, `x^3-x>0`, `x^2 != 4`, `\|2x+1\|<3`, `exp(x)>1`; together, `1<x<5`, `x>1 && x<5`, `x<1 or x>5`, `x^2>4 && x<10` | `x^2 \ge 4`, `x \ne 2`, `\left\| x \right\| < 3` |
 | Complex roots | `x^2+x+1=0` gives x = (−1 ± √3 i)/2 | |
-| Tidying | `2x+3x`, `xb+xc`, `(m^4q^4z^-1)(mq^5z^3)`; a sum to a power, or sums multiplied, is multiplied out: `(a+b)^2`, `(x+1)(x-1)`, `(a+b)^1` | |
+| Tidying | `2x+3x`, `xb+xc`, `(m^4q^4z^-1)(mq^5z^3)`, `x^12/x^3`; coefficients exact, `35x^4/2048`, and a function of the letters as one thing, `2sin(x)+3sin(x)`; a sum to a power, or sums multiplied, is multiplied out: `(a+b)^2`, `(x+1)(x-1)`, `(a+b)^10` | |
 | Trigonometric identities | `sin(x)^2+cos(x)^2` is 1, `sin(x)/cos(x)` is tan(x), `2sin(x)cos(x)` is sin(2x), `1-2sin(x)^2` is cos(2x), `1+tan(x)^2` is sec(x)² | `\sin^2 x + \cos^2 x`, `\frac{\sin x}{\cos x}` |
 
 ### Statistics
@@ -87,6 +89,8 @@ each of a list: `mean(1,2,3,4)` or `mean([1,2,3,4])`; `quartile([…],1)`, `perc
 `corr([…],[…])`, `cov([…],[…])`, `linreg([…],[…])` (the line, y = 2x + 1), `zscore(x,mu,sigma)`. Distributions: `binompdf(n,p,k)`, `binomcdf(n,p,k)`,
 `normpdf(x[,mu,sigma])`, `normcdf(x[,mu,sigma])`, `normalcdf(lo,hi[,mu,sigma])`, `invnorm(p[,mu,sigma])`,
 `poissonpdf(λ,k)`, `poissoncdf(λ,k)`. In LaTeX, `\operatorname{mean}(1,2,3,4)`.
+A frequency table is two lists, the values and how often each comes: `mean([1,2,3],[2,1,1])`, and so
+`median`, `var`, `varp`, `stdev`, `stdevp` and `total`, each worked through from Σfx and n.
 
 ### Complex numbers
 
@@ -100,6 +104,26 @@ each of a list: `mean(1,2,3,4)` or `mean([1,2,3,4])`; `quartile([…],1)`, `perc
 `[[1,2],[3,4]]*[[0,1],[1,0]]`, `[[1,2],[3,4]]+[[1,1],[1,1]]`, `2*[[1,2],[3,4]]`, `[[1,2],[3,4]]^2`,
 `[[1,2],[3,4]]^-1`, `[[1,2],[3,4]]*[1,1]`. In LaTeX, `\begin{pmatrix} 1 & 2 \\ 3 & 4 \end{pmatrix}`
 (also `bmatrix`; `vmatrix` is its determinant), `\det`, `^{-1}`, `^T`, `\left\| v \right\|`.
+
+### Colours
+
+A colour written as CSS writes it, `#FF5733`, `#f53`, `rgb(255, 87, 51)`, `rgb(255 87 51 / 50%)`, `hsl(11, 100%, 60%)`,
+or as `hsb( )` and `cmyk( )`, or by its CSS name after `colour`: `colour tomato`. The card shows it beside the answer,
+which is the colour written another way, or the way asked for: `#FF5733 to hsl`, `tomato in cmyk`, `#FF00FF to name`.
+The working converts it into each way step by step, finds the nearest named colour and its contrast with white and black,
+and marks it on the CIE 1931 chromaticity diagram.
+
+| Typed | Gives |
+| --- | --- |
+| `red + blue`, `#FF0000 + #0000FF` | light added, channel by channel, no more than 255: `#FF00FF` |
+| `#FFFFFF - #FF0000` | light taken away, no less than 0: `#00FFFF` |
+| `mix(#FF0000, #0000FF)`, `mix(a, b, 25%)` | the two mixed, half and half or the first's share given, as Sass's `mix( )`: `#800080` |
+| `gradient(a, b, 5)`, `interpolate(a, b, 25%)` | the colours evenly between, or the one a quarter of the way along |
+| `deltaE(a, b)` | how far apart they look, ΔE in CIELAB |
+| `contrast(#FFFFFF, #767676)` | the WCAG 2 ratio, 4.54 : 1, and the levels it meets |
+
+The diagram marks each colour, with dashed lines from the colours added or mixed to what they make, and through the
+colours of a gradient.
 
 ### Units and bases
 
@@ -145,6 +169,8 @@ ticker, and metals from gold-api.com. Nothing is sent to them but the request: n
 | Differentiate | `derivative(x^3+2x)`, `d/dx sin(x)`, `diff(x^2, 3)`, `derivative(x^3) at 2`; higher, `d2/dx2 x^3`, `second derivative of x^3` | `\frac{d}{dx}\left( x^3 \right)`, `\frac{\mathrm{d}}{\mathrm{d}x} \sin x` |
 | Integrate | `integrate(x^2)`, `integrate(x^2, 0, 1)`, `∫ x^2 dx`, `∫_0^1 x^2 dx` | `\int_0^1 x^2 \, dx`, `\int x^2 \, \mathrm{d}x` |
 | Limit | `limit(sin(x)/x, x, 0)`, `limit((1+1/x)^x, x, inf)`, `limit(1/x, x, 0+)` | `\lim_{x \to 0} \frac{\sin x}{x}`, `\lim_{x \to \infty}`, `\lim_{x \to 0^+}` |
+| Euler's method | `euler(x+y, 0, 1, 0.1, 3)`: dy/dx = x + y from y(0) = 1, three steps of 0.1, each written out | |
+| Prove an identity | `sin(A+B)=sin(A)cos(B)+cos(A)sin(B)`, `cos(2x)=1-2sin(x)^2`: shown to hold for every angle, by the compound-angle formulas | |
 
 ### Letters and constants
 
@@ -204,6 +230,7 @@ explained where it belongs above.
 | `29-12)/5` | a bracket that closes what was never opened: `(29-12)/5` |
 | `solve …`, `find x: …`, `what is …` | words in front, which are ignored |
 | `ans`, `ans1`, `clip` | the last answer, the several answers of the last, the clipboard |
+| `> top` | a line for Terminal, typed there when its card is clicked, to be run with Return (where the setting for it is on) |
 
 ### True or false
 
@@ -219,7 +246,7 @@ True, `&&` going first, and `not (1=1 and 2=3)` is True. In LaTeX: `\approx`, `\
 Equations separated by commas, `2x+y=5, x-y=1`. Linear ones are solved by elimination, written out as by
 hand; nonlinear ones (`x^2+y^2=25, x+y=7`) numerically, with simple values written exactly (`1 − √2`).
 
-### Digests, paths, the answer before
+### Digests, paths, commands, the answer before
 
 - `SHA256("hello")`, `SHA1`, `SHA384`, `SHA512`, `MD5`, in capitals or not, give the digest of the text in
   hexadecimal; `sha256("hello", decimal)` and `sha256("hello", binary)` give it as a whole number, which,
@@ -228,6 +255,16 @@ hand; nonlinear ones (`x^2+y^2=25, x+y=7`) numerically, with simple values writt
   Clicking the card's folder sign, or Return with the pointer on it, shows the file selected in Finder; a
   folder is opened. A path from the home folder, `~/Code`, is left to Spotlight. macOS may ask once for
   access to Desktop, Documents or Downloads.
+- A line after `>`, `> top` or `>ls -la`, brings up a card with the line exactly as it was typed, where the
+  setting for it is on (it is off at first). Return, or clicking the card's button, types the line at the
+  prompt in a new Terminal window, and leaves it there: it runs only when Return is pressed in Terminal,
+  which is yours to decide. Return does this wherever the pointer is, a line after `>` being no search; a
+  setting under it turns that off, and Return then does so only with the pointer moved onto the card. Once
+  the line is in Terminal, Spotlight's search field is emptied, and Spotlight closes as Terminal comes to
+  the front. Spotlight Add-ons never runs the line itself; it runs in Terminal, with Terminal's
+  permissions and a terminal of its own, as `top` needs. This needs zsh, the shell
+  macOS starts with: no other shell can be given a line to wait at its prompt, and with one the card says
+  so. The first time, macOS asks whether Spotlight Add-ons may control Terminal.
 - `ans` is the last answer, once it has been copied or Spotlight closed on it, so `ans*2` carries on from it.
   After an equation with several answers they are `ans1`, `ans2` and so on. `clip` is the number on the
   clipboard, as in `20*clip`.
@@ -243,6 +280,11 @@ hand; nonlinear ones (`x^2+y^2=25, x+y=7`) numerically, with simple values writt
 commands (`\,` `\;` `\quad`) ignored.
 
 ## The panel
+
+The card's sign, on its left, says what kind of answer it is: ±/ for something worked out, # for a number by itself,
+x√ for an equation or formula solved, < for an inequality, ƒ(x) for a derivative, integral, limit or series, ( ) for an
+expression factorised or tidied, a grid for matrices, a numbered list for a sequence, ⇄ for a conversion, a banknote
+for money, ✓ or ✗ for a statement judged, a lock for a digest, a folder or a page for a path, and a terminal for a command.
 
 The top of the panel is the card itself, so opening it moves nothing. Below it:
 
@@ -263,45 +305,44 @@ keyboard, so typing carries on going to Spotlight.
 
 ## Preferences
 
-Choosing **Spotlight Add-ons Preferences** in Spotlight (or the gear at the foot of the panel) opens the preferences,
-with the pages in a sidebar: **Status**, **General**, **Calculation**, **Cards**, **Constants** and **Clipboard**. Under
-each setting there is what it does, and a card at the top of the page shows the examples for the one the pointer is
-on, or that was last changed, with what it gives now: turning one off shows its card going ("No card"). Opening the app itself, from Spotlight or Finder, opens the preferences on the Status page (it has no Dock icon, and would
-otherwise seem not to have opened); opened by the login it keeps quiet. A
-trackpad with haptics gives a tap for each switch or choice, and a firmer one for a change of page. The page last
-looked at is the one it opens on.
+Opening **Spotlight Add-ons** from Spotlight or Finder (or the gear at the foot of the panel) opens the preferences,
+with four pages in its toolbar: **General**, **Answers**, **Cards** and **Constants**. Each setting has a line saying what
+it does, or an example of what is typed for it. Opened by the login, the app keeps quiet. A trackpad with haptics gives
+one light tap when a switch is turned or a choice is made, and nothing else. The page last looked at is the one it
+opens on.
 
-- **Status**: how things stand now, updated as you look: whether it may read Spotlight (with a button to the
-  Accessibility pane of System Settings when it may not), whether it opens at login, and for money, coins and metals
-  whether their rates are live, and when they were recorded.
-- **General**: opening at login, the note shown when it is opened, the log (and a button to show it in Finder),
-  resetting every setting, and a button to quit.
-- **Calculation**: angles in radians or degrees; how many significant figures a decimal is given to, from three to
-  ten; whether an answer is exact where it can be (5/2, √5, π/6) or always a decimal; and whether a sum is
-  answered as a decimal first (`10/4` gives 2.5, with 5/2 beneath: the default) or as a fraction first.
-- **Cards**: what brings up a card: arithmetic with no equals sign, a number by itself, a path to a file, units
-  and number bases (and whether a base is marked 0x, 0b, 0o), inequalities, algebra by name, matrices and vectors.
-- **Constants**: one list. g, G and c, each with its value, which may be typed over (g as 10), and a switch; under
-  them, constants of your own, added on the last row with a name, a value and a unit.
-- **Clipboard**: whether the copy button gives a decimal or the answer as shown, whether a line of the panel copies
-  as LaTeX or as it is shown, and whether Return copies while the pointer is on the card.
+- **General**: whether it may read Spotlight (with a button to the Accessibility pane of System Settings when it may
+  not), opening at login, the note shown when it is opened, each source of exchange rates (national currencies, digital currencies, metals) with
+  when it was last updated and a button to refresh it, the log, with a button to show it in Finder (a crash is always written in it, with
+  where macOS's report says it failed, and a notification says so; after one the app opens again by itself), resetting every setting, and a button to quit.
+- **Answers**: angles in radians or degrees; how many significant figures a decimal is given to, from three to ten;
+  whether an answer is exact where it can be (5/2, √5, π/6); whether a sum is shown first as a decimal (`10/4` gives
+  2.5, with 5/2 beneath: the default) or as a fraction; whether a base is marked 0x, 0b, 0o; what the copy button and
+  a line of the working copy; and whether Return copies while the pointer is on the card.
+- **Cards**: whether arithmetic with no equals sign has a card, as Spotlight's own calculator answers it too; a path
+  to a file, a command for Terminal (off at first), and whether Return types the command from anywhere. Everything
+  else that is mathematics always has its card.
+- **Constants**: g, G and c, each with its value, which may be typed over (g as 10), and a switch; under them,
+  constants of your own, added on the last row with a name, a value and a unit.
 
 ## How it reads Spotlight
 
 There is no public way to give Spotlight an answer that changes with each key. Spotlight Add-ons runs
 in the background and reads Spotlight's search field through Accessibility, so it needs that
 permission: System Settings ›
-Privacy & Security › Accessibility. It never types into Spotlight, presses a key or changes what is
-in it.
+Privacy & Security › Accessibility. It never types into Spotlight or presses a key. The one change it
+makes to what is in it is to empty the search field, through Accessibility, once a line typed after
+`>` has gone to Terminal, so that Spotlight opens on nothing next time.
 
 While a card is up it watches for Return, and nothing else: Return copies the answer when the
-pointer is on the card, and at any other time is Spotlight's.
+pointer is on the card, types a line after `>` in Terminal, and at any other time is Spotlight's.
 
 ## Build and install
 
 ```bash
 ./build.sh   # builds, signs, installs into /Applications and restarts it
 ./test.sh    # the solver's tests
+./test.sh --booklets   # every question in Tests/booklets.json, from the IB formula and data booklets
 ```
 
 Requires macOS 26 (it uses Liquid Glass and Swift Charts), Swift 6 and Xcode's command-line tools.

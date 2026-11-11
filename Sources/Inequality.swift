@@ -13,7 +13,7 @@ struct Inequality {
     private enum Piece { case region(Int), root(Int) }
 
     static func parse(_ input: String, forSet: Bool = false) -> Inequality? {
-        guard Options.inequalities, let found = Comparison.relation(in: input),
+        guard let found = Comparison.relation(in: input),
               [.less, .greater, .atMost, .atLeast, .notEqual].contains(found.relation) else { return nil }
         let sides = [String(input[..<found.range.lowerBound]), String(input[found.range.upperBound...])]
         guard var l = try? Parser.tokenize(sides[0]), var r = try? Parser.tokenize(sides[1]), !l.isEmpty, !r.isEmpty else { return nil }
@@ -153,7 +153,7 @@ struct Inequality {
     private var sign: String { relation == .notEqual ? "≠" : relation.rawValue }
 
     var details: Details {
-        var d = Details(name: name, equation: row(typeset(left, name), t(" \(sign) "), typeset(right, name)), steps: [], solutions: [t(solution.exact)] + (solution.approx.map { [t($0)] } ?? []),
+        var d = Details(name: name, equation: row(typeset(left, name), t(" \(sign) "), typeset(right, name)), steps: [], solutions: answerLines(solution),
                         note: nil, f: { [left, right] x in left.eval(x) - right.eval(x) }, roots: roots)
         if let p, p.isEmpty {
             d.steps.append(Step(label: "Moving every term to one side", math: row(t("0 \(sign) 0")),
@@ -192,7 +192,6 @@ struct InequalitySet {
     var text: String
 
     static func parse(_ input: String) -> InequalitySet? {
-        guard Options.inequalities else { return nil }
         var text = input
         text = text.replacingOccurrences(of: "(?i)(?<=[\\s)])and(?=[\\s(])", with: "&&", options: .regularExpression)
         text = text.replacingOccurrences(of: "(?i)(?<=[\\s)])or(?=[\\s(])", with: "||", options: .regularExpression)
@@ -268,7 +267,7 @@ struct InequalitySet {
     }
 
     var details: Details {
-        var d = Details(name: name, equation: t(text.trimmingCharacters(in: .whitespaces)), steps: [], solutions: [t(solution.exact)] + (solution.approx.map { [t($0)] } ?? []),
+        var d = Details(name: name, equation: t(text.trimmingCharacters(in: .whitespaces)), steps: [], solutions: answerLines(solution),
                         note: nil, f: { _ in .nan }, roots: [])
         for (i, atom) in atoms.enumerated() {
             d.steps.append(Step(label: "Solving inequality \(i + 1)", math: row(typeset(atom.left, name), t(" \(atom.relation.rawValue) "), typeset(atom.right, name)),

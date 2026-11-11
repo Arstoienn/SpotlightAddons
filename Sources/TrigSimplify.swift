@@ -51,7 +51,7 @@ struct TrigSimplification {
     }
 
     static func parse(_ input: String) -> TrigSimplification? {
-        guard Options.algebra, !input.contains("="), input.contains(where: { "sctSCT".contains($0) }) else { return nil }
+        guard !input.contains("="), input.contains(where: { "sctSCT".contains($0) }) else { return nil }
         guard var tokens = try? Parser.tokenize(input), tokens.contains(where: { if case .function = $0 { true } else { false } }) else { return nil }
         tokens = tokens.map { $0 == .letter("e") ? .constant(M_E) : $0 }
         var letters: [String] = []
@@ -129,7 +129,8 @@ struct TrigSimplification {
         }
         func term(_ c: Double, _ e: Expr) -> Expr {
             if case .num = e { return .num(c) }
-            let (p, q) = rational(abs(c)) ?? (Int(abs(c)), 1)
+            // A coefficient that is no simple fraction, 1e30, is kept as the decimal it is.
+            guard let (p, q) = rational(abs(c)) else { let t: Expr = .op("*", .num(abs(c)), e); return c < 0 ? .neg(t) : t }
             var t: Expr = p == 1 ? e : .op("*", .num(Double(p)), e)
             if q != 1 { t = .op("/", t, .num(Double(q))) }
             return c < 0 ? .neg(t) : t
@@ -209,10 +210,14 @@ struct TrigSimplification {
 
     var details: Details {
         var d = Details(name: name, equation: typeset(expr, name), steps: [], solutions: [row(t(approximate ? "≈ " : "= "), shown)], note: nil, f: { [expr] in expr.eval($0) }, roots: [])
-        d.steps.append(approximate
-            ? Step(label: "Working out the numbers", math: row(t("≈ "), shown), note: "A sine or cosine of a number is a number, and is written here as a decimal.")
-            : Step(label: "Simplifying with trigonometric identities", math: row(t("= "), shown),
-                   note: "The two expressions agree at every one of 48 values of \(name) tried, to the last figures: they are the same function."))
+        if approximate {
+            d.steps.append(Step(label: "Working out the numbers", math: row(t("≈ "), shown), note: "A sine or cosine of a number is a number, and is written here as a decimal."))
+        } else if let proof = TrigProof.prove(Equation(left: expr, right: result, unknown: name)) {
+            d.steps = proof.simplificationSteps(name)
+        } else {
+            d.steps.append(Step(label: "Numerically checking the proposed simplification", math: row(t("≈ "), shown),
+                                note: "The expressions agree at 48 sampled values where both are defined. This is a numerical check, not a symbolic derivation; restrictions at undefined points still apply."))
+        }
         return d
     }
 

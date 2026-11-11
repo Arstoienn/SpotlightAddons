@@ -19,7 +19,7 @@ struct MatrixValue {
 
     // Whether it is for this: a square bracket in it, and it reads.
     static func parse(_ input: String) -> MatrixValue? {
-        guard Options.matrices, input.contains("[") || input.lowercased().contains("identity("), !input.contains("=") else { return nil }
+        guard input.contains("[") || input.lowercased().contains("identity("), !input.contains("=") else { return nil }
         var reader = Reader(chars: Array(input.filter { $0 != " " }))
         let v: Value
         do { v = try reader.expression() } catch let e as Undefined {
@@ -27,6 +27,12 @@ struct MatrixValue {
             return MatrixValue(value: .undefined(e.reason), source: input)
         } catch { return nil }
         guard reader.at == reader.chars.count, reader.sawBracket || reader.operations > 0 else { return nil }
+        // Entries beyond what can be held, or no number at all, are no answer to show and copy.
+        let entries: [Double]
+        switch v { case .vector(let e): entries = e; case .matrix(let m): entries = m.flatMap { $0 }; default: entries = [] }
+        if !entries.allSatisfy(\.isFinite) {
+            return MatrixValue(value: .undefined(entries.contains(where: \.isNaN) ? "Some of its entries have no value." : "Its entries are beyond the largest number that can be held, about 1.8×10³⁰⁸."), source: input)
+        }
         // A lone literal is nothing asked for.
         if case .matrix = v, input.trimmingCharacters(in: .whitespaces).hasPrefix("["), reader.operations == 0 { return nil }
         if case .vector = v, input.trimmingCharacters(in: .whitespaces).hasPrefix("["), reader.operations == 0 { return nil }
@@ -162,13 +168,18 @@ struct MatrixValue {
 
     private static func combine(_ op: Character, _ a: Value, _ b: Value) throws -> Value {
         switch (a, b) {
-        case (.scalar(let x), .scalar(let y)): return .scalar(op == "+" ? x + y : op == "-" ? x - y : op == "*" ? x * y : x / y)
+        case (.scalar(let x), .scalar(let y)):
+            if op == "/", y == 0 { throw Undefined(reason: "It is divided by zero.") }
+            return .scalar(op == "+" ? x + y : op == "-" ? x - y : op == "*" ? x * y : x / y)
         case (.scalar(let k), .matrix), (.scalar(let k), .vector):
             guard op == "*" else { throw Failure() }
             return try scale(b, k)
         case (.matrix, .scalar(let k)), (.vector, .scalar(let k)):
             if op == "*" { return try scale(a, k) }
-            if op == "/" { return try scale(a, 1 / k) }
+            if op == "/" {
+                guard k != 0 else { throw Undefined(reason: "A vector or a matrix cannot be divided by zero.") }
+                return try scale(a, 1 / k)
+            }
             throw Failure()
         case (.vector(let u), .vector(let v)):
             guard u.count == v.count, op == "+" || op == "-" else { throw Failure() }
@@ -354,6 +365,36 @@ struct MatrixValue {
                 guard sxx > 0, syy > 0 else { throw Undefined(reason: "A list that does not vary has no correlation.") }
                 return .scalar(sxy / (sxx * syy).squareRoot())
             }
+        // From a frequency table, the values and how often each comes: mean([1,2,3],[2,1,1]) is
+        // the mean of 1, 1, 2 and 3, (1×2 + 2×1 + 3×1)/4 = 1.75.
+        case "mean", "average", "avg", "median", "var", "variance", "varp", "stdev", "stdevp", "total":
+            guard args.count == 2 else { throw Failure() }
+            let (x, f) = (try vector(0), try vector(1))
+            guard x.count == f.count, !x.isEmpty else { throw Undefined(reason: "There must be as many frequencies as values.") }
+            guard f.allSatisfy({ $0 >= 0 }) else { throw Undefined(reason: "A frequency cannot be below nought.") }
+            let n = f.reduce(0, +)
+            guard n > 0 else { throw Undefined(reason: "The frequencies add up to nought.") }
+            let mean = zip(x, f).reduce(0) { $0 + $1.0 * $1.1 } / n
+            let squares = zip(x, f).reduce(0) { $0 + $1.1 * ($1.0 - mean) * ($1.0 - mean) }
+            switch name {
+            case "mean", "average", "avg": return .scalar(mean)
+            case "total": return .scalar(zip(x, f).reduce(0) { $0 + $1.0 * $1.1 })
+            case "varp": return .scalar(squares / n)
+            case "stdevp": return .scalar((squares / n).squareRoot())
+            case "var", "variance", "stdev":
+                guard n > 1 else { throw Undefined(reason: "A sample of one has no variance.") }
+                return .scalar(name == "stdev" ? (squares / (n - 1)).squareRoot() : squares / (n - 1))
+            default:
+                // The middle of the values in order, each counted as often as it comes.
+                guard f.allSatisfy({ $0 == $0.rounded() }), n <= 1_000_000 else { throw Undefined(reason: "A median needs whole frequencies.") }
+                let ordered = zip(x, f).sorted { $0.0 < $1.0 }
+                func at(_ k: Double) -> Double {
+                    var seen = 0.0
+                    for (value, count) in ordered { seen += count; if seen >= k { return value } }
+                    return ordered.last!.0
+                }
+                return .scalar(n.truncatingRemainder(dividingBy: 2) == 1 ? at((n + 1) / 2) : (at(n / 2) + at(n / 2 + 1)) / 2)
+            }
         case "identity":
             guard args.count == 1, case .scalar(let n) = args[0], n == n.rounded(), n >= 1, n <= 20 else { throw Failure() }
             return .matrix(identity(Int(n)))
@@ -383,6 +424,131 @@ struct MatrixValue {
             y = 1 / rest
         }
         return decimal(x)
+    }
+
+    // A matrix drawn as one, between square brackets; a vector as a single row of them.
+    static func math(_ m: [[Double]]) -> Math { .matrix(m.map { $0.map { t(entry($0)) } }) }
+    static func math(_ v: [Double]) -> Math { .matrix([v.map { t(entry($0)) }]) }
+
+    // The result drawn: a matrix or vector as one, anything else as its line.
+    var resultMath: Math {
+        switch value {
+        case .matrix(let m): return MatrixValue.math(m)
+        case .vector(let v): return MatrixValue.math(v)
+        default: return t(text)
+        }
+    }
+
+    // What was typed, drawn: each [[…]] and […] as a matrix, inv(A) as A⁻¹ and transpose(A) as Aᵀ,
+    // det(A) and the rest with their names before them; nil where it does not read, and the text
+    // is shown as it was typed.
+    var shown: Math? {
+        var reader = Display(chars: Array(source.filter { $0 != " " }))
+        guard let m = try? reader.expression(), reader.at == reader.chars.count else { return nil }
+        return m
+    }
+
+    private struct Display {
+        var chars: [Character]
+        var at = 0
+
+        func peek() -> Character? { at < chars.count ? chars[at] : nil }
+        mutating func take(_ c: Character) -> Bool { if peek() == c { at += 1; return true }; return false }
+        static func isMatrix(_ m: Math) -> Bool { if case .matrix = m { true } else if case .power(.matrix, _) = m { true } else { false } }
+
+        mutating func expression() throws -> Math {
+            var parts = [try term()]
+            while let c = peek(), c == "+" || c == "-" {
+                at += 1
+                parts += [t(c == "+" ? " + " : " − "), try term()]
+            }
+            return parts.count == 1 ? parts[0] : .row(parts)
+        }
+
+        // A product of matrices juxtaposed, AB, as on paper; a number times one, 2A; else a dot.
+        mutating func term() throws -> Math {
+            var left = try unary()
+            while let c = peek(), "*/×·÷".contains(c) {
+                at += 1
+                let right = try unary()
+                if c == "/" || c == "÷" { left = .fraction(left, right); continue }
+                left = Display.isMatrix(right) ? row(left, t(" "), right) : row(left, t("·"), right)
+            }
+            return left
+        }
+
+        mutating func unary() throws -> Math {
+            if take("-") { return row(t("−"), try unary()) }
+            if take("+") { return try unary() }
+            return try power()
+        }
+
+        mutating func power() throws -> Math {
+            let base = try primary()
+            guard take("^") || take("ᵀ") else { return base }
+            if chars[at - 1] == "ᵀ" { return .power(base, t("T")) }
+            if take("(") {
+                let inside = try expression()
+                guard take(")") else { throw Failure() }
+                return .power(base, inside)
+            }
+            if let c = peek(), c == "T" || c == "t" { at += 1; return .power(base, t("T")) }
+            var exponent = take("-") ? "−" : ""
+            while let c = peek(), c.isNumber || c == "." { exponent.append(c); at += 1 }
+            guard exponent.contains(where: \.isNumber) else { throw Failure() }
+            return .power(base, t(exponent))
+        }
+
+        mutating func list() throws -> Math {
+            var rows: [[Math]] = [], flat: [Math] = []
+            repeat {
+                if take("[") {
+                    var row: [Math] = []
+                    repeat { row.append(try expression()) } while take(",")
+                    guard take("]") else { throw Failure() }
+                    rows.append(row)
+                } else {
+                    flat.append(try expression())
+                }
+            } while take(",")
+            guard take("]") else { throw Failure() }
+            return .matrix(rows.isEmpty ? [flat] : rows)
+        }
+
+        mutating func primary() throws -> Math {
+            guard let c = peek() else { throw Failure() }
+            if take("[") { return try list() }
+            if take("(") {
+                let inside = try expression()
+                guard take(")") else { throw Failure() }
+                return .group(inside)
+            }
+            if c.isNumber || c == "." {
+                var number = ""
+                while let d = peek(), d.isNumber || d == "." || ((d == "e" || d == "E") && number.last?.isNumber == true) { number.append(d); at += 1 }
+                return t(number)
+            }
+            if take("π") { return t("π") }
+            guard c.isLetter else { throw Failure() }
+            var name = ""
+            while let d = peek(), d.isLetter { name.append(d); at += 1 }
+            if name == "pi" { return t("π") }
+            if name == "e" { return t("e") }
+            guard take("(") else { throw Failure() }
+            var args: [Math] = []
+            if peek() != ")" { repeat { args.append(try expression()) } while take(",") }
+            guard take(")") else { throw Failure() }
+            switch name.lowercased() {
+            case "inv", "inverse" where args.count == 1: return .power(args[0], t("−1"))
+            case "transpose" where args.count == 1: return .power(args[0], t("T"))
+            default:
+                // det A with the matrix after its name; the rest as name(a, b).
+                if args.count == 1, Display.isMatrix(args[0]) { return row(t(name.lowercased() + " "), args[0]) }
+                var parts: [Math] = []
+                for (i, a) in args.enumerated() { parts += (i > 0 ? [t(", ")] : []) + [a] }
+                return row(t(name.lowercased()), .group(.row(parts)))
+            }
+        }
     }
 
     var text: String {
@@ -416,21 +582,21 @@ struct MatrixValue {
     var values: [Double] { if case .scalar(let x) = value { [x] } else { [] } }
 
     var details: Details {
-        var d = Details(name: "", equation: t(source.trimmingCharacters(in: .whitespaces)), steps: [], solutions: [], note: nil, f: { _ in .nan }, roots: [])
+        var d = Details(name: "", equation: shown ?? t(source.trimmingCharacters(in: .whitespaces)), steps: [], solutions: [], note: nil, f: { _ in .nan }, roots: [])
         let worked = working()
         switch value {
         case .scalar:
             let line = solution
-            d.solutions = [t(line.exact)] + (line.approx.map { [t($0)] } ?? [])
+            d.solutions = answerLines(line)
             d.steps = worked
         case .vector(let v):
-            d.solutions = [t(text)]
-            d.steps = worked.isEmpty ? [Step(label: "Working component by component", math: t(text), note: "The vector has \(v.count) components.")] : worked
+            d.solutions = [resultMath]
+            d.steps = worked.isEmpty ? [Step(label: "Working component by component", math: resultMath, note: "The vector has \(v.count) components.")] : worked
         case .matrix(let m):
-            d.solutions = m.map { t("[ " + $0.map(MatrixValue.entry).joined(separator: "   ") + " ]") }
-            d.steps = worked.isEmpty ? [Step(label: "Working entry by entry", math: t(text), note: "The result has \(m.count) rows and \(m[0].count) columns.")] : worked
+            d.solutions = [resultMath]
+            d.steps = worked.isEmpty ? [Step(label: "Working entry by entry", math: resultMath, note: "The result has \(m.count) rows and \(m[0].count) columns.")] : worked
         case .undefined(let why):
-            d.solutions = [t("Undefined"), t(why)]
+            d.solutions = [t("Undefined")]
             d.steps = [Step(label: "Why there is no value", math: nil, note: why)]
         case .text(let line, _):
             d.solutions = [t(line)]
@@ -504,10 +670,10 @@ struct MatrixValue {
                 let (a, b, c, d) = (m[0][0], m[0][1], m[1][0], m[1][1])
                 let det = a * d - b * c
                 return [Step(label: "Finding the determinant", math: t("det = \(p(a))×\(p(d)) − \(p(b))×\(p(c)) = \(n(det))")),
-                        Step(label: "Swapping the diagonal and changing the signs of the others", math: t("[[\(n(d)), \(n(-b))], [\(n(-c)), \(n(a))]]")),
-                        Step(label: "Dividing every entry by the determinant", math: t(text))]
+                        Step(label: "Swapping the diagonal and changing the signs of the others", math: MatrixValue.math([[d, -b], [-c, a]])),
+                        Step(label: "Dividing every entry by the determinant", math: resultMath)]
             }
-            return [Step(label: "Row-reducing [A | I]", math: t(text),
+            return [Step(label: "Row-reducing [A | I]", math: resultMath,
                          note: "The same row operations that turn A into the identity matrix turn the identity into the inverse of A.")]
         case ("trace", .matrix(let m)?):
             guard m.count == m[0].count else { return [] }
@@ -524,7 +690,7 @@ struct MatrixValue {
             return [Step(label: "Applying the cross product formula",
                          math: t("[\(p(u[1]))×\(p(v[2])) − \(p(u[2]))×\(p(v[1])), \(p(u[2]))×\(p(v[0])) − \(p(u[0]))×\(p(v[2])), \(p(u[0]))×\(p(v[1])) − \(p(u[1]))×\(p(v[0]))]"),
                          note: "(u₂v₃ − u₃v₂, u₃v₁ − u₁v₃, u₁v₂ − u₂v₁)"),
-                    Step(label: "Working out each component", math: t(text))]
+                    Step(label: "Working out each component", math: resultMath)]
         case ("norm", .vector?), ("magnitude", .vector?), ("norm", .matrix?):
             let entries: [Double]
             switch args[0] { case .vector(let v): entries = v; case .matrix(let m): entries = m.flatMap { $0 }; default: return [] }
@@ -533,6 +699,27 @@ struct MatrixValue {
             return [Step(label: "Squaring each component", math: t("= √(" + entries.map { "\(p($0))²" }.joined(separator: " + ") + ")")),
                     Step(label: "Adding", math: t("= √(" + squares.map(n).joined(separator: " + ") + ") = √\(n(sum))")),
                     Step(label: "Taking the square root", math: result())]
+        // From a frequency table: Σfx and n, then the mean, and for a spread the squared distances
+        // from it; in decimals, as such working is written, 7/4 = 1.75.
+        case ("mean", .vector(let x)?), ("average", .vector(let x)?), ("avg", .vector(let x)?), ("var", .vector(let x)?), ("variance", .vector(let x)?),
+             ("varp", .vector(let x)?), ("stdev", .vector(let x)?), ("stdevp", .vector(let x)?):
+            guard args.count == 2, case .vector(let f) = args[1], f.count == x.count else { return [] }
+            func d(_ v: Double) -> String { decimal(v) }
+            func q(_ v: Double) -> String { v < 0 ? "(\(d(v)))" : d(v) }
+            // = where the decimal shown is the whole of the value, 1.75; ≈ where it is cut short.
+            func equals(_ v: Double) -> String { shownWhole(v) ? "= \(d(v))" : "≈ \(d(v))" }
+            let count = f.reduce(0, +), total = zip(x, f).reduce(0) { $0 + $1.0 * $1.1 }, mean = total / count
+            var steps = [Step(label: "Multiplying each value by its frequency", math: t("Σfx = " + zip(x, f).map { "\(q($0))×\(q($1))" }.joined(separator: " + ") + " = \(d(total))")),
+                         Step(label: "Adding the frequencies", math: t("n = " + f.map(d).joined(separator: " + ") + " = \(d(count))")),
+                         Step(label: "Dividing", math: t("x̄ = Σfx/n = \(d(total))/\(d(count)) \(equals(mean))"))]
+            guard !["mean", "average", "avg"].contains(name) else { return steps }
+            let squares = zip(x, f).reduce(0) { $0 + $1.1 * ($1.0 - mean) * ($1.0 - mean) }
+            let sample = ["var", "variance", "stdev"].contains(name), divisor = sample ? count - 1 : count, variance = squares / divisor
+            steps.append(Step(label: "Squaring each value's distance from the mean",
+                              math: t("Σf(x − x̄)² = " + zip(x, f).map { "\(d($1))(\(d($0)) − \(d(mean)))²" }.joined(separator: " + ") + " \(equals(squares))")))
+            steps.append(Step(label: sample ? "Dividing by n − 1" : "Dividing by n", math: t("σ² = \(d(squares))/\(d(divisor)) \(equals(variance))")))
+            if name.hasPrefix("stdev") { steps.append(Step(label: "Taking the square root", math: t("σ = √\(d(variance)) \(equals(variance.squareRoot()))"))) }
+            return steps
         case ("quartile", _), ("percentile", _), ("iqr", _):
             return [Step(label: "Ordering the values and interpolating", math: result(),
                          note: "The values are put in order, and the percentile read at its position between two of them, linearly.")]
@@ -540,7 +727,7 @@ struct MatrixValue {
             return [Step(label: name.hasPrefix("cor") ? "Dividing the covariance by both spreads" : "Summing the products of the deviations", math: result(),
                          note: "Each pair is taken as its distance from the two means, (x − x̄)(y − ȳ); these are added, and divided by n − 1 for the covariance, or by √(Σ(x − x̄)² Σ(y − ȳ)²) for the correlation.")]
         case ("transpose", _):
-            return [Step(label: "Swapping rows and columns", math: t(text), note: "Entry (i, j) of the result is entry (j, i) of the matrix.")]
+            return [Step(label: "Swapping rows and columns", math: resultMath, note: "Entry (i, j) of the result is entry (j, i) of the matrix.")]
         default:
             return []
         }

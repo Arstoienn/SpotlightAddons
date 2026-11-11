@@ -35,13 +35,22 @@ struct LinearSystem {
         let all = tokenized.flatMap { $0 }
         var letters = Set(all.compactMap { if case .letter(let s) = $0 { s } else { nil } }).subtracting(Parser.indices(all))
         if letters.count > 1 { letters.remove("e") }
+        // Where there are more letters than equations, g and c are the constants they name, as
+        // they are with one equation: 5.05 = 1.6f, f = 1.3g cos(25°)μ is in f and μ. In
+        // c + d = 3, c − d = 1 there are no more letters than equations, and c is an unknown.
+        var constants: Set<String> = []
+        if letters.count > texts.count {
+            constants = Roles.constants(among: letters)   // the shared rules (Roles.swift)
+            if constants.count == letters.count { constants = [] }
+            letters.subtract(constants)
+        }
         guard !letters.isEmpty, letters.count <= 4 else { return nil }
         let variables = letters.sorted()
 
         var equations: [(left: Expr, right: Expr)] = []
         for tokens in tokenized {
             let tokens = tokens.map { $0 == .letter("e") && !letters.contains("e") ? .constant(M_E) : $0 }
-            var p = Parser.State(tokens: tokens, unknown: "", bound: variables)
+            var p = Parser.State(tokens: tokens, unknown: "", constants: constants, bound: variables)
             guard let left = try? p.expression(), p.take("="), let right = try? p.expression(), p.at == tokens.count
             else { return nil }
             equations.append((left, right))
@@ -119,7 +128,8 @@ struct LinearSystem {
         case .unique(let values):
             let exact = zip(variables, values).map { "\($0) = \(exactText($1))" }.joined(separator: ", ")
             let needsApprox = values.contains { abs($0 - $0.rounded()) > 1e-9 }
-            return Solution(exact: exact, approx: needsApprox && Options.exact ? "≈ " + values.map(decimal).joined(separator: ", ") : nil)
+            return Solution(exact: exact, approx: needsApprox && Options.exact ? "≈ " + values.map(decimal).joined(separator: ", ")
+                                                                               : taking(equations))
         }
     }
 }
@@ -200,6 +210,7 @@ extension LinearSystem {
         }
 
         if variables.count <= 2 { d.graph = graph }
+        d.steps.insert(contentsOf: substituting(equations), at: 0)
         return d
     }
 
@@ -354,7 +365,7 @@ struct NonlinearSystem {
         if solutions.count == 1 {
             let exact = zip(variables, solutions[0]).map { "\($0) = \(closedForm($1).plain)" }.joined(separator: ", ")
             let approx = solutions[0].contains { closedForm($0).plain != decimal($0) } ? "≈ " + solutions[0].map(decimal).joined(separator: ", ") : nil
-            return Solution(exact: exact, approx: approx)
+            return Solution(exact: exact, approx: approx ?? taking(equations))
         }
         let tuples = solutions.prefix(2).map { "(" + $0.map { closedForm($0).plain }.joined(separator: ", ") + ")" }
         return Solution(exact: "(\(variables.joined(separator: ", "))) = " + tuples.joined(separator: ", ") + (solutions.count > 2 ? ", …" : ""),
@@ -396,6 +407,7 @@ struct NonlinearSystem {
             d.graph = Graph(xName: variables[0], yName: variables[1], curves: curves,
                             points: solutions.map { CGPoint(x: $0[0], y: $0[1]) })
         }
+        d.steps.insert(contentsOf: substituting(equations), at: 0)
         return d
     }
 }
@@ -443,4 +455,18 @@ func solveLinear(_ a: [[Double]], _ b: [Double]) -> [Double]? {
         }
     }
     return (0..<n).map { m[$0][n] / m[$0][$0] }
+}
+
+// What a system takes for g or c, where one stands in it as the constant it names: on the card
+// where it has the room, and first in the working.
+private func constants(_ equations: [(left: Expr, right: Expr)]) -> [String] {
+    unique(equations.flatMap { $0.left.constants + $0.right.constants })
+}
+
+private func taking(_ equations: [(left: Expr, right: Expr)]) -> String? {
+    constants(equations).isEmpty ? nil : "Taking " + Constants.values(constants(equations))
+}
+
+private func substituting(_ equations: [(left: Expr, right: Expr)]) -> [Step] {
+    constants(equations).isEmpty ? [] : [Step(label: "Substituting " + Constants.values(constants(equations)), math: nil)]
 }

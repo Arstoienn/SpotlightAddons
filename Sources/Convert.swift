@@ -16,7 +16,6 @@ struct Conversion {
     var copyText: String { copy ?? (text.hasPrefix("=") ? String(format: "%.12g", value) : text.replacingOccurrences(of: "−", with: "-")) }
 
     static func parse(_ input: String) -> Conversion? {
-        guard Options.conversions else { return nil }
         let text = input.trimmingCharacters(in: .whitespaces)
         if let base = Bases.parse(text) { return base }
         if let money = Currency.parse(text) { return money }
@@ -437,8 +436,8 @@ enum NumberForms {
         case "percent", "percentage":
             return result(value: v * 100, shown: "= \(decimal(v * 100))%", approx: nil, copy: String(format: "%.12g", v * 100), in: text)
         case "roman":
-            guard v == v.rounded(), (1...3999).contains(Int(v)) else { return nil }
-            let r = roman(Int(v))
+            guard v == v.rounded(), let n = Int(fitting: v), (1...3999).contains(n) else { return nil }
+            let r = roman(n)
             return result(value: v, shown: r, approx: "Roman numerals, for 1 to 3999", copy: r, in: text)
         default: return nil
         }

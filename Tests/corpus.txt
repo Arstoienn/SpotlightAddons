@@ -1,0 +1,3609 @@
+decimalFirst
+2n^2=10
+n = ±√5
+≈ ±2.23607
+2N²=10
+N = ±√5
+x^2-5x+6=0
+x = 2, 3
+x^2=2x+1
+x = 1 ± √2
+≈ −0.414214, 2.41421
+2x^2+3x-1=0
+x = (−3 ± √17)/4
+≈ −1.78078, 0.280776
+4x^2=9
+x = ±3/2
+≈ ±1.5
+x^2+1=0
+x = ±i
+No real solutions; the roots are complex
+x^2+2x+5=0
+x = −1 ± 2i
+x^2-2x+1=0
+x = 1
+(x+1)(x-1)=3
+x = ±2
+x^2/2=8
+x = ±4
+0.5x^2=2
+3x+2=11
+x = 3
+2x=1
+x = 1/2
+≈ 0.5
+x/3+1=2
+x=x
+x ∈ ℝ
+Every real number satisfies the equation.
+x+1=x
+No solution
+x^3-6x^2+11x-6=0
+x = 1, 2, 3
+x^3=2
+x ≈ 1.25992
+x^2=pi
+x ≈ ±1.77245
+x^4=16
+2^x=8
+e^x=10
+x ≈ 2.30259
+sqrt(x)=3
+x = 9
+√x=3
+ln x=1
+x ≈ 2.71828
+sin(x rad)=0.5
+x = π/6, 5π/6
+≈ 0.524, 2.618 = 30°, 150°, for 0 ≤ x ≤ 2π
+1/x=4
+x = 1/4
+≈ 0.25
+tan(x rad)=x
+x ≈ −7.72525, −4.49341, 0, 4.49341, 7.72525, …
+sin(x rad)^2=0
+x = 0, π, 2π
+≈ 0, 3.142, 6.283 = 0°, 180°, 360°, for 0 ≤ x ≤ 2π
+sin(x^2 rad)=0
+x ≈ −2.50663, −1.77245, 0, 1.77245, 2.50663, …
+e^x=-1
+No real solutions found
+The interval −1000 ≤ x ≤ 1000 was searched.
+(20^2*sin(2x rad))/9.81=20
+x ≈ 0.256332, 1.31446, 3.39792, 4.45606
+≈ 14.6867°, 75.3133°, 194.687°, 255.313°, for 0 ≤ x ≤ 2π
+0.5=cos(x rad)
+x = π/3, 5π/3
+≈ 1.047, 5.236 = 60°, 300°, for 0 ≤ x ≤ 2π
+cos(x rad)=-1
+x = π
+≈ 3.142 = 180°, for 0 ≤ x ≤ 2π
+sin(x rad)=cos(x rad)
+x = π/4, 5π/4
+≈ 0.785, 3.927 = 45°, 225°, for 0 ≤ x ≤ 2π
+sin(10x rad)=0.5
+x = π/60, π/12, 13π/60, 17π/60, …
+≈ 0.052, 0.262, 0.681, 0.890, … = 3°, 15°, 39°, 51°, …, for 0 ≤ x ≤ 2π
+sin(x/100 rad)=1
+x ≈ −471.239, 157.08, 785.398
+x^2+sin(x rad)=1
+x ≈ −1.40962, 0.636733
+sin(x)=0.5
+sin(x deg)=0.5
+x = 30°, 150°
+= π/6, 5π/6 rad, for 0° ≤ x ≤ 360°
+(20^2*sin(2x deg))/9.81=20
+x ≈ 14.6867°, 75.3133°, 194.687°, 255.313°
+≈ 0.256, 1.314, 3.398, 4.456 rad, for 0° ≤ x ≤ 360°
+cos(x°)=-1
+x = 180°
+= π rad, for 0° ≤ x ≤ 360°
+3sin(x deg)=0
+x = 0°, 180°, 360°
+= 0, π, 2π rad, for 0° ≤ x ≤ 360°
+sin(10x deg)=0.5
+x = 3°, 15°, 39°, 51°, …
+= π/60, π/12, 13π/60, 17π/60, … rad, for 0° ≤ x ≤ 360°
+sin(30 deg)=0.5
+True
+0.5 = 0.5
+sin(30)=0.5
+False
+sin(pi/6)=0.5
+x=asin(0.5)
+x = π/6
+= 30°
+x=asin(0.5) deg
+x = 30°
+= π/6 rad
+\tan^{-1}24/21
+≈ 0.851966
+≈ 48.8141°
+x=tan^-1(1)
+x = π/4
+= 45°
+x=atan(24/21) deg
+x ≈ 48.8141°
+≈ 0.851966 rad
+sin 2x=1
+x=sin^2(pi/6)
+sin x cos x=0.25
+x = π/12, 5π/12, 13π/12, 17π/12
+x=sin 1/2
+x ≈ 0.479426
+x=asin(0.5) rad
+x=sin(2rad)
+x ≈ 0.909297
+sin(pi*x)=0
+x = 0, 1, 2, 3, …
+2(x+1)=10
+x = 4
+3sin(x rad)=0
+xx=4
+PES=\frac{\frac{120000-80000}{80000}}{\frac{250-200}{200}}
+PES = 2
+\frac{1}{3}
+= 1/3
+≈ 0.333333
+\frac{x}{2}+1=3
+x^{2}=4
+\sqrt{x}=3
+2\cdot x=6
+\left(x+1\right)^{2}=9
+x = −4, 2
+\sqrt[3]{x}=2
+x = 8
+x = 2 ± √3
+≈ 0.267949, 3.73205
+$\frac12 x = 3$
+x = 6
+x \le 3
+\sum_{k=0}^{10}k20
+= 1100
+\sum_{k=1}^{10} k
+= 55
+\sum_{k=1}^{4} k^{2} + 1
+= 31
+\prod_{k=1}^{5} k
+= 120
+\sum_{k=1}^{3} kx = 12
+x = 2
+S=\sum_{n=1}^{100}\frac{1}{n^2}
+S ≈ 1.63498
+sum(k,1,3,k)=x
+\[\#n2x+3y=12,\quad 5x-y=7\#n\]
+x = 33/17, y = 46/17
+≈ 1.94118, 2.70588
+\begin{cases} x+y=3 \\ x-y=1 \end{cases}
+x = 2, y = 1
+\left\{ \begin{aligned} 2x &= 4 \\ x + y &= 5 \end{aligned} \right.
+x = 2, y = 3
+2x+y=5, x-y=1
+3x=2, 3x=1
+The lines are parallel and do not intersect.
+x+y=2, 2x+2y=4
+Infinitely many solutions
+The equations represent the same line.
+x+2y=1; 3x-y=2
+x = 5/7, y = 1/7
+≈ 0.714286, 0.142857
+y=2x+1, y=-x+4
+x = 1, y = 3
+a+b+c=6, a-b=0, 2c=6
+a = 3/2, b = 3/2, c = 3
+≈ 1.5, 1.5, 3
+x^2+y=1, x-y=2
+(x, y) = ((−1 − √13)/2, (−5 − √13)/2), ((−1 + √13)/2, (−5 + √13)/2)
+2 real solutions
+\[\#n\begin{cases}\#nx^2+y+z=3\\\#nx+y^2+z=3\\\#nx+y+z^2=3\#n\end{cases}\#n\]
+(x, y, z) = (−3, −3, −3), (−√2, −√2, 1 + √2), …
+8 real solutions
+x^2+y^2=25, x+y=7
+(x, y) = (3, 4), (4, 3)
+x^3=8, y=x+1
+x^2+y^2=-1, x=y
+The search was conducted from numerous starting points about the origin.
+X^2=4
+X = ±2
+E=0.5*2*3^2
+E = 9
+E=e^2
+E ≈ 7.38906
+m=5.97e24*2
+m = 1.194×10²⁵
+x=1.6e-19*2
+x = 3.2×10⁻¹⁹
+x=1.6*10^-19*2
+x=3E8*2
+x = 6×10⁸
+x=12345678*2
+x = 24691356
+x=1/3*10^-19
+x ≈ 3.33333×10⁻²⁰
+3e-19=6.63e-34*f
+f ≈ 4.52489×10¹⁴
+2e - 3=1
+e = 2
+x=0.1+0.2-0.3
+x = 0
+x=sin(pi)
+0.1x+0.2x-0.3x=5
+x=2g
+x ≈ 19.6
+Taking g = 9.8 m s⁻²
+h=0.5g*3^2
+h ≈ 44.1
+E=0.002c^2
+E = 1.8×10¹⁴
+Taking c = 3.00×10⁸ m s⁻¹
+F=G*5.97e24*70/6.37e6^2
+F ≈ 686.941
+Taking G = 6.67×10⁻¹¹ N m² kg⁻²
+20=0.5g*t^2
+t ≈ ±2.02031
+9.8=G*M/6.37e6^2
+M ≈ 5.96182×10²⁴
+c=2g
+c ≈ 19.6
+2c=g
+g = 6×10⁸
+2g=10
+g = 5
+2c=6
+c = 3
+2G=10
+G = 5
+g=2g
+g = 0
+e=2g
+g ≈ 1.35914
+F=mg
+E=mc^2
+Insufficient information
+A value is required for E or m.
+h=0.5gt^2
+A value is required for h or t.
+9e16=1*c^2
+c = ±3×10⁸
+9e16=1* !c^2
+9×10¹⁶ = 9×10¹⁶
+9e16=!c^2
+!g=9.8
+9.8 = 9.8
+!g ≈ 9.81
+c=2*!g
+g = 1.5×10⁸
+!c=2g
+!c=2*!g
+x=2*!g
+20=0.5*!g*t^2
+!x=2
+2!g=10
+e ≈ 2.718
+2omega=10
+ω = 5
+2ω=10
+rho*2=5
+ρ = 5/2
+≈ 2.5
+sin(theta rad)=0.5
+θ = π/6, 5π/6
+≈ 0.524, 2.618 = 30°, 150°, for 0 ≤ θ ≤ 2π
+cos(theta rad)=0.5
+θ = π/3, 5π/3
+≈ 1.047, 5.236 = 60°, 300°, for 0 ≤ θ ≤ 2π
+\sin(2\theta rad)=0.5
+θ = π/12, 5π/12, 13π/12, 17π/12
+≈ 0.262, 1.309, 3.403, 4.451 = 15°, 75°, 195°, 255°, for 0 ≤ θ ≤ 2π
+(20^2*sin(2theta rad))/g=20
+θ ≈ 0.256045, 1.31475, 3.39764, 4.45634
+lambda=c/5e14
+λ = 6×10⁻⁷
+phi^2=phi+1
+φ = (1 ± √5)/2
+≈ −0.618034, 1.61803
+alpha+beta=3, alpha-beta=1
+α = 2, β = 1
+v=omega*r
+3mu=6
+μ = 2
+3μ=6
+\mu=0.5*2
+μ = 1
+F_n=0.4*20cos(35°)
+F_n ≈ 6.55322
+F_n=0.4*20cos(35deg)
+F_n=0.4*20cos(35)
+F_n ≈ −7.22954
+F_n=0.4*20cos(35 rad)
+20=F_n*2
+F_n = 10
+F_{net}=2*3
+F_net = 6
+mu_k=6/20
+μ_k = 3/10
+≈ 0.3
+x_1+x_2=3, x_1-x_2=1
+x_1 = 2, x_2 = 1
+v_y=3-g*2
+v_y ≈ −16.6
+v_0t=10
+A value is required for v_0 or t.
+x_1=10
+x_1 = 10
+theta=30
+θ = 30
+x=10
+x_=3
+sin(30°)=0.5
+x=5!
+x = 120
+x=5!/(3!2!)
+x = 10
+x=\frac{10!}{7!3!}
+x=2^3!
+x = 64
+x=-3!
+x = −6
+n!=120
+n = 5
+n!=1
+n = 0, 1
+x=(-2)!
+Undefined
+It has no real value.
+x^3-3x^2+3x-1=0
+(x-1)^2(x+2)=0
+x = −2, 1
+2=2
+2 = 2
+2^2=4
+4 = 4
+0.1+0.2=0.3
+0.3 = 0.3
+1/3 = 0.3333
+0.333333 > 0.3333
+1/3 ~= 0.3333
+The two sides differ by 0.01%, which is within the tolerance of 0.1%.
+1/3 ≈ 0.3
+The two sides differ by 10%, which exceeds the tolerance of 0.1%.
+1.6e-19 ≈ 1.7e-19
+1e-10 ≈ 0
+1/3 != 0.3333
+2 ≠ 3
+2 < 3
+2 != 2
+2!=2
+5!=120
+120 = 120
+5 > 3
+3>5
+3 < 5
+5 >= 5
+5 = 5
+4 <= 5
+4 < 5
+5 ≥ 5
+4 ≤ 5
+pi=3.14
+3.14159 > 3.14
+1/3=1/3+1e-7
+The two sides are not equal: they differ by 1×10⁻⁷.
+\frac{1}{3} \approx 0.3333
+2^{10} \ge 1000
+1024 > 1000
+1<2<3
+1 < 2 is True; 2 < 3 is True.
+2=2=2
+2 = 2 is True; 2 = 2 is True.
+0=0=0
+0 = 0 is True; 0 = 0 is True.
+2=2=3
+2 = 2 is True; 2 = 3 is False.
+1>1>1
+1 > 1 is False; 1 > 1 is False.
+1+1=2=4/2
+1 + 1 = 2 is True; 2 = 4/2 is True.
+1<2<=3
+1 < 2 is True; 2 ≤ 3 is True.
+(0=0)=0
+(0=0)=1
+(1>1)=0
+(2<3)+5
+= 6
+((0=0)=0)=0
+(x=2)=1
+!(3=1)
+(1=1) && (2=3)
+(0 = 0) is True, taken as 1. A true statement counts as 1, and a false one as 0.
+FAIL (0=0)=0: the working does not begin by taking (0 = 0) as 1
+x>3
+g=9.8
+1/0=1
+SHA256("hello")
+2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824
+SHA-256 digest of 5 bytes, in hexadecimal
+sha256("hello")
+Sha256(hello)
+sha256("")
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+SHA-256 digest of 0 bytes, in hexadecimal
+sha256("abc")
+ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad
+SHA1("hello")
+aaf4c61ddcc5e8a2dabede0f3b482cd9aea9434d
+SHA-1 digest of 5 bytes, in hexadecimal
+sha256("hello", decimal)
+20329878786436204988385760252021328656300425018755239228739303522659023427620
+SHA-256 digest of 5 bytes, in decimal
+sha1("hello", binary)
+101010101111010011000110000111011101110011000101…
+SHA-1 digest of 5 bytes, in binary
+sha256("a, b")
+4a479db6af79906e7200f9560d9af890f0077e394e3ae44cbd2a2bb3ba5c2c2d
+SHA-256 digest of 4 bytes, in hexadecimal
+sha256("f(x) = 1")
+44daafd1796bff53b436eef5ef7b02b05ad41dd04e12ab3846978b49c9afe270
+sha256(2+2)
+1acf86226c68c1485ca3939884c43ed99abeea344e806548af7ee813c1c0cff3
+sha256("hello")+1
+x=sha256("hello")
+sha256("hello", decimal)/10^76
+≈ 2.03299
+x=sha256("hello", binary)/sha256("hello", decimal)
+sha256("hello"
+xb+xc
+= x(b + c)
+2x+3x
+= 5x
+x+x
+= 2x
+2x+4
+= 2(x + 2)
+x^2+x
+= x(x + 1)
+ab+ba
+= 2ab
+2x+3x+y
+= 5x + y
+3ab-ab+2b
+= 2b(a + 1)
+6x^2y+9xy^2
+= 3xy(2x + 3y)
+2(x+1)+3(x+1)
+= 5(x + 1)
+-2x-4
+= −2(x + 2)
+x/2+x/2
+= x
+theta+2theta
+= 3θ
+2x*3x
+= 6x²
+(m^4*q^4*z^-1)(mq^5*z^3)
+= m⁵q⁹z²
+x^3/x
+= x²
+6x^2y/(3x)
+= 2xy
+2x/y+3x/y
+= 5x/y
+a^2b^-1*b^3
+= a²b²
+a+b
+x(b+c)
+(a+b)^2
+= a² + 2ab + b²
+x^2-5x+6
+= (x − 2)(x − 3)
+Factorised
+x^6-7x^4+14x^2-8
+= (x + 2)(x + 1)(x − 1)(x − 2)(x² − 2)
+2x^2-8
+= 2(x + 2)(x − 2)
+x^2+1
+x^2
+ab+ac+d
+wi-fi
+rock+roll
+c++
+2x+3x=10
+\frac{1}{7b}=\frac{11x}{y}
+x = y/(77b)
+\frac{1}{7b}=\frac{11x}{y}, y=?
+y = 77bx
+x+y=3
+x = 3 − y
+ax+bx=c
+x = c/(a + b)
+F=ma, a=?
+a = F/m
+v=u+at, t=?
+t = (v − u)/a
+1/f=1/u+1/v, f=?
+f = uv/(v + u)
+E=1/2mv^2, v=?
+v = ±√(2E/m)
+PV=nRT, T=?
+T = PV/(nR)
+2x+3=11, x=?
+ax^2+bx=c
+Values are required for two of a, x and b.
+F=ma, z=?
+2048
+2048 = 2¹¹
+360
+360 = 2³·3²·5
+144
+144 = 2⁴·3²
+= 12²
+1296
+1296 = 2⁴·3⁴
+= 6⁴
+97
+97 is prime
+2
+2 is prime
+2024
+2024 = 2³·11·23
+999999999989
+999999999989 is prime
+0.375
+0.375 = 3/8
+2.50
+2.50 = 5/2
+3.0
+lcm(10000000000,10000000001)
+= 100000000010000000000
+lcm(99999999999999,100000000000000)
+= 9999999999999900000000000000
+\operatorname{lcm}(10000000000,10000000001)
+root(-8,1e20)
+root(-8,1e309)
+\sqrt[3]{-8}
+= −2
+\sqrt[5]{-32}
+root(-8,3)
+1+2+\cdots+100
+= 5050
+1+2+\ldots+100
+\int_{-1}^{1}\frac{1}{x^2}dx
+Does not converge
+integrate(1/x,-1,1)
+integrate(1/sqrt(x),0,1)
+= 2
+integrate(1/x^2,1,2)
+= 1/2
+binomcdf(999999999,0.5,999999999)
+= 1
+poissoncdf(1,999999999)
+poissonpdf(0,0)
+poissoncdf(0,5)
+mean(1e308,1e308)
+= 1×10³⁰⁸
+hypot(1e308,1e308)
+≈ 1.41421×10³⁰⁸
+rms(1e308,1e308)
+-5
+−5 = −1·5
+-12
+−12 = −1·2²·3
+-1.5
+−1.5 = −3/2
+0
+0 is neither prime nor composite
+Every whole number divides it
+1
+1 is neither prime nor composite
+Its only divisor is 1
+-1
+−1 is neither prime nor composite
+Its only divisors are 1 and −1
+1e6
+= 1000000
+2+2
+= 4
+10/4
+= 5/2
+2^10
+= 1024
+5!/(3!2!)
+= 10
+sqrt(2)
+≈ 1.41421
+2pi
+≈ 6.28319
+sin(30°)
+1.6e-19*2
+= 3.2×10⁻¹⁹
+2+
+2026 10
+(2+3
+cost=12*3+4
+cost = 40
+r=22/7
+r = 22/7
+≈ 3.14286
+a=1
+a=b
+sin=2
+hello
+2048 report
+pie
+c
+5g
+F=ma
+y=mx+b
+weather today
+x=
+=3
+x==3
+2x+
+x^2=4 apple
+log(n)=5
+n = 100000
+ln(x)=10
+x ≈ 22026.5
+sqrt(x)=50
+x = 2500
+log(n)=499
+n = 10⁴⁹⁹
+Too large to be written out as a decimal.
+log(x)=-400
+x = 10^−400
+Too small to be written out as a decimal.
+ln(x)=800
+x = e⁸⁰⁰
+ans*2
+20*clip
+= 80
+Taking ans = 40
+ans
+= 40
+Ans+1
+= 41
+x=ans/3
+x ≈ 13.3333
+≈ 196.2
+Taking clip = 9.81
+2x=ans
+x = 20
+h=0.5clip*3^2
+h ≈ 44.145
+ans=40
+40 = 40
+ans*2+1
+ans·2 + 1
+Substituting ans = 40
+= 40·2 + 1
+Multiplying
+= 80 + 1
+Adding
+= 81
+12*3+4
+2x=10
+x^2=4
+FAIL the values an answer leaves for ans
+ans has 2 values
+Write ans1 = 2, ans2 = 3.
+ans1*2
+Taking ans_1 = 2
+ans2+ans1
+= 5
+Taking ans_2 = 3, ans_1 = 2
+x=10ans2
+x = 30
+Taking ans_2 = 3
+ans3
+degrees
+numberFacts
+constant.g
+A value is required for x or g.
+constant.c
+precise
+x ≈ 19.6133
+Taking g = 9.80665 m s⁻²
+E ≈ 1.79751×10¹⁴
+Taking c = 299 792 458 m s⁻¹
+constantValue.g
+Taking g = 10 m s⁻²
+h = 45
+t = ±2
+!g=10
+10 = 10
+x ≈ 19.62
+Taking g = 9.81 m s⁻²
+constantValue.c
+Taking c = 3×10⁸ m s⁻¹
+constantValue.G
+F=G*5*6/2^2
+F = 5.0055×10⁻¹⁰
+Taking G = 6.674×10⁻¹¹ N m² kg⁻²
+R
+J K⁻¹ mol⁻¹
+k_e
+N m² C⁻²
+μ_0
+T m A⁻¹
+h
+PV=nRT, P=2, V=3, n=1
+T ≈ 0.721674
+Taking P = 2, V = 3, n = 1, R = 8.314 J K⁻¹ mol⁻¹
+F=k_e*2*3/4^2
+F = 3371250000
+Taking k_e = 8.99×10⁹ N m² C⁻²
+B=mu_0*2/(2pi*0.1)
+B ≈ 0.000004
+Taking μ_0 = 1.25664×10⁻⁶ T m A⁻¹
+E=h*5e14
+E = 3.315×10⁻¹⁹
+Taking h = 6.63×10⁻³⁴
+2R=10
+R = 5
+!R=8.314
+8.314 = 8.314
+8.314=!R*x
+R=2*!k_e
+k_e ≈ 4.157
+Taking R = 8.314 J K⁻¹ mol⁻¹
+R=2*!mu_0
+μ_0 ≈ 4.157
+x=2k_e
+x = 1.798×10¹⁰
+x=2k
+A value is required for x or k.
+x=2R
+A value is required for x or R.
+mu_0
+epsilon_0
+ε_0
+sigma
+σ
+N_A
+8.314
+6.022*10^23
+8.99e9
+1/(4pi*8.85e-12)
+x
+ab
+e
+i
+g
+G
+pi
+sin
+k_
+figures
+x=1/3
+x = 1/3
+≈ 0.333
+≈ ±2.24
+F ≈ 687
+≈ 0.3333333333
+exact
+= 2.5
+x ≈ 0.333333
+x ≈ 0.5
+n ≈ ±2.23607
+x ≈ 0.523599, 2.61799
+= 30°, 150°, for 0 ≤ x ≤ 2π
+2x+3y=12, 5x-y=7
+x = 1.94118, y = 2.70588
+arithmetic
+x=2+2
+2x=4
+copyAsShown
+5/2
+4x=10
+±√5
+40
+2.5
+cost=10/4
+2x+3=11
+4
+2, 3
+-2.2360679775, 2.2360679775
+3.2e-19
+44.1
+30, 150
+100000
+x(b + c)
+factor(2x^2+3x-2)
+2x² + 3x − 2
+Finding two numbers with product ac and sum b
+ac = −4,  b = 3:  4 and −1
+Splitting the middle term
+2x² + 4x − x − 2
+Grouping in pairs
+2x(x + 2) − (x + 2)
+Taking out the common factor (x + 2)
+(x + 2)(2x − 1)
+factor(4x^2+6x-4)
+4x² + 6x − 4
+Taking out the common factor
+2 × (2x² + 3x − 2)
+2(x + 2)(2x − 1)
+A=\begin{pmatrix}2&3\\1&4\end{pmatrix},\ B=\begin{pmatrix}1&5\\2&3\end{pmatrix},\ A+B=?
+[[3, 8], [3, 7]]
+A = [[2,3],[1,4]], B = [[1,5],[2,3]], A + B = ?
+A=[[2,3],[1,4]], B=[[1,5],[2,3]], AB
+[[8, 19], [9, 17]]
+A=[[2,3],[1,4]], B=[[1,5],[2,3]], BA=?
+[[7, 23], [7, 18]]
+A=[[2,3],[1,4]], 2A=?
+[[4, 6], [2, 8]]
+A=[[2,3],[1,4]], B=[[1,5],[2,3]], 3AB - B
+[[23, 52], [25, 48]]
+A=[[2,3],[1,4]], det(A)
+u=[1,2,3], v=[4,5,6], dot(u,v)
+= 32
+A+B, A=[[2,3],[1,4]], B=[[1,5],[2,3]]
+mg*1.2+1/2mv^2, m=55, v=0.9
+m=55, v=0.9, mg*1.2+1/2mv^2=?
+a=?, F=ma
+sin(x)=0.5, 0<=x<360°
+0<=x<360°, sin(x)=0.5
+v=u+at, u=2, a=3, t=4
+u=2, a=3, t=4, v=u+at
+x+y, x=2, y=3
+x=2, y=3, x+y=?
+12=1.8+4vcos(theta), theta=30°
+theta=30°, 12=1.8+4vcos(theta)
+u_1=1,d=1,u_9223372036854775808=?
+u_{1}=1,d=1,u_{9223372036854775808}=?
+u_1=1,u_3=1,S_1000000000=?
+Arithmetic: S_1000000000 = 1×10⁹
+Geometric: S_1000000000 = 1×10⁹ or 0
+u_1=1,u_3=4,S_1000000000=?
+Arithmetic: S_1000000000 = 7.5×10¹⁷
+Geometric: S_1000000000 is beyond the largest number that can be held
+1+
+= 500
+FAIL a 500-term sum: the working was not cut short
+\sqrt{
+}
+integrate(1/(x-0.999999),-1,1)
+\int_{-1}^{1}\frac{1}{x-0.999999}dx
+integrate(1/(x-0.999999)^2,-1,1)
+integrate(1/x,-1,-1e-300)
+≈ −690.776
+[1,2]/0
+A vector or a matrix cannot be divided by zero.
+[0,0]/0
+[[1,2],[3,4]]/0
+[1e308,1]*10
+Its entries are beyond the largest number that can be held, about 1.8×10³⁰⁸.
+plus.forwardslash.minus
+12
+number
+x.squareroot
+x^2>4
+lessthan
+derivative(x^3)
+function
+integrate(x^2,0,1)
+factor(x^2-5x+6)
+parentheses
+expand((x+1)^2)
+det([[1,2],[3,4]])
+square.grid.3x3
+u_1=2,d=3,u_10=?
+list.number
+5 km to miles
+arrow.left.arrow.right
+checkmark.circle
+2=3
+xmark.circle
+/usr/bin
+folder
+/bin/ls
+doc
+x+y=3, x-y=1
+inv([[1,2],[3,4]])
+[[1, 2], [3, 4]]^−1
+Finding the determinant
+det = 1×4 − 2×3 = −2
+Swapping the diagonal and changing the signs of the others
+[[4, −2], [−3, 1]]
+Dividing every entry by the determinant
+[[−2, 1], [3/2, −1/2]]
+integrate(x^2+1, 0, pi/2)
+∫(0…π/2) (x² + 1) dx
+∛x = 2
+root(x,3)=2
+x^(1/3)=2
+det [[1, 2], [3, 4]]
+−12
+Taking out −1
+−12 = −1·12
+Dividing by 2 repeatedly
+12 = 2²·3
+4/2
+Reducing the fraction
+2n^2+3n+1=0
+2n² + 3n + 1 = 0
+ac = 2,  b = 3:  2 and 1
+2n² + 2n + n + 1 = 0
+2n(n + 1) + (n + 1) = 0
+Factorising
+(n + 1)(2n + 1) = 0
+Zero-product property
+n + 1 = 0 or 2n + 1 = 0
+Solving each linear factor
+n = −1 or n = −1/2
+n = −1
+n = −1/2 ≈ −0.5
+2x + 3 = 11
+Subtracting 3 on both sides
+2x = 8
+Dividing both sides by 2
+x = 8/2 = 4
+3x=2
+3x = 2
+Dividing both sides by 3
+x = 2/3
+x = 2/3 ≈ 0.666667
+2n² = 10
+Subtracting the right-hand side from both sides
+2n² − (10) = 0
+Collecting like terms
+2n² − 10 = 0
+Multiplying both sides by 1/2
+n² − 5 = 0
+Isolating n²
+n² = 5
+Taking the square root
+n = −√5 ≈ −2.23607
+n = √5 ≈ 2.23607
+2x² + 3x − 1 = 0
+Identifying the quadratic coefficients
+a = 2,  b = 3,  c = −1
+Evaluating the discriminant
+b² − 4ac = 3² − 4·2·(−1) = 17
+Quadratic formula
+x = (−b ± √(b² − 4ac))/2a
+Substituting the coefficients and discriminant
+x = (−3 − √17)/4 ≈ −1.78078
+x = (−3 + √17)/4 ≈ 0.280776
+x² + 2x + 5 = 0
+a = 1,  b = 2,  c = 5
+b² − 4ac = 2² − 4·1·5 = −16
+Hence
+b² − 4ac < 0
+No real solutions
+x² − 2x + 1 = 0
+ac = 1,  b = −2:  −1 and −1
+x² − x − x + 1 = 0
+x(x − 1) − (x − 1) = 0
+(x − 1)² = 0
+x − 1 = 0
+(x + 1)(x − 1) = 3
+Expanding brackets and collecting like terms
+x² − 1 = 3
+x² − 1 − (3) = 0
+x² − 4 = 0
+ac = −4,  b = 0:  2 and −2
+x² + 2x − 2x − 4 = 0
+x(x + 2) − 2(x + 2) = 0
+(x + 2)(x − 2) = 0
+x + 2 = 0 or x − 2 = 0
+x = −2 or x = 2
+x³ − 6x² + 11x − 6 = 0
+(x − 1)(x − 2)(x − 3) = 0
+x³ = 2
+x³ − (2) = 0
+x³ − 2 = 0
+Solving numerically
+This polynomial of degree 3 is not readily factorised; its real roots are therefore determined numerically.
+sin(n rad)=1
+sin(n) = 1
+Stating the general solution
+n = π/2 + 2kπ, k ∈ ℤ
+n = π/2 ≈ 1.571 (90°)
+These are the solutions for 0 ≤ n ≤ 2π; further solutions lie outside this interval.
+sin(x) = 0.5
+x = π/6 + 2kπ or x = 5π/6 + 2kπ, k ∈ ℤ
+x = π/6 ≈ 0.524 (30°)
+x = 5π/6 ≈ 2.618 (150°)
+(20²·sin(2x))/9.81 = 20
+Isolating sin(2x)
+sin(2x) = 0.4905
+2x = 0.512663 + 2kπ or 2x = 2.62893 + 2kπ, k ∈ ℤ
+x = 0.256332 + kπ or x = 1.31446 + kπ, k ∈ ℤ
+x ≈ 0.256332 (14.6867°)
+x ≈ 1.31446 (75.3133°)
+x ≈ 3.39792 (194.687°)
+x ≈ 4.45606 (255.313°)
+(20^2*sin(2x rad))/g=20
+(20²·sin(2x))/g = 20
+Substituting g = 9.8 m s⁻²
+(20²·sin(2x))/9.8 = 20
+sin(2x) = 0.49
+2x = 0.51209 + 2kπ or 2x = 2.6295 + 2kπ, k ∈ ℤ
+x = 0.256045 + kπ or x = 1.31475 + kπ, k ∈ ℤ
+2sin(3x+1 rad)-1=0
+2sin(3x + 1) − 1 = 0
+Isolating sin(3x + 1)
+sin(3x + 1) = 0.5
+3x + 1 = π/6 + 2kπ or 3x + 1 = 5π/6 + 2kπ, k ∈ ℤ
+x = −0.1588 + 2kπ/3 or x = 0.539331 + 2kπ/3, k ∈ ℤ
+tan(x/2 rad)=1
+tan(x/2) = 1
+x/2 = π/4 + kπ, k ∈ ℤ
+x = π/2 + 2kπ, k ∈ ℤ
+x = π/2 ≈ 1.571 (90°)
+cos(x rad)=0.5
+cos(x) = 0.5
+x = ±π/3 + 2kπ, k ∈ ℤ
+tan(x rad)=1
+tan(x) = 1
+x = π/4 + kπ, k ∈ ℤ
+sin(x rad)=2
+sin(x) = 2
+No solution, since −1 ≤ sin x ≤ 1
+No real solutions in the interval −1000 ≤ x ≤ 1000
+2^x = 8
+Expressing both sides as powers of 2
+2^x = 2³
+Equating the exponents
+10=0.1^x
+10 = 0.1^x
+Interchanging the sides
+0.1^x = 10
+Expressing both sides as powers of 10
+(10^−1)^x = 10¹
+Multiplying the exponents
+10^−x = 10¹
+−x = 1
+x = −1
+4^x=8
+4^x = 8
+(2²)^x = 2³
+2^(2x) = 2³
+2x = 3
+x = 3/2
+3^x=10
+3^x = 10
+Taking the logarithm of both sides
+ln(3^x) = ln 10
+Applying the power rule for logarithms
+x·ln 3 = ln 10
+Dividing by ln 3
+x = ln 10/ln 3
+e^x = 10
+Taking the natural logarithm of both sides
+ln(e^x) = ln 10
+Simplifying
+x = ln 10
+ln(x) = 1
+Rewriting in exponential form
+x = e¹
+log x=2
+log(x) = 2
+x = 10²
+√x = 3
+Squaring both sides
+x = 3²
+x² + sin(x) = 1
+x² + sin(x) − 1 = 0
+sin(x°) = 0.5
+x = 30° + 360°k or x = 150° + 360°k, k ∈ ℤ
+x = 30° (π/6)
+x = 150° (5π/6)
+These are the solutions for 0° ≤ x ≤ 360°; further solutions lie outside this interval.
+(20²·sin(2x°))/9.81 = 20
+Isolating sin(2x°)
+sin(2x°) = 0.4905
+2x = 29.3735° + 360°k or 2x = 150.627° + 360°k, k ∈ ℤ
+x = 14.6867° + 180°k or x = 75.3133° + 180°k, k ∈ ℤ
+x ≈ 14.6867° (0.256 rad)
+x ≈ 75.3133° (1.314 rad)
+x ≈ 194.687° (3.398 rad)
+x ≈ 255.313° (4.456 rad)
+cos(x deg)=0.5
+cos(x°) = 0.5
+x = ±60° + 360°k, k ∈ ℤ
+x = 60° (π/3)
+x = 300° (5π/3)
+F_n = 0.4·20·cos(35°)
+F_n = 8·0.819152
+F_n = 6.55322
+3sin(x) = 0
+Isolating sin(x)
+sin(x) = 0
+x = kπ, k ∈ ℤ
+x = 0 (0°)
+x = π ≈ 3.142 (180°)
+x = 2π ≈ 6.283 (360°)
+x/3 + 1 = 2
+1/3x + 1 = 2
+Subtracting 1 on both sides
+1/3x = 1
+Dividing both sides by 1/3
+x = 1/(1/3) = 3
+PES = ((120000 − 80000)/80000)/((250 − 200)/200)
+Subtracting
+PES = (40000/80000)/((250 − 200)/200)
+PES = (1/2)/((250 − 200)/200)
+PES = (1/2)/(50/200)
+Multiplying by the reciprocal
+PES = 1/2·4
+Multiplying the fractions
+cost = 12·3 + 4
+cost = 36 + 4
+F_n=20cos(60°)
+F_n = 20cos(60°)
+Evaluating the function
+F_n = 20·0.5
+12·3 + 4
+= 36 + 4
+360 = 2³·45
+Dividing by 3 repeatedly
+45 = 3²·5
+72
+72 = 2³·9
+9 = 3²
+Testing for divisors
+97 is divisible by no prime up to its square root, 9.84886; it is therefore prime.
+Writing as a fraction
+0.375 = 375/1000
+Dividing through by 125
+10101010 11110100 11000110 00011101 11011100 11000101 11101000 10100010
+11011010 10111110 11011110 00001111 00111011 01001000 00101100 11011001
+10101110 10101001 01000011 01001101
+1010101011110100110001100001110111011100110001011110100010100010110110101011111011011110000011110011101101001000001011001101100110101110101010010100001101001101
+FAIL sha1 binary: no details
+SHA-256("hello")
+Encoding the message as UTF-8
+68 65 6c 6c 6f
+Applying SHA-256
+The message is padded to a multiple of 512 bits and compressed block by block, which gives a digest of 256 bits.
+xb + xc
+2x + 3x
+3ab − ab + 2b
+= 2ab + 2b
+−2x − 4
+1/(7b) = 11x/y
+Collecting the terms in x
+11x/y = 1/(7b)
+E = 1/2·mv²
+Collecting the terms in v
+mv²/2 = E
+Isolating v²
+v² = 2E/m
+2² = 4
+Evaluating the power
+1/3 ≈ 0.3333
+Dividing
+0.333333 ≈ 0.3333
+Comparing the two sides
+9e16=1*!c^2
+9×10¹⁶ = 1c²
+Substituting c = 3.00×10⁸ m s⁻¹
+9×10¹⁶ = 1(3×10⁸)²
+9×10¹⁶ = 1·9×10¹⁶
+3*4 < 2^3
+3·4 < 2³
+12 < 8
+12 > 8
+x = 5!/(3!·2!)
+Evaluating the factorials
+x = 120/(6·2)
+x = 120/12
+x=3!^2
+x = (3!)²
+Evaluating the factorial
+x = 6²
+x = 36
+nCr(5,2)
+C(5, 2)
+Applying the formula
+C(n, r) = n!/(r!(n − r)!) = 5!/(2!·3!)
+Cancelling 3!
+= (5·4)/(2·1)
+= 20/2
+5C2
+C(10,8)
+C(10, 8)
+C(n, r) = n!/(r!(n − r)!) = 10!/(8!·2!)
+Cancelling 8!
+= (10·9)/(2·1)
+= 90/2
+= 45
+nCr(52,5)
+C(52, 5)
+C(n, r) = n!/(r!(n − r)!) = 52!/(5!·47!)
+Cancelling 47!
+= (52·51·50·49·48)/(5·4·3·2·1)
+= 311875200/120
+= 2598960
+nCr(5,0)
+C(5, 0)
+C(n, r) = n!/(r!(n − r)!) = 5!/(0!·5!)
+Cancelling 5!, as 0! = 1
+nCr(5,1)
+C(5, 1)
+C(n, r) = n!/(r!(n − r)!) = 5!/(1!·4!)
+Cancelling 4!
+nCr(100,50)
+C(100, 50)
+C(n, r) = n!/(r!(n − r)!) = 100!/(50!·50!)
+Cancelling 50!
+= (100·99·…·51)/50!
+nPr(5,2)
+P(5, 2)
+P(n, r) = n!/(n − r)! = 5!/3!
+= 5·4
+= 20
+nPr(5,5)
+P(5, 5)
+P(n, r) = n!/(n − r)! = 5!/0!
+Using 0! = 1
+= 5!
+nPr(5,0)
+P(5, 0)
+P(n, r) = n!/(n − r)! = 5!/5!
+Cancelling 5!
+x=nCr(5,2)
+x = C(5, 2)
+x = (5·4)/(2·1)
+x = 20/2
+nCr(n,2), n=5
+C(n, 2)
+Substituting n = 5
+= C(5, 2)
+2*nCr(6,3)+1
+2C(6, 3) + 1
+Evaluating the combination
+= 2·20 + 1
+= 40 + 1
+nPr(4,2)*2
+P(4, 2)·2
+Evaluating the permutation
+= 12·2
+= 24
+h = 0.5g·3²
+h = 0.5·9.8·3²
+h = 4.9·9
+h = 44.1
+E = 0.002c²
+E = 0.002(3×10⁸)²
+E = 0.002·9×10¹⁶
+20 = 0.5g·t²
+20 = 0.5·9.8·t²
+Writing in standard form
+4.9t² − 20 = 0
+Isolating t²
+t² = 4.08163
+t ≈ −2.02031
+t ≈ 2.02031
+100=m*g
+100 = m·g
+100 = m·9.8
+Rearranging
+9.8m = 100
+Dividing by 9.8
+m ≈ 10.2041
+0=20t-0.5g*t^2
+0 = 20t − 0.5g·t²
+0 = 20t − 0.5·9.8·t²
+4.9t² − 20t = 0
+b² − 4ac = (−20)² − 4·4.9·0 = 400
+Applying the quadratic formula
+t = (−b ± √(b² − 4ac))/2a = (20 ± √400)/9.8
+t = 0
+t ≈ 4.08163
+x² = π
+Collecting all terms on the left
+x² − 3.14159 = 0
+Isolating x²
+x² = 3.14159
+v=-(3-1)
+v = −(3 − 1)
+v = −2
+∑(k = 0…10) k·20
+Writing out the terms
+= 0·20 + 1·20 + 2·20 + … + 9·20 + 10·20
+Evaluating each term
+= 0 + 20 + 40 + … + 180 + 200
+Adding the terms
+\sum_{k=1}^{100} k
+∑(k = 1…100) k
+= 1 + 2 + 3 + … + 99 + 100
+2x + y = 5,   x − y = 1
+(1)
+2x + y = 5
+(2)
+x − y = 1
+Eliminating y: (1) + (2)
+3x = 6
+Substituting x = 2 into (1)
+2·2 + y = 5
+y = 1
+3x = 2,   3x = 1
+3x = 1
+Solving (1)
+Solving (2)
+y = 2x + 1,   y = −x + 4
+Writing (1) in standard form
+2x − y = −1
+Writing (2) in standard form
+x + y = 4
+3x = 3
+Substituting x = 1 into (1)
+2·1 − y = −1
+y = 3
+x=2, y=1
+x = 2,   y = 1
+2x=4, 3y=2
+2x = 4,   3y = 2
+3y = 2
+Solving (2) for y
+y = 2/3
+x^2+y+z=3, x+y^2+z=3, x+y+z^2=3
+(−3, −3, −3)
+(−√2, −√2, 1 + √2) ≈ (−1.41421, −1.41421, 2.41421)
+(−√2, 1 + √2, −√2) ≈ (−1.41421, 2.41421, −1.41421)
+(1 − √2, √2, √2) ≈ (−0.414214, 1.41421, 1.41421)
+(1, 1, 1)
+(√2, 1 − √2, √2) ≈ (1.41421, −0.414214, 1.41421)
+(√2, √2, 1 − √2) ≈ (1.41421, 1.41421, −0.414214)
+(1 + √2, −√2, −√2) ≈ (2.41421, −1.41421, −1.41421)
+10*10%
+50%
+200+10%
+= 220
+200-10%
+= 180
+200+50*10%
+= 205
+15% of 80
+= 12
+15%*80
+5%5
+= 0
+10 % 3
+-7%3
+(10+5)%4
+= 3
+m1 mac
+r2d2
+9to5mac
+q4 2026
+5 ft 10
+wi-fi 6
+e2e
+2+2=5 meme
+$100
+100$
+2026-10-06
+10/6/2026
+007
+2 x + 3 x
+F=kq/r^2, r=?
+r = ±√(kq/F)
+3+1=4 || 3=1
+3=1 || 2=5
+3=1 && 2=2
+2=2 && 3=3
+1=1 && 2=3 || 4=4
+1<2 && 2<3 && 3<4
+1/3===0.33
+1/3===0.3333333333333333
+1/3===1/3
+0.5===1/2
+2^10===1024
+sqrt(2)^2===2
+0.1+0.2==0.3
+1/3==0.3333
+5 !== 5
+3=1 and 2=2
+3=1 or 2=2
+3=1 AND 2=2
+not 3=1
+!(3=1 || 2=2)
+(1=1 || 2=3) && 3=3
+1=1 and not 2=3
+not (1=1 and 2=3) or 4=5
+2 and 3
+salt and pepper
+x or y
+x=2 && 3=3
+ls
+In /bin, shown in Finder
+'/bin/ls'
+bin
+A folder, opened in Finder: /usr/bin
+/usr/bin/
+file:///bin/ls
+/no/such/place.jar
+/
+/2
+~
+~/Code
+paths
+Press Return, or click, to type it in Terminal without running it
+commands
+> top
+x>2
+1<x<5
+> 5
+nil
+top
+>top
+>ls -la
+ls -la
+> echo "a\"b" 'c' \\ $HOME
+echo "a\"b" 'c' \\ $HOME
+> ls my_file
+ls my_file
+> sudo rm x
+sudo rm x
+>
+> top\rls
+> 2+2
+> echo ans clip ans1
+echo ans clip ans1
+FAIL > top: a command gave ans a value
+5
+commandReturn
+Click, or press Return here, to type it in Terminal without running it
+sudo ls
+echo 'a'"b" \ $HOME
+ls; echo $(whoami) `id` !! 'it''s'
+rm -rf ~/x
+clear; print -rz --
+/bin/zsh
+-f
+-c
+print -rn --
+mean(1,2,3,4)
+median(3,1,2)
+mode(1,2,2,3)
+stdevp(2,4,4,4,5,5,7,9)
+var(1,2,3,4)
+= 5/3
+geomean(1,2,4)
+binompdf(10,0.5,3)
+= 15/128
+binomcdf(10,0.5,3)
+= 11/64
+gcd(12,18)
+lcm(4,6)
+5P3
+= 60
+17 mod 5
+mod(17,5)
+floor(3.7)
+ceil(3.2)
+round(79.695,2)
+= 797/10
+max(3,5,9)
+= 9
+min(3,5)
+|3-7|+2
+$5*3
+= 15
+20% off 80
+= 64
+1<<4
+= 16
+256>>2
+12&10
+= 8
+xor(12,10)
+log(8,2)
+log2(8)
+sec(0)
+cbrt(27)
+fib(10)
+totient(36)
+nextprime(100)
+= 101
+hypot(3,4)
+sqrt(-4)
+= 2i
+1/0
+200!
+Too large
+255 in hex
+FF
+hex(255)
+bin(10)
+1010
+3 in binary
+11
+5 in base 1
+11111
+3 in unary
+111
+0xFF in decimal
+255
+x < −2 or x > 2
+x^2<4
+−2 < x < 2
+x^2>=0
+x^2<0
+x^2 != 4
+x ≠ −2, 2
+x^3-x>0
+−1 < x < 0 or x > 1
+2x+3<7
+x < 2
+x^2-5x+6>0
+x < 2 or x > 3
+x² + 2x + 1
+(x − 2)(x − 3)
+factor(2x^2-8)
+2(x + 2)(x − 2)
+factor(x^3-x)
+x(x + 1)(x − 1)
+derivative(x^3+2x)
+3x² + 2
+d/dx sin(x)
+cos(x)
+expand ((x+1)^2)
+expand (x+1)^2
+expand 3(x+2)
+3x + 6
+factor x^2-5x+6
+derivative x^3
+3x²
+integrate x^2, 0, 1
+derivative(x^2, 3)
+integrate(x^2)
+x³/3 + C
+integrate(x^2, 0, 1)
+∫_0^1 x^2 dx
+integrate(1/x)
+ln|x| + C
+x^2+x+1=0
+x = (−1 ± √3 i)/2
+= 3.10686 miles
+5 km
+100 F to C
+= 37.7778 °C
+100 °F
+12 in to cm
+= 30.48 cm
+12 in
+2.5e-3
+= 1/400
+≈ 0.0025
+≈ 3.14159
+basePrefix
+0b11
+0xFF
+3.10685596119
+255 to hex
+FAIL copy of a base
+FAIL copy of a mean
+(1+2i)*(3-i)
+= 5 + 5i
+i^2
+= −1
+e^(i*pi)
+|3+4i|
+sqrt(-1)*sqrt(-1)
+(2+3i)/(1-i)
+= −1/2 + 5i/2
+3i+2i
+= 5i
+conj(3+4i)
+= 3 − 4i
+ln(-1)
+= 3.14159i
+transpose([[1,2,3],[4,5,6]])
+[[1, 4], [2, 5], [3, 6]]
+rank([[1,2],[2,4]])
+dot([1,2,3],[4,5,6])
+cross([1,2,3],[4,5,6])
+[−3, 6, −3]
+norm([3,4])
+[[1,2],[3,4]]*[[0,1],[1,0]]
+[[2, 1], [4, 3]]
+[[1,2],[3,4]]^2
+[[7, 10], [15, 22]]
+[[1,2],[3,4]]*[1,1]
+[3, 7]
+inv([[1,2],[2,4]])
+limit(sin(x)/x, x, 0)
+limit((1-cos(x))/x^2, x, 0)
+limit(1/x, x, 0)
+Does not exist
+limit(1/x, x, inf)
+limit(x^2, x, inf)
+∞
+lim(x*ln(x), x, 0)
+|2x+1|<3
+−2 < x < 1
+|x|>2
+exp(x)>1
+x > 0
+\binom{5}{2}
+\log_2 8
+\log_{2}{8}
+\left|-5\right|
+\int_0^1 x^2 dx
+\lim_{x\to 0}\frac{\sin x}{x}
+\frac{d}{dx}(x^3)
+x^4-12x^3+37x^2+30x-200=0
+x = −2, 4, 5
+x^6+30x^5+375x^4+2500x^3+9375x^2+18750x+15625=0
+x = −5
+(x-5)^2(x+1)(x-4)=0
+x = −1, 4, 5
+-x^4+12x^3-37x^2-30x+200>=0
+−2 ≤ x ≤ 4 or x = 5
+mean([1,2,3,4])
+2⁵
+x⁴-1=0
+x = ±1
+5+5i
+-2
+FAIL copy of a determinant
+15\% \text{ of } 80
+20\% \text{ off } 80
+\sin 30^\circ
+\sec 0
+\sec^2 0
+\lfloor 3.7 \rfloor
+\left\lceil 3.2 \right\rceil
+\gcd(12,18)
+17 \bmod 5
+{5 \choose 2}
+\operatorname{mean}(1,2,3,4)
+\mathrm{e}^{i\pi}
+\overline{3+4i}
+5\,\mathrm{km} \text{ to } \mathrm{mi}
+= 3.10686 mi
+\det \begin{pmatrix} 1 & 2 \\ 3 & 4 \end{pmatrix}
+\begin{vmatrix} 1 & 2 \\ 3 & 4 \end{vmatrix}
+\begin{bmatrix} 1 & 2 \\ 3 & 4 \end{bmatrix}^{-1}
+\begin{pmatrix} 1 & 2 \\ 3 & 4 \end{pmatrix}^T
+[[1, 3], [2, 4]]
+\begin{pmatrix} 1 & 2 \\ 3 & 4 \end{pmatrix}\begin{pmatrix} 1 \\ 1 \end{pmatrix}
+\left\| \begin{pmatrix}3\\4\end{pmatrix} \right\|
+\int_0^1 x^2 \, \mathrm{d}x
+\int x^2 \, dx
+\frac{d}{dx}\left( x^3 + 2x \right)
+\lim_{x \to 0^+} \frac{\sin x}{x}
+\lim_{x \to \infty} \frac{1}{x}
+\sum\limits_{k=1}^{5} k^2
+x \ne 2
+x ≠ 2
+3=1 \lor 2=2
+\lnot (3=1)
+\left\{ \begin{array}{l} x+y=10 \\ x-y=2 \end{array} \right.
+x = 6, y = 4
+\tan^{-1} 1
+= π/4
+（x＋1）＾2=4
+x = −3, 1
+\sin x=\frac{\sqrt{3}}{2},\quad 0^\circ\le x<360^\circ
+x = 60°, 120°
+= π/3, 2π/3 rad, for 0° ≤ x < 360°
+sin(x)=sqrt(3)/2, 0<=x<=2pi
+x = π/3, 2π/3
+\cos x=\frac12,\quad x\in[0,2\pi)
+cos(x)=1/2, x in [0, 2π)
+2sin(x)=1, 0°<x<720°
+x = 30°, 150°, 390°, 510°
+x^2=4, x>0
+for x > 0
+x^2=4, x<0
+x = −2
+for x < 0
+sin(x)=2, 0<=x<=360
+expand （（x＋1）＾2）
+v = 14
+s=ut+1/2at^2, u=0, a=9.8, t=2
+s = 98/5
+v=u+at, v=14, u=2, a=3
+t = 4
+F=ma, m=2, a=3
+F = 6
+2^64
+= 18446744073709551616
+20!
+= 2432902008176640000
+2^100
+= 1267650600228229401496703205376
+(2^64)/2
+= 9223372036854775808
+1 1/2 + 2 3/4
+= 17/4
+1+2+...+100
+2+4+6+…+20
+= 110
+1*2*...*5
+sum of 1 to 100
+5 km + 300 m
+= 5300 m
+5 ft 10 in to cm
+= 177.8 cm
+1 h 30 min
+= 90 min
+md5("hello")
+5d41402abc4b2a76b9719d911017c592
+d2/dx2 x^3
+6x
+second derivative of x^3
+0.75 to fraction
+= 3/4
+12345 to scientific
+= 1.2345×10⁴
+0.25 to percent
+= 25%
+2024 to roman
+MMXXIV
+MCMXCIV to number
+= 1994
+quartile([1,2,3,4,5,6,7,8],1)
+= 11/4
+percentile([1,2,3,4,5],50)
+corr([1,2,3],[2,4,6])
+linreg([1,2,3],[2,4,6])
+y = 2x
+1 < x < 5
+x>1 && x<5
+x<1 or x>5
+x < 1 or x > 5
+x^2>4 && x<10
+x < −2 or 2 < x < 10
+x>5 && x<1
+SIN(30°)
+Sqrt(16)
+NCR(5,2)
+solve 2x+3=7
+2x+3=7 solve for x
+find x: 2x=6
+what is 15% of 80
+2^(x+1)=3^x
+x ≈ 1.70951
+1/x+1/(x+1)=1
+x = (1 ± √5)/2
+1/x=2
+(x+1)/(x-1)=2
+2/(x-1)=x
+x = −1, 2
+x+1/x=3
+x = (3 ± √5)/2
+(x^2-1)/(x-1)=2
+x/x=1
+x ∈ ℝ, x ≠ 0
+1/(x-2)+1/(x+2)=1/3
+x = 3 ± √13
+e^x=0
+5'7
+= 1.7018 m
+5'7"
+5' 7" to cm
+= 170.18 cm
+5’7”
+5'7 in
+5'7 in cm
+5'7 to meters
+= 1.7018 meters
+6'
+= 1.8288 m
+6' to in
+= 72 in
+5'10.5" to cm
+= 179.07 cm
+5'7 to kg
+1.7018
+18446744073709551616
+sin(x)^2+cos(x)^2
+1-sin(x)^2
+= cos(x)²
+sin(x)/cos(x)
+= tan(x)
+2sin(x)cos(x)
+= sin(2x)
+sin(x)cos(x)
+= sin(2x)/2
+cos(x)^2-sin(x)^2
+= cos(2x)
+1-2sin(x)^2
+(1-cos(2x))/2
+= sin(x)²
+tan(x)cos(x)
+= sin(x)
+1+tan(x)^2
+= sec(x)²
+sin(x+pi/2)
+= cos(x)
+1-sin(x)^2-cos(x)^2
+3sin(x)^2+3cos(x)^2
+2sin(3x)cos(3x)
+= sin(6x)
+\sin^2 x + \cos^2 x
+\frac{\sin x}{\cos x}
+sin(x°)^2+cos(x°)^2
+sin(0.3)*sin(x)/cos(x)
+= sin(0.3)·tan(x)
+sin(0.3)/cos(x)
+≈ 0.29552/cos(x)
+2*sin(0.3)/cos(x)
+≈ 0.59104/cos(x)
+sin(x)
+tan(x)
+sin(x)+cos(x)
+sin(x)^2
+x+sin(x)
+sin x^2 + cos x^2
+29-12)/5
+= 17/5
+1+2)*3
+x=29-12)/5
+x = 17/5
+(1+2)+3)
+2*(1+2))
+u_1=12, u_5=29, d
+d = 17/4
+u_{1}=12, u_{5}=29, d
+u_2=6, u_4=24, d
+d = 9
+u_1=3, u_4=24, r
+r = 2
+u_1=2, d=3, u_10=?
+u_10 = 29
+u_1=2, r=3, u_5=?
+u_5 = 162
+u_1=2, u_3=18, S_5=?
+Arithmetic: S_5 = 90
+u_1=12, u_5=29, d=?
+u_1=12, u_5=29, r=?
+r = ±(29/12)^(1/4)
+u_1=12, u_5=29
+u+1=12, u_5=29
+Arithmetic
+Geometric
+u+1=12, u_5=29, d
+u_n = 12 + (17/4)(n − 1)
+u1=12, u_5=29, d
+u-1=12, u_5=29, r
+≈ ±1.24682, u_n = 12·r^(n − 1)
+u_2=6, u_4=24, r
+r = ±2
+u_n = 6·r^(n − 2)
+d_1=10,d_3=20,r
+r = ±√2
+≈ ±1.41421, d_n = 10·r^(n − 1)
+u_1=3, u_3=7, r
+r = ±√21/3
+u_1=1, u_2=2, u_3=4, d
+No common difference
+u_2=6, u_4=24, u_6=?
+Arithmetic: u_6 = 42
+Geometric: u_6 = 96
+u_2=6, u_4=24, u_5=?
+Arithmetic: u_5 = 33
+Geometric: u_5 = 48 or −48
+u_1=-4, u_2=6, r
+(a-b)^2
+= a² − 2ab + b²
+(x+1)^3
+= x³ + 3x² + 3x + 1
+(x+1)(x-1)
+= x² − 1
+(a+b)(c+d)
+= ac + ad + bc + bd
+2(a+b)^2
+= 2a² + 4ab + 2b²
+(a+b)^2-(a-b)^2
+= 4ab
+(a+b)^1
+= a + b
+(a+b)^0
+(x-1)^1
+= x − 1
+(2a+3b)^2
+= 4a² + 12ab + 9b²
+3(x+1)
+(a+b)
+1/3
+1/3+1/6
+= 0.5
+2/3*3
+x=10/4
+x = 2.5
+50*c^2
+= 4.5×10¹⁸
+c^2*50
+2*c
+= 6×10⁸
+50*g
+= 490
+e=50*c^2
+E = 4.5×10¹⁸
+e=mc^2, m=50
+Taking m = 50, c = 3.00×10⁸ m s⁻¹
+E=mc^2, m=50
+5.05=f*1.6, f = mgcos(25deg)*mu,m=1.3
+μ ≈ 0.273355
+Taking m = 1.3, f = 3.15625, g = 9.8 m s⁻²
+5.05=f*1.6, f = 1.3gcos(25deg)*mu
+f = 101/32, μ = 0.273355
+≈ 3.15625, 0.273355
+x+y=g, x-y=1
+x = 27/5, y = 22/5
+≈ 5.4, 4.4
+x+y=10g, x-y=2
+x = 50, y = 48
+c+d=3, c-d=1
+c = 2, d = 1
+a=2b, b=c+1, c=3
+a = 8
+Taking c = 3, b = 4
+F=ma, a=v/t, v=10, t=2, m=3
+F = 15
+Taking v = 10, t = 2, m = 3, a = 5
+5.05=f*1.6, f=N*mu, N=mgcos(25deg), m=1.3
+Taking m = 1.3, f = 3.15625, N ≈ 11.5464, g = 9.8 m s⁻²
+5.05 = f·1.6,   f = Nμ,   N = mg·cos(25°)
+Solving (1) for f
+5.05 = f·1.6
+f = 101/32 ≈ 3.15625
+Substituting m = 1.3, g = 9.8 m s⁻² into (3)
+N = 1.3·9.8·cos(25°)
+N ≈ 11.5464
+Substituting f = 3.15625, N ≈ 11.5464 into (2)
+3.15625 = 11.5464μ
+0.273354517796
+v = u + at
+Substituting u = 2, a = 3, t = 4
+v = 2 + 3·4
+v = 2 + 12
+mgh=1/2mv^2, h=5
+v ≈ ±9.89949
+Taking h = 5, g = 9.8 m s⁻²
+mgh = 1/2·mv²
+Substituting h = 5
+mg·5 = 1/2·mv²
+Dividing both sides by m
+g·5 = 1/2·v²
+9.8·5 = 1/2·v²
+0.5v² − 49 = 0
+v² = 98
+ma=mg, a=?
+a = g
+mgh=1/2mv^2,v=2
+h ≈ 0.204082
+Taking v = 2, g = 9.8 m s⁻²
+F=kq_1q_2/r^2, k=8.99e9, q_1=2e-6, q_2=3e-6, r=0.05
+F = 2697/125
+≈ 21.576
+mg*1.2+1/2mv^2,m=55,v=0.9
+mg·1.2 + 1/2·mv²
+Substituting m = 55, v = 0.9, g = 9.8 m s⁻²
+= 55·9.8·1.2 + 1/2·55·0.9²
+= 539·1.2 + 0.5·55·0.81
+= 646.8 + 27.5·0.81
+= 646.8 + 22.275
+= 669.075
+12=1.8+4vcos(theta)
+12 = 1.8 + 4v cos(θ)
+12 = 4v cos(θ) + 9/5
+Subtracting 4v cos(θ) on both sides
+−4v cos(θ) + 12 = 9/5
+Subtracting 12 on both sides
+−4v cos(θ) = −51/5
+Dividing both sides by −4
+v cos(θ) = (−51/5)/(−4) = 51/20
+v and θ cannot be found separately from one equation.
+2x+3=7
+2x + 3 = 7
+2x = 4
+x = 4/2 = 2
+mgh=1/2mv^2
+A value is required for h or v.
+2a+3b=7
+A value is required for a or b.
+5.05=f*1.6, f=N*mu
+A value is required for N or μ.
+s=ut+1/2at^2, u=0
+Values are required for two of s, t and a.
+x+y+z, z=1
+= x + y + 1
+Taking z = 1
+m·gh = 1/2·mv²
+gh = 1/2·v²
+Identifying the unknowns
+h, v
+Expressing h in terms of v
+h = v²/(2g)
+Expressing v in terms of h
+v = ±√(2gh)
+5.05 = f·1.6,   f = Nμ
+N, μ
+Expressing N in terms of μ
+N = 101/(32μ)
+Expressing μ in terms of N
+μ = 101/(32N)
+x=5
+x+y
+hello world
+≈ 669.075
+Taking m = 55, v = 0.9, g = 9.8 m s⁻²
+1/2mv^2, m=2, v=3
+Taking m = 2, v = 3
+x^2+1, x=3
+Taking x = 3
+x+y, x=2
+= y + 2
+Taking x = 2
+n*x, n=2
+Taking n = 2
+mg*1.2+1/2mv^2, m=55
+= 55v²/2 + 646.8
+Taking m = 55, g = 9.8 m s⁻²
+x>1, x=3
+(n(n-1)(n-3))/3!*(-2x)^3,n=1/2
+= −5x³/6
+Taking n = 1/2
+(n(n-1)(n-2))/3!*(-2x)^3, n=1/2
+= −x³/2
+n(n-1)/2!*x^2, n=1/3
+= −x²/9
+Taking n = 1/3
+n(n-1)/2*(3x)^2, n=-1/3
+= 2x²
+Taking n = −1/3
+n(n-1)(n-2)/3!*(2x)^3+n*2x+1, n=1/2
+= x³/2 + x + 1
+(n(n-1)(n-3))/3!,n=1/2
+= 5/48
+≈ 0.104167
+n!/(r!(n-r)!), n=5, r=2
+Taking n = 5, r = 2
+y=mx+c, m=2/3, c=1, x=3
+Taking m = 2/3, c = 1, x = 3
+12=1.8+4vcos(theta), theta=1/2
+v ≈ 2.90571
+Taking θ = 1/2 rad
+(n(n-1)(n-3))/3!*-2x^,n=1/2
+!c*2, c=3
+(n(n − 1)(n − 3))/(3!)(−2x)³
+Substituting n = 1/2
+= (1/2(1/2 − 1)(1/2 − 3))/(3!)(−2x)³
+Combining the powers
+2x*3!+x
+= 13x
+Solving an equation
+Evaluating
+ax+by=1, bx+ay=2
+Solving simultaneous equations in letters
+y
+a
+b
+Writing in the values given
+m
+v
+dy/dx+2xy=2x
+Solving a differential equation
+T_5(x),\quad f(x)=\ln(1+x)\cos(x)
+Finding a Taylor polynomial
+(2x^2+1/ax^2)^9
+1/ax² is read as (1/a)·x²; for 1/(ax²), write the brackets.
+1/(x-2)=3
+Where x ≠ 2
+sqrt(x-1)=2
+Where x ≥ 1
+ln(2x-4)=1
+Where x > 2
+(1+x)^60
+(n(n − 1)(n − 3))/(3!)(−2x)³,   n = 1/2
+2 + 2
+5 km → miles
+x + y = 3,   x − y = 1
+12 = 1.8 + 4v·cos(θ),   θ = 30°
+(n(n-1)(n-2)(n-3))/4!*(x/2)^4, n=1/2
+= −5x⁴/2048
+(n(n-1)(n-2)(n-3))/4!*(3x)^4, n=5/4
+= 2835x⁴/2048
+Taking n = 5/4
+0.1234567891x+x
+= 1.12346x
+0.333333x+x
+= 1.33333x
+0.142857142857x+x
+= 8x/7
+123456.789x+x
+= 123457789x/1000
+pi*x+x
+= 4.14159x
+1/1024+1
+= 1025/1024
+≈ 1.00098
+35/2048
+= 35/2048
+≈ 0.0170898
+3.14159*2
+= 6.28318
+nCr(1/2,3)
+= 1/16
+≈ 0.0625
+nPr(1/2,3)
+= 3/8
+≈ 0.375
+nCr(-1,2)
+nCr(2,5)
+nCr(8,3)*(2x)^3
+= 448x³
+nCr(n,3)*(-2x)^3, n=1/2
+pi === 3.14159265358979
+C(1/2, 3)
+C(n, r) = (n(n − 1)⋯(n − r + 1))/r! = (1/2·(−1/2)·(−3/2))/3!
+= (3/8)/6
+x^12/x^3
+= x⁹
+168*64x^12 * 1/ (a^3*x^3)
+= 10752x⁹/a³
+(2x^3)^12
+= 4096x³⁶
+(a+b)^10
+= a¹⁰ + 10a⁹b + 45a⁸b² + 120a⁷b³ + 210a⁶b⁴ + 252a⁵b⁵ + 210a⁴b⁶ + 120a³b⁷ + 45a²b⁸ + 10ab⁹ + b¹⁰
+sqrt(x)+sqrt(x)
+= 2√x
+T_5(x) = x − x²/2 − x³/6 + 3x⁵/40
+The Taylor polynomial of degree 5 about x = 0
+taylor(e^x sin(x), 4)
+T_4(x) = x + x² + x³/3
+The Taylor polynomial of degree 4 about x = 0
+series(cos(x), x, 6)
+T_6(x) = 1 − x²/2 + x⁴/24 − x⁶/720
+The Taylor polynomial of degree 6 about x = 0
+f_s=f*v/(v-u_s),f=440,v=340,u_s=20
+f_s = 467.5
+mean([1,2,3],[2,1,1])
+= 1.75
+= 7/4
+euler(x+y, 0, 1, 0.1, 3)
+y(0.3) = 1.362
+By Euler's method, in 3 steps of h = 0.1
+sin(A+B)=sin(A)*cos(B)+cos(A)*sin(B)
+A, B ∈ ℝ
+An identity: the two sides are equal for every A and B.
+cos(A-B)=cos(A)*cos(B)+sin(A)*sin(B)
+\lim_{x\to0}\frac{\sin(ax)-a\sin(x)}{x^3}
+= a/6 − a³/6
+limit((1-cos(ax))/x^2, x, 0)
+= a²/2
+\int e^{2x}\sin(3x)\,dx
+(e^(2x)(2sin(3x) − 3cos(3x)))/13 + C
+The integral with respect to x, up to a constant C
+integrate(x^2 e^(3x))
+((9x² − 6x + 2)·e^(3x))/27 + C
+integrate(x cos(3x))
+(cos(3x) + 3x·sin(3x))/9 + C
+integrate(2x e^(x^2))
+e^x² + C
+\frac{dy}{dx}+2xy=2x
+y = 1 + C·e^−x²
+The general solution; C is any constant
+dy/dx+2y=e^(3x)
+y = e^(3x)/5 + C·e^−2x
+x dy/dx + y = x^3
+y = x³/4 + C/x
+y'=cos(x)
+y = sin(x) + C
+dy/dx=y^2
+\begin{cases}ax+by=1\\bx+ay=2\end{cases}
+x = (a − 2b)/(a² − b²), y = (2a − b)/(a² − b²)
+Where a² − b² ≠ 0
+ax+y+z=1, x+ay+z=1, x+y+az=1
+x = 1/(a + 2), y = 1/(a + 2), z = 1/(a + 2)
+Where a³ − 3a + 2 ≠ 0
+A^{-1},\quad A=\begin{pmatrix}2&1&0\\1&2&1\\0&1&2\end{pmatrix}
+[[3/4, −1/2, 1/4], [−1/2, 1, −1/2], [1/4, −1/2, 3/4]]
+\left.\frac{d}{dx}\left(\frac{e^{x^2}\sin(3x)}{1+x^4}\right)\right|_{x=1}
+≈ −4.03662
+P(X\geq 8)=\sum_{k=8}^{12}\binom{12}{k}(0.37)^k(0.63)^{12-k}
+P(X≥ 8) ≈ 0.0359393
+\sum_{n=1}^{\infty}\frac{n}{3^n}
+≈ 0.75
+sum(n,1,inf,1/n^2)
+≈ 1.64493
+sum(n,1,inf,1/n)
+The terms do not get small fast enough for the sum to settle.
+(x+1)^4
+(x + 1)⁴
+Applying the binomial theorem
+(a + b)^n = ∑(k=0…n)  ^nC_k a^(n−k)b^k
+Writing the coefficients ⁴C_k, row 4 of Pascal's triangle
+1, 4, 6, 4, 1
+Substituting a = x, b = 1
+= x⁴ + 4x³ + 6x² + 4x + 1
+(2x^2+1/(ax^2))^9
+(2x² + 1/(ax²))⁹
+Writing the coefficients ⁹C_k, row 9 of Pascal's triangle
+1, 9, 36, 84, 126, 126, 84, 36, 9, 1
+Substituting a = 2x², b = 1/(ax²)
+= (2x²)⁹ + 9·(2x²)⁸·(1/(ax²)) + 36·(2x²)⁷·(1/(ax²))² + … + (1/(ax²))⁹
+Working out each term
+= 512x¹⁸ + 2304x¹⁴/a + 4608x¹⁰/a² + 5376x⁶/a³ + 4032x²/a⁴ + 2016/(x²a⁵) + 672/(x⁶a⁶) + 144/(x¹⁰a⁷) + 18/(x¹⁴a⁸) + 1/(x¹⁸a⁹)
+A value is required for E or h.
+669.075
+v ≈ 2.94449
+Taking θ = 30°
+12=1.8+4vcos(θ), θ=30°
+12=1.8+4vcos(theta), theta=pi/6
+Taking θ = π/6
+12=1.8+4vcos(theta), theta=30deg
+12=1.8+4vcos(theta), theta=30
+v ≈ 16.5314
+Taking θ = 30 rad
+s=r*theta, theta=2, r=3
+s = 6
+Taking θ = 2, r = 3
+v cos(θ) = 51/20
+≈ 2.55
+0.5mv^2=100
+mv² = 200
+m and v cannot be found separately from one equation.
+6/(ab)=2
+ab = 3
+a and b cannot be found separately from one equation.
+-ab=4
+ab = −4
+ab/2+1=4
+ab = 6
+vcos(theta)=2.55
+A value is required for v or θ.
+vcos(theta)+v=3
+ab + 1 = a
+(ab)^2=16
+(ab)² = 16
+(ab)² − (16) = 0
+(ab)² − 16 = 0
+ac = −16,  b = 0:  4 and −4
+(ab)² + 4ab − 4ab − 16 = 0
+ab(ab + 4) − 4(ab + 4) = 0
+(ab + 4)(ab − 4) = 0
+ab + 4 = 0 or ab − 4 = 0
+ab = −4 or ab = 4
+2.55
+m*c^2
+USD
+TWD
+EUR
+JPY
+BTC
+ETH
+USDT
+XMR
+NEAR
+XAU
+XAG
+750 USD to NTD
+= 23,664.23 TWD
+1 USD = 31.5523 TWD
+750USD=NTD?
+750usd=ntd
+750 Usd in twd
+$750 to ntd
+1,000 USD = TWD
+= 31,552.30 TWD
+jpy 10 to ntd
+= 2.10 TWD
+1 JPY = 0.210069 TWD
+¥1000 to ntd
+= 210.07 TWD
+€100 to usd
+= 116.28 USD
+1 EUR = 1.16279 USD
+USD 750 to Ntd
+20 yen to usd
+= 0.1332 USD
+1 JPY = 0.00665779 USD
+5 kwd to jpy
+No rate
+open.er-api.com has no rate for KWD.
+1000 JPY to EUR
+= 5.73 EUR
+1 JPY = 0.0057257 EUR
+usd to twd
+= 31.55 TWD
+1000 USD to JPY
+= 150,200 JPY
+1 USD = 150.2 JPY
+23664.23
+750.00 USD → TWD
+Taking the rate
+750.00 × 31.5523 = 23,664.23 TWD
+750.00 USD ≈ 23,664.23 TWD
+1 btc to usd
+= 100,000.00 USD
+1 BTC = 100000 USD
+0.5 BTC to twd
+= 1,577,615.00 TWD
+1 BTC = 3155230 TWD
+100 usd to btc
+= 0.001 BTC
+1 USD = 0.00001 BTC
+2 oz gold to usd
+= 8,000.00 USD
+1 XAU = 4000 USD
+2oz gold to usd
+2oz gold to ntd
+= 252,418.40 TWD
+1 XAU = 126209 TWD
+2 troy ounces of gold to usd
+10g gold to usd
+= 1,286.03 USD
+1ntd to glod
+= 0.00000792 XAU
+1 TWD = 0.00000792335 XAU
+1 usd to sliver
+= 0.02 XAG
+1 USD = 0.02 XAG
+1 usd to bitcon
+= 0.00001 BTC
+1 usd to abcd
+4000 usd to gold g
+= 31.1035 g gold
+1 USD = 0.00777587 g gold
+4000 usd to g gold
+4000 usd to grams of gold
+4000 usd to gold oz
+= 1.00 oz gold
+1 USD = 0.00025 oz gold
+1000 ntd to gold g
+= 0.2464 g gold
+1 TWD = 0.000246444 g gold
+1000 ntd to oz
+= 0.0079 oz gold
+1 TWD = 0.00000792335 oz gold
+1000 ntd to gold oz
+gold oz to usd
+= 4,000.00 USD
+2 gold oz to usd
+1 oz to usd
+5 oz to g
+= 141.748 g
+5 oz
+1 xau to usd
+gold to silver
+= 80.00 XAG
+1 XAU = 80 XAG
+31.1034768 g gold to usd
+1 eth to btc
+= 0.025 BTC
+1 ETH = 0.025 BTC
+1 bitcoin to ntd
+= 3,155,230.00 TWD
+1 sol to usd
+api.coinbase.com has no rate for SOL.
+10usdt to xmr
+= 0.02 XMR
+1 USDT = 0.002 XMR
+10 USDT to XMR
+1 monero to usd
+= 500.00 USD
+1 XMR = 500 USD
+1 xmr to btc
+= 0.005 BTC
+1 XMR = 0.005 BTC
+2 near to ntd
+= 126.21 TWD
+1 NEAR = 63.1046 TWD
+1 trx to usd
+api.kraken.com has no rate for TRX.
+1.00 XMR → BTC
+1.00 × 0.005 = 0.005 BTC
+1.00 XMR ≈ 0.005 BTC
+750 gbp
+750 USD to XYZ
+No rates saved
+There is no connection, and no rates for USD have yet been saved.
+Fetching the rates
+One moment: the card is made again when they arrive.
+(20/3)
+\left(\frac{20}{3}\right)
+= \frac{20}{3}
+\approx 6.66667
+x^{2} - 5x + 6 = 0
+sqrt(2)/2
+\frac{\sqrt{2}}{2}
+\sin(30^{\circ})
+= \frac{1}{2}
+\approx 0.5
+asin(0.5)
+\arcsin(0.5)
+= \frac{\pi}{6}
+= 30^{\circ}
+sum(k,1,10,k^2)
+\sum_{k = 1}^{10} k^{2}
+3e8*2
+3 \times 10^{8} \cdot 2
+F_n=6.55*2
+F_{n} = 6.55 \cdot 2
+x^2<=4
+x^{2} \le 4
+-2 \le x \le 2
+theta/2=pi
+\frac{\theta}{2} = \pi
+e^(2x)=5
+e^{2x} = 5
+\operatorname{lcm}(4, 6)
+x + y = 3, \quad x - y = 1
+x=(1/2)^2
+x = \left(\frac{1}{2}\right)^{2}
+((1/2)+1)*3
+\left(\frac{1}{2} + 1\right) \cdot 3
+2x^{2} + 3x - 1 = 0
+x = \frac{-3 - \sqrt{17}}{4} \approx -1.78078
+x = \frac{-3 + \sqrt{17}}{4} \approx 0.280776
+16-15 in binary
+Writing 16 in base 2
+16 = 10000 (base 2)
+Writing 15 in base 2
+15 = 1111 (base 2)
+Working it out in base 2
+10000 − 1111 = 1 (base 2)
+1 = 1 (base 2)
+decimal 1; hexadecimal 1; octal 1
+255+1 in hex
+Writing 255 in base 16
+255 = FF (base 16)
+Writing 1 in base 16
+1 = 1 (base 16)
+Working it out in base 16
+FF + 1 = 100 (base 16)
+256 = 100 (base 16)
+100
+decimal 256; binary 1 0000 0000; octal 400
+12*12 in hex
+Writing 12 in base 16
+12 = C (base 16)
+C × C = 90 (base 16)
+144 = 90 (base 16)
+90
+decimal 144; binary 1001 0000; octal 220
+sin2x+cos2x-1=2sinx(cosx-sinx)
+\sin 2\theta+\cos 2\theta-1=2\sin\theta(\cos\theta-\sin\theta)
+Double-angle formula
+sin(2
+cos(2
+values tried
+sampling presented as a proof
+=
+the reported trigonometric identity was not proved
+sin(x)^2+cos(x)^2=1+0.0000000001*sin(x)
+0.0000000000001*sin(x)=0
+sin(x)/sin(x)=1
+not a symbolic
+unproved trig simplification must say it is a numerical check
+-
+3x=9
+the final division was hidden
+factorising an equation must explain why each factor can be set to zero
+quadratic formula substitution missing
+derivative(sin(x^2))
+sin derivative and chain rule
+derivative(x^2*sin(x))
+Product rule
+derivative(sin(x)/x)
+Quotient rule
+derivative(x^3,2)
+derivative point substitution missing
+Fundamental theorem of calculus
+definite-integral theorem missing
+integrate(sin(3x))
+Using a linear substitution
+integration substitution missing
+Adding the constant of integration
+the only integral step was removed
+2/3+1/6
+3/4-1/6
+(1/2+1/3)/(2/5)
+-2/3+5/6
+(2/3)^2+1/9
+0.25+0.5
+fractional linear coefficients must remain exact in the working
+3x^2+2x+1
+sin(3x)
+1/(2x+1)
+x*exp(x)
+x^2*exp(2x)
+x*sin(x)
+x^2*cos(3x)
+2*x*exp(x^2)
+cos(x)*sin(x)
+2*x*cos(x^2)
+exp(x)*sin(x)
+exp(x)*cos(2x)
+integrate(x*exp(x))
+Applying integration by parts
+integration by parts must show the transformed integral
+integrate(2*x*exp(x^2))
+Rewriting the integral in u
+nonlinear substitution must show the integral in u
++
+*
+exp
+^
+Numerically suggested substitution
+sample-only substitution was presented as an algebraic derivation
+unproved substitution must not display an equality in u
+6*7
+Solution
+missing solution heading
+Solution (Multiplying)
+the operation was lost while merging the final answer
+constant
+the explanation of C was lost while merging the result
+Solutions
+distinct roots were merged
+i=sqrt(-1)
+-i=sqrt(-1)
+sqrt(-1)=i
+sqrt(-1)=-i
+i^2=-1
+(-i)^2=-1
+sqrt(-4)=2i
+sqrt(-4)=-2i
+i=i
+i=-i
+i^0=1
+(1+i)^2=2i
+1+i=2+i
+e^(i*pi)=-1
+sqrt(-1)*sqrt(-1)=-1
+(-1)^(1/2)=i
+1e-13*i=0
+i<1
+0^(-i)=0
+i=sqrt(-1) && -i != sqrt(-1)
+Principal square root
+complex square root needs its principal-value explanation
+z^2=-1
+z = ±i
+an equation's two complex roots were confused with the principal square root
+principal square root outside numeric range or wrong branch
+complex square root did not square back to its input
+result
+success
+rates
+rate refresh remained stuck
+duplicate in-flight rate requests
+automatic refresh ignored its cooldown
+manual refresh did not bypass cooldown
+503
+failed refresh discarded saved rates or hid the error
+retry after a failure did not recover
+all passed
+expand
+factor
+derivative
+integrate
+limit
+&&
+||
+not
+clip
+2+3*4
+5 x 5
+5×5
+5÷5
+2+3\times 4
+\frac{10}{4}
+5\cdot 5
+5\div 5
+2**8
+x²
+x⁴
+√2
+root(27,3)
+2^{10}
+\sqrt{2}
+\sqrt[3]{27}
+2(3+4)
+3sin x
+\left( \right)
+5!
+(n-1)!
+10!/(3!7!)
+10\%
+17%5
+17 \pmod{5}
+5.97e24
+1.6E-19
+1,000+250
+$12.50*3
+€10+5
+π
+e^2
+\pi
+e^{2}
+sin(x deg)
+sin(x rad)
+round(3.14159,2)
+trunc(3.9)
+frac(3.75)
+sign(-5)
+\lceil 3.2 \rceil
+abs(-5)
+\|3-7\|
+\left\| 3-7 \right\|
+\lvert x \rvert
+\max(3,5,9)
+\operatorname{lcm}(4,6)
+comb(5,2)
+5P2
+nCr(8,3)(2x)^3
+bor(12,10)
+0b1010
+ln(e)
+log(1000)
+log10(1000)
+lg(8)
+lb(8)
+\ln e
+\log 1000
+\log_{10} 1000
+cos
+tan
+sec
+csc
+cot
+asin
+arcsin
+sin^-1
+sinh
+asinh
+atan2(1,1)
+\sin
+\sec
+\arcsin
+\tan^{-1}
+\sinh
+exp(2)
+e^x
+\exp(2)
+e^{x}
+prod(k,1,5,k)
+\sum_{k=1}^{10} k^2
+30!
+3^50
+calculate 5*5
+ans1
+ans2
+log(n)=2
+x^{2}-5x+6=0
+2sin(3x+1)=1
+\sin x=\frac12
+sin(x)=sqrt(3)/2, 0°<=x<360°
+cos(x)=1/2, x in [0,2π)
+x∈[0,2π)
+x\in[0,2\pi)
+5.05=f*1.6, f=mgcos(25deg)*mu, m=1.3
+…, r
+±√2
+±(29/12)^(1/4)
+u_1=12, u_5=29, u_10=?
+S_5=?
+u_1=2, r=3, S_5=?
+u+1
+u1
+u_1
+u_5
+E=1/2*m*v^2, m=2, v=3
+PV=nRT, P=2, V=3, n=1, R=8.314
+n(n-1)(n-2)/3!*(-2x)^3, n=1/2
+30deg
+pi/6
+1/(7b)=11x/y
+\frac{1}{7b}=\frac{11x}{y}, x=?
+!c
+theta
+omega
+F_n
+\theta
+F_{n}
+x^2-4<=0
+\|2x+1\|<3
+x^2 \ge 4
+\left\| x \right\| < 3
+(m^4q^4z^-1)(mq^5z^3)
+35x^4/2048
+2sin(x)+3sin(x)
+mean
+median
+mode
+stdev
+stdevp
+var
+varp
+geomean
+rms
+range
+total
+quartile([…],1)
+percentile([…],90)
+iqr([…])
+corr([…],[…])
+cov([…],[…])
+linreg([…],[…])
+zscore(x,mu,sigma)
+binompdf(n,p,k)
+binomcdf(n,p,k)
+normpdf(x[,mu,sigma])
+normcdf(x[,mu,sigma])
+normalcdf(lo,hi[,mu,sigma])
+invnorm(p[,mu,sigma])
+poissonpdf(λ,k)
+poissoncdf(λ,k)
+arg(1+i)
+(1+2i)(3-i)
+e^{i\pi}
+[[1,2],[3,4]]
+[1,2,3]
+inv(…)
+transpose(…)
+trace(…)
+rank(…)
+identity(3)
+cross([1,0,0],[0,1,0])
+[[1,2],[3,4]]+[[1,1],[1,1]]
+2*[[1,2],[3,4]]
+[[1,2],[3,4]]^-1
+\begin{pmatrix} 1 & 2 \\ 3 & 4 \end{pmatrix}
+bmatrix
+vmatrix
+\det
+^{-1}
+^T
+\left\| v \right\|
+5 km in mi
+72 kg to lb
+60 mph to km/h
+1 GiB to MB
+1 atm to psi
+255 to octal
+255 in base 7
+oct(64)
+0xFF + 1
+5 ft 10 in
+1 h 30 min to s
+5'7" to cm
+1/3 to decimal
+$20 in yen
+100 euro to gbp
+usd
+Usd
+$
+€
+£
+¥
+₩
+₹
+NT$
+R$
+yen
+sterling
+ntd
+750*2 usd to ntd
+0.5 btc to usd
+₿1 to ntd
+1 xau to jpy
+10 g gold to ntd
+1 kg of silver to usd
+bitcoin
+monero
+chainlink
+10 usdt to xmr
+1 BTC = 82645.1 USD · offline, rates of 8 Oct 2026, 14:01
+expand (x+1)(x-1)
+factor 360
+diff(x^2, 3)
+derivative(x^3) at 2
+\frac{d}{dx}\left( x^3 \right)
+\frac{\mathrm{d}}{\mathrm{d}x} \sin x
+∫ x^2 dx
+\int_0^1 x^2 \, dx
+\int x^2 \, \mathrm{d}x
+limit((1+1/x)^x, x, inf)
+limit(1/x, x, 0+)
+\lim_{x \to 0} \frac{\sin x}{x}
+\lim_{x \to \infty}
+\lim_{x \to 0^+}
+sin(A+B)=sin(A)cos(B)+cos(A)sin(B)
+cos(2x)=1-2sin(x)^2
+E
+v_0
+lambda
+alpha
+beta
+phi
+rho
+tau
+mu
+epsilon
+!
+!k_e
+9e16=c^2
+2n
+2(x+1)
+sin 2x
+sin^2 x
+tan^-1 x
+deg
+°
+cos(35°)
+(29-12)/5
+（ｘ＋１）＾２
+cost = 12*3+4
+1/3~=0.3333
+≈
+==
+5 != 120
+≠
+<=
+>=
+≤
+≥
+and
+\|\|
+or
+!( )
+x=?
+x deg
+35°
+x rad
+d/dx x^3
+0-
+inf
+r
+x in [0,2π)
+[
+(
+solve …
+find x: …
+what is …
+1/3=0.3333
+===
+!=
+<
+not (1=1 and 2=3)
+\approx
+\ne
+\le
+\ge
+\land
+\lor
+\lnot
+1 − √2
+SHA1
+SHA384
+SHA512
+MD5
+sha256("hello", binary)
+/Users/me/Code/app.jar
+, with
+\,
+\;
+\quad
+\left
+\right
+(n(n-1))/2*(2x)^2, n=1/4
+(n(n-1)(n-2))/3!*(1/2)*x^3, n=-1
+(n)/1!*-1*x^1, n=-1/4
+(n(n-1)(n-2))/6*((1/2)x)^3, n=-3/3
+(n(n-1)(n-2)(n-3))/4!*3*x^4, n=-2/2
+(n(n-1))/2!*-1*x^2, n=-1/3
+(n(n-1)(n-2))/3!*-3*x^3, n=2/3
+(n(n-1)(n-2)(n-3))/4!*(2x)^4, n=-1/2
+(n(n-1))/2*1*x^2, n=3/2
+(n(n-1))/2*((1/2)x)^2, n=5/3
+(n(n-1)(n-2)(n-3))/24*((1/2)x)^4, n=5/4
+(n(n-1))/2!*(1x)^2, n=1/2
+(n)/1!*(-2x)^1, n=1
+(n)/1!*(-3x)^1, n=-2
+(n)/1*-2*x^1, n=2/4
+(n(n-1))/2*(2x)^2, n=5/3
+(n(n-1)(n-2)(n-3))/24*(1x)^4, n=-1/3
+(n(n-1)(n-2))/6*-1*x^3, n=2/3
+(n(n-1)(n-2)(n-3))/24*2*x^4, n=1/2
+(n(n-1))/2!*-2*x^2, n=-2
+(n(n-1)(n-2))/3!*(-2x)^3, n=-1
+(n)/1*(-2x)^1, n=3/3
+(n(n-1)(n-2)(n-3))/24*2*x^4, n=3/3
+(n(n-1))/2!*(3x)^2, n=3/2
+(n(n-1))/2!*3*x^2, n=-2/4
+(n(n-1)(n-2))/6*3*x^3, n=3/4
+(n(n-1)(n-2))/3!*-3*x^3, n=1/4
+(n)/1*(1/2)*x^1, n=-1/2
+(n)/1*(3x)^1, n=-3/4
+(n)/1!*(1/2)*x^1, n=2
+(n(n-1)(n-2))/3!*2*x^3, n=-2
+(n(n-1)(n-2)(n-3))/24*((1/2)x)^4, n=-1/2
+(n(n-1)(n-2)(n-3))/4!*2*x^4, n=1
+(n(n-1)(n-2))/3!*-3*x^3, n=3
+(n(n-1))/2!*(-1x)^2, n=1
+(n)/1*(1x)^1, n=-2/2
+(n(n-1))/2!*3*x^2, n=-1/2
+(n(n-1))/2*-2*x^2, n=-2/3
+(n(n-1))/2!*(-3x)^2, n=1/3
+(n(n-1)(n-2))/3!*(-1x)^3, n=3/3
+(n(n-1)(n-2)(n-3))/4!*-2*x^4, n=3
+(n(n-1)(n-2)(n-3))/24*-1*x^4, n=5/2
+(n)/1!*3*x^1, n=-2/4
+(n)/1!*2*x^1, n=-1/2
+(n(n-1))/2*(2x)^2, n=-2/4
+(n(n-1)(n-2)(n-3))/4!*(-1x)^4, n=3
+(n(n-1))/2!*(-2x)^2, n=2/2
+(n)/1*(-3x)^1, n=1/2
+(n)/1!*(2x)^1, n=3
+(n(n-1))/2!*3*x^2, n=5/4
+(n(n-1)(n-2)(n-3))/4!*2*x^4, n=2/3
+(n)/1!*(1x)^1, n=2
+(n(n-1)(n-2))/3!*(2x)^3, n=-1/2
+(n(n-1)(n-2))/3!*-3*x^3, n=-2/3
+(n(n-1))/2*(3x)^2, n=3/2
+(n(n-1)(n-2)(n-3))/4!*(-1x)^4, n=-2
+(n(n-1)(n-2)(n-3))/24*-2*x^4, n=3/3
+(n(n-1))/2!*3*x^2, n=5/3
+(n(n-1))/2!*(3x)^2, n=-3/4
+(n(n-1)(n-2))/3!*-2*x^3, n=-3/4
+(n(n-1)(n-2))/6*-1*x^3, n=-1/4
+(n(n-1))/2!*(-2x)^2, n=2
+(n)/1!*-2*x^1, n=3/3
+(n(n-1))/2!*-3*x^2, n=3/4
+(n(n-1))/2*(-2x)^2, n=-3/4
+(n(n-1))/2*(1x)^2, n=-2/3
+(n(n-1)(n-2))/3!*(-1x)^3, n=1/2
+(n(n-1)(n-2))/3!*(-3x)^3, n=-2
+(n(n-1)(n-2))/6*(1x)^3, n=-2/4
+(n(n-1)(n-2))/3!*(1/2)*x^3, n=-2
+(n(n-1))/2*-1*x^2, n=-1/4
+(n(n-1))/2*(2x)^2, n=3/3
+(n)/1*((1/2)x)^1, n=-1/3
+(n)/1!*1*x^1, n=-3/2
+(n)/1*-1*x^1, n=-1/4
+(n(n-1)(n-2))/6*2*x^3, n=-2/2
+(n(n-1)(n-2))/6*-2*x^3, n=1/2
+(n(n-1))/2!*3*x^2, n=5
+(n(n-1)(n-2))/6*-2*x^3, n=-3/4
+(n(n-1))/2*(3x)^2, n=2/4
+(n(n-1)(n-2))/6*(1x)^3, n=1/3
+(n)/1!*(2x)^1, n=1
+(n(n-1)(n-2))/6*(-2x)^3, n=1/4
+(n(n-1))/2!*1*x^2, n=1
+(n(n-1)(n-2))/3!*2*x^3, n=5/4
+(n(n-1)(n-2))/6*-2*x^3, n=2/4
+(n)/1!*-3*x^1, n=2
+(n)/1!*3*x^1, n=3
+(n(n-1))/2!*(1x)^2, n=2/3
+(n(n-1)(n-2)(n-3))/24*-3*x^4, n=-1/3
+(n(n-1)(n-2)(n-3))/24*(2x)^4, n=2/4
+(n(n-1)(n-2)(n-3))/4!*(1/2)*x^4, n=3/3
+(n(n-1)(n-2))/6*(-2x)^3, n=3/2
+(n(n-1)(n-2)(n-3))/24*2*x^4, n=-2/3
+(n(n-1)(n-2)(n-3))/4!*(3x)^4, n=3/2
+(n(n-1))/2!*(-2x)^2, n=-3
+(n)/1*-3*x^1, n=5/2
+(n(n-1)(n-2))/3!*(3x)^3, n=5/4
+(n(n-1))/2!*(3x)^2, n=1/2
+(n(n-1)(n-2)(n-3))/4!*(1x)^4, n=5/4
+(n)/1*(3x)^1, n=-3/2
+(n)/1*((1/2)x)^1, n=3/4
+(n(n-1))/2!*(-1x)^2, n=1/4
+(n(n-1)(n-2))/3!*-1*x^3, n=1
+(n(n-1)(n-2))/6*(1/2)*x^3, n=5/3
+(n)/1!*-3*x^1, n=5/4
+(n(n-1)(n-2))/6*3*x^3, n=2/3
+(n(n-1))/2!*(1/2)*x^2, n=1
+(n(n-1)(n-2)(n-3))/4!*(1/2)*x^4, n=-2/4
+(n(n-1))/2*-1*x^2, n=5/2
+(n(n-1)(n-2)(n-3))/4!*(1/2)*x^4, n=-3/3
+(n)/1!*2*x^1, n=-1/3
+(n(n-1)(n-2))/3!*(3x)^3, n=-3/2
+(n)/1!*-2*x^1, n=1/3
+(n(n-1))/2*(-1x)^2, n=3/4
+(n(n-1)(n-2))/3!*(-1x)^3, n=-2/3
+(n(n-1))/2*(-1x)^2, n=1/2
+(n(n-1)(n-2)(n-3))/4!*(-1x)^4, n=2
+(n(n-1))/2*3*x^2, n=-2/4
+(n(n-1))/2!*(1x)^2, n=-3
+(n(n-1))/2!*(-2x)^2, n=-1/3
+(n)/1!*2*x^1, n=-3/2
+(n(n-1))/2*(-2x)^2, n=5/4
+(n(n-1))/2!*-1*x^2, n=3
+(n)/1!*(-2x)^1, n=-2/2
+(n(n-1)(n-2)(n-3))/4!*(-1x)^4, n=5/3
+(n)/1!*(-3x)^1, n=1/4
+(n(n-1)(n-2)(n-3))/4!*3*x^4, n=3/2
+(n)/1*(1x)^1, n=3/2
+(n)/1!*2*x^1, n=1
+(n)/1!*3*x^1, n=-1/2
+(n(n-1)(n-2))/3!*(2x)^3, n=-1/3
+(n)/1!*1*x^1, n=1
+(n(n-1)(n-2)(n-3))/24*(-1x)^4, n=-2/2
+(n)/1!*(1/2)*x^1, n=3/4
+(n)/1*(-1x)^1, n=3/3
+(n(n-1)(n-2)(n-3))/24*((1/2)x)^4, n=-2/4
+(n)/1!*-1*x^1, n=1
+(n)/1!*3*x^1, n=1
+(n(n-1)(n-2))/6*((1/2)x)^3, n=-1/2
+(n)/1*(2x)^1, n=-1/4
+(n(n-1)(n-2)(n-3))/4!*(-3x)^4, n=5/4
+(n(n-1)(n-2)(n-3))/4!*(1/2)*x^4, n=-2
+(n(n-1)(n-2)(n-3))/24*-3*x^4, n=1/4
+(n)/1!*(-2x)^1, n=-1
+(n)/1*(2x)^1, n=-3/2
+(n(n-1)(n-2))/6*(1x)^3, n=-2/3
+(n(n-1))/2*-1*x^2, n=5/4
+(n(n-1)(n-2)(n-3))/4!*(3x)^4, n=3
+(n(n-1)(n-2)(n-3))/4!*-2*x^4, n=3/3
+(n(n-1)(n-2))/3!*((1/2)x)^3, n=-3/3
+(n)/1*((1/2)x)^1, n=5/2
+(n(n-1)(n-2))/6*2*x^3, n=5/3
+(n)/1!*(2x)^1, n=-3
+(n)/1*(3x)^1, n=3/2
+(n(n-1)(n-2)(n-3))/4!*(1x)^4, n=-2/3
+(n(n-1)(n-2)(n-3))/4!*((1/2)x)^4, n=1
+(n(n-1)(n-2))/3!*(1x)^3, n=-2/4
+(n(n-1))/2!*(2x)^2, n=1/3
+(n(n-1)(n-2)(n-3))/4!*(-3x)^4, n=3/3
+(n(n-1))/2!*(3x)^2, n=-1/4
+(n(n-1)(n-2))/3!*(-3x)^3, n=5/4
+(n)/1!*(-3x)^1, n=-2/4
+(n(n-1)(n-2)(n-3))/24*((1/2)x)^4, n=-2/3
+(n(n-1))/2*1*x^2, n=-3/3
+(n(n-1)(n-2)(n-3))/24*(1x)^4, n=-2/2
+(n(n-1)(n-2)(n-3))/4!*(-3x)^4, n=-3/4
+(n(n-1)(n-2))/3!*(3x)^3, n=1
+(n(n-1))/2!*(2x)^2, n=5/4
+(n(n-1))/2!*-3*x^2, n=5
+(n(n-1))/2!*2*x^2, n=1/2
+(n(n-1))/2!*(-1x)^2, n=5/2
+(n)/1*(-2x)^1, n=5/4
+(n(n-1))/2!*-2*x^2, n=1/4
+(n)/1!*-1*x^1, n=2/3
+(n(n-1)(n-2))/3!*(-2x)^3, n=1/3
+(n(n-1))/2*(-2x)^2, n=-1/4
+(n)/1!*(-3x)^1, n=3/2
+(n(n-1)(n-2)(n-3))/4!*(2x)^4, n=5
+(n(n-1)(n-2)(n-3))/24*(-1x)^4, n=2/3
+(n(n-1))/2!*2*x^2, n=-3/2
+(n(n-1)(n-2)(n-3))/24*-2*x^4, n=5/4
+(n)/1!*(-3x)^1, n=-3
+(n(n-1)(n-2)(n-3))/4!*((1/2)x)^4, n=-1
+(n(n-1))/2!*1*x^2, n=5/4
+(n(n-1)(n-2))/3!*1*x^3, n=-3/4
+(n(n-1)(n-2))/3!*(-2x)^3, n=1/4
+(n(n-1))/2!*3*x^2, n=-2
+(n(n-1)(n-2)(n-3))/24*(2x)^4, n=3/2
+(n(n-1)(n-2)(n-3))/4!*(1x)^4, n=-2
+(n(n-1))/2*1*x^2, n=5/4
+(n(n-1)(n-2))/3!*-3*x^3, n=-2/2
+(n(n-1)(n-2)(n-3))/4!*(-2x)^4, n=-1/2
+(n(n-1)(n-2)(n-3))/4!*(1/2)*x^4, n=-3
+(n(n-1))/2*-1*x^2, n=-3/4
+(n)/1!*-3*x^1, n=-2
+(n(n-1)(n-2))/6*2*x^3, n=-1/4
+(n(n-1))/2*(2x)^2, n=3/2
+(n)/1!*(1/2)*x^1, n=-2
+(n)/1!*(-1x)^1, n=2/2
+(n(n-1)(n-2)(n-3))/4!*((1/2)x)^4, n=-3
+(n(n-1)(n-2))/6*((1/2)x)^3, n=-1/4
+(n(n-1))/2!*-1*x^2, n=1
+(n)/1*(-1x)^1, n=5/4
+(n)/1!*2*x^1, n=5
+(n(n-1)(n-2))/3!*(3x)^3, n=-2/4
+(n(n-1))/2!*((1/2)x)^2, n=-3
+(n(n-1)(n-2)(n-3))/4!*(3x)^4, n=2/4
+(n(n-1))/2*-1*x^2, n=-2/4
+(n(n-1)(n-2)(n-3))/24*-1*x^4, n=2/4
+(n(n-1))/2*-2*x^2, n=-1/3
+(n(n-1)(n-2))/3!*-1*x^3, n=-2/2
+(n(n-1))/2!*((1/2)x)^2, n=3
+(n(n-1)(n-2))/3!*2*x^3, n=2/2
+(n(n-1)(n-2))/6*2*x^3, n=3/2
+(n(n-1)(n-2)(n-3))/4!*(3x)^4, n=3/4
+(n)/1!*-2*x^1, n=3
+(n(n-1)(n-2))/3!*-1*x^3, n=-2/3
+(n(n-1))/2!*-1*x^2, n=5
+(n(n-1)(n-2))/3!*(-3x)^3, n=-3/4
+(n(n-1)(n-2))/6*-1*x^3, n=-1/2
+(n(n-1)(n-2)(n-3))/4!*-2*x^4, n=5/2
+(n(n-1))/2*((1/2)x)^2, n=3/2
+(n(n-1)(n-2)(n-3))/4!*(-2x)^4, n=2/3
+(n(n-1))/2*(1/2)*x^2, n=2/2
+(n(n-1)(n-2)(n-3))/4!*(1/2)*x^4, n=1
+(n(n-1)(n-2))/6*(-1x)^3, n=3/3
+(n)/1*-3*x^1, n=5/4
+(n(n-1))/2!*(-1x)^2, n=-3/2
+(n(n-1)(n-2))/3!*1*x^3, n=2
+(n(n-1))/2*(-3x)^2, n=-1/2
+(n(n-1)(n-2))/6*2*x^3, n=1/4
+(n)/1*3*x^1, n=2/3
+(n(n-1)(n-2)(n-3))/4!*-1*x^4, n=3
+(n(n-1)(n-2))/3!*2*x^3, n=2
+(n(n-1)(n-2))/3!*-2*x^3, n=2
+(n(n-1))/2!*2*x^2, n=1/4
+(n(n-1))/2!*(1x)^2, n=1
+(n(n-1)(n-2)(n-3))/24*3*x^4, n=-3/4
+(n(n-1))/2!*3*x^2, n=-1/4
+(n(n-1)(n-2)(n-3))/24*(1/2)*x^4, n=2/2
+(n(n-1))/2*(-2x)^2, n=-2/2
+(n(n-1)(n-2)(n-3))/4!*-2*x^4, n=-2/4
+(n(n-1))/2!*3*x^2, n=-3/2
+(n(n-1))/2!*(-3x)^2, n=5/2
+(n(n-1)(n-2)(n-3))/24*(1x)^4, n=5/2
+(n(n-1)(n-2))/6*(-2x)^3, n=2/3
+(n(n-1))/2!*3*x^2, n=1/4
+(n(n-1))/2!*(2x)^2, n=2/3
+(n(n-1))/2*-1*x^2, n=1/3
+(n(n-1)(n-2)(n-3))/24*((1/2)x)^4, n=-2/2
+(n(n-1)(n-2))/6*(2x)^3, n=1/2
+(n(n-1)(n-2)(n-3))/24*-1*x^4, n=-2/4
+(n(n-1)(n-2)(n-3))/4!*1*x^4, n=1/3
+(n(n-1)(n-2))/6*(1/2)*x^3, n=5/4
+(n(n-1))/2*-3*x^2, n=5/3
+(n(n-1)(n-2))/6*(1x)^3, n=2/3
+(n)/1!*(1x)^1, n=3
+(n(n-1))/2!*(-3x)^2, n=3
+(n(n-1))/2!*(-2x)^2, n=5/4
+(n)/1*2*x^1, n=-1/2
+(n(n-1)(n-2)(n-3))/24*(1x)^4, n=5/4
+(n(n-1))/2!*-3*x^2, n=3/2
+(n(n-1))/2*-3*x^2, n=1/3
+(n(n-1))/2!*(1x)^2, n=-2
+(n(n-1)(n-2)(n-3))/4!*(3x)^4, n=-1/2
+(n(n-1))/2*-3*x^2, n=-1/2
+(n)/1*-3*x^1, n=2/4
+(n(n-1)(n-2))/6*(3x)^3, n=3/4
+(n(n-1)(n-2)(n-3))/4!*-1*x^4, n=3/3
+(n(n-1)(n-2)(n-3))/4!*(-2x)^4, n=-3/2
+(n(n-1))/2!*(2x)^2, n=-2/3
+(n(n-1))/2!*-1*x^2, n=-2/4
+(n(n-1)(n-2)(n-3))/24*(-2x)^4, n=1/4
+(n(n-1)(n-2)(n-3))/24*(-2x)^4, n=5/2
+(n(n-1)(n-2)(n-3))/4!*(-2x)^4, n=5/4
+(n(n-1)(n-2)(n-3))/4!*(3x)^4, n=1/4
+(n(n-1))/2!*(1/2)*x^2, n=-1/3
+(n)/1*((1/2)x)^1, n=-1/2
+(n(n-1)(n-2)(n-3))/4!*(-3x)^4, n=-2/4
+(n(n-1)(n-2)(n-3))/24*(2x)^4, n=2/3
+(n(n-1)(n-2)(n-3))/4!*(1/2)*x^4, n=2
+(n(n-1)(n-2))/3!*(-3x)^3, n=5/2
+(n)/1*3*x^1, n=-2/2
+(n(n-1))/2!*(1/2)*x^2, n=3/2
+(n)/1!*-3*x^1, n=3/4
+(n)/1!*(-3x)^1, n=5
+(n(n-1))/2!*-3*x^2, n=5/3
+(n(n-1)(n-2))/6*-3*x^3, n=3/3
+(n(n-1)(n-2))/6*-2*x^3, n=-2/3
+(n(n-1)(n-2)(n-3))/4!*(2x)^4, n=3/2
+(n)/1!*3*x^1, n=-3/3
+(n)/1!*((1/2)x)^1, n=-2
+(n(n-1)(n-2))/6*(-2x)^3, n=-2/2
+(n)/1!*3*x^1, n=2/2
+(n)/1*((1/2)x)^1, n=1/4
+(n(n-1))/2*(1/2)*x^2, n=-2/2
+(n(n-1)(n-2)(n-3))/4!*-3*x^4, n=1
+(n(n-1))/2!*(2x)^2, n=3/4
+(n(n-1)(n-2))/3!*(-1x)^3, n=-3
+(n(n-1)(n-2)(n-3))/24*2*x^4, n=-1/4
+(n(n-1)(n-2))/3!*(2x)^3, n=-3/2
+(n(n-1))/2*-1*x^2, n=-3/3
+(n(n-1))/2*(1/2)*x^2, n=-2/3
+(n(n-1)(n-2))/3!*-2*x^3, n=-2/4
+(n(n-1)(n-2)(n-3))/4!*-2*x^4, n=-2/3
+(n(n-1))/2!*-1*x^2, n=3/2
+(n)/1*(-1x)^1, n=-3/4
+(n)/1!*(-3x)^1, n=1/3
+(n(n-1))/2*2*x^2, n=2/4
+(n(n-1)(n-2))/6*(-3x)^3, n=3/4
+(n)/1!*(3x)^1, n=1
+(n)/1!*(-1x)^1, n=-3/2
+(n(n-1)(n-2))/6*2*x^3, n=-3/3
+(n(n-1)(n-2)(n-3))/4!*-1*x^4, n=-1
+(n(n-1)(n-2))/3!*((1/2)x)^3, n=-2
+(n(n-1)(n-2))/3!*(2x)^3, n=1
+(n(n-1))/2!*((1/2)x)^2, n=5/4
+(n(n-1))/2*(1/2)*x^2, n=-3/2
+(n(n-1)(n-2)(n-3))/4!*(1x)^4, n=3
+(n(n-1)(n-2)(n-3))/24*1*x^4, n=-3/3
+(n(n-1)(n-2))/3!*1*x^3, n=1/4
+(n)/1*(-3x)^1, n=5/4
+(n)/1*-1*x^1, n=-2/3
+(n(n-1)(n-2)(n-3))/4!*-1*x^4, n=-2/4
+(n(n-1)(n-2)(n-3))/4!*2*x^4, n=-3/3
+(n(n-1))/2*(-2x)^2, n=-2/3
+(n(n-1)(n-2))/6*-3*x^3, n=-3/3
+(n(n-1))/2!*(-1x)^2, n=5/4
+(n(n-1)(n-2))/3!*(2x)^3, n=3/3
+(n(n-1)(n-2))/3!*(-1x)^3, n=1
+(n(n-1))/2*2*x^2, n=-2/2
+(n)/1!*(2x)^1, n=1/4
+(n(n-1))/2*((1/2)x)^2, n=-2/2
+(n(n-1)(n-2)(n-3))/4!*(-2x)^4, n=1/4
+(n(n-1))/2!*(-2x)^2, n=-1/4
+(n(n-1))/2!*(2x)^2, n=1/4
+(n(n-1))/2*(2x)^2, n=2/4
+(n(n-1)(n-2)(n-3))/4!*-2*x^4, n=-1/2
+(n(n-1))/2!*(1/2)*x^2, n=3/4
+(n(n-1)(n-2))/3!*2*x^3, n=1/2
+(n)/1!*(1/2)*x^1, n=-2/2
+(n(n-1)(n-2)(n-3))/4!*(3x)^4, n=-1
+(n(n-1))/2!*(1x)^2, n=-1/3
+(n(n-1)(n-2)(n-3))/4!*((1/2)x)^4, n=3/2
+(n(n-1)(n-2)(n-3))/24*(-2x)^4, n=-3/2
+(n(n-1))/2!*1*x^2, n=-3
+(n(n-1)(n-2))/6*3*x^3, n=1/4
+(n(n-1)(n-2)(n-3))/24*(-2x)^4, n=2/3
+(n(n-1))/2*-2*x^2, n=3/2
+(n)/1*1*x^1, n=-3/4
+(n)/1*-3*x^1, n=-2/2
+(n)/1!*(3x)^1, n=3/3
+(n(n-1)(n-2))/6*(1/2)*x^3, n=-2/2
+(n(n-1))/2!*3*x^2, n=-1/3
+(n(n-1)(n-2))/3!*-1*x^3, n=3/4
+(n(n-1)(n-2))/3!*(2x)^3, n=1/3
+(n(n-1))/2!*(2x)^2, n=-2/2
+(n(n-1)(n-2))/3!*3*x^3, n=-2
+(n(n-1))/2!*(-2x)^2, n=1/3
+(n)/1!*(3x)^1, n=-3/2
+(n(n-1)(n-2))/3!*(-3x)^3, n=2/2
+(n)/1!*3*x^1, n=5/4
+(n)/1!*-2*x^1, n=1
+(n(n-1)(n-2))/3!*(3x)^3, n=2
+(n(n-1))/2!*(1/2)*x^2, n=5/4
+(n(n-1)(n-2))/3!*-1*x^3, n=-1/4
+(n(n-1))/2*-1*x^2, n=2/3
+(n(n-1))/2!*(1x)^2, n=3/3
+nCr(0,0)
+nPr(0,0)
+nCr(1,0)
+nPr(1,0)
+nCr(2,0)
+nPr(2,0)
+nCr(3,0)
+nPr(3,0)
+nCr(3,3)
+nPr(3,3)
+nCr(4,0)
+nPr(4,0)
+nCr(4,3)
+nPr(4,3)
+nCr(5,3)
+nPr(5,3)
+nCr(6,0)
+nPr(6,0)
+nCr(6,3)
+nPr(6,3)
+nCr(6,6)
+nPr(6,6)
+nCr(7,0)
+nPr(7,0)
+nCr(7,3)
+nPr(7,3)
+nCr(7,6)
+nPr(7,6)
+nCr(8,0)
+nPr(8,0)
+nCr(8,3)
+nPr(8,3)
+nCr(8,6)
+nPr(8,6)
+nCr(9,0)
+nPr(9,0)
+nCr(9,3)
+nPr(9,3)
+nCr(9,6)
+nPr(9,6)
+nCr(9,9)
+nPr(9,9)
+nCr(10,0)
+nPr(10,0)
+nCr(10,3)
+nPr(10,3)
+nCr(10,6)
+nPr(10,6)
+nCr(10,9)
+nPr(10,9)
+nCr(11,0)
+nPr(11,0)
+nCr(11,3)
+nPr(11,3)
+nCr(11,6)
+nPr(11,6)
+nCr(11,9)
+nPr(11,9)
+nCr(12,0)
+nPr(12,0)
+nCr(12,3)
+nPr(12,3)
+nCr(12,6)
+nPr(12,6)
+nCr(12,9)
+nPr(12,9)
+nCr(12,12)
+nPr(12,12)
+nCr(13,0)
+nPr(13,0)
+nCr(13,3)
+nPr(13,3)
+nCr(13,6)
+nPr(13,6)
+nCr(13,9)
+nPr(13,9)
+nCr(13,12)
+nPr(13,12)
+nCr(14,0)
+nPr(14,0)
+nCr(14,3)
+nPr(14,3)
+nCr(14,6)
+nPr(14,6)
+nCr(14,9)
+nPr(14,9)
+nCr(14,12)
+nPr(14,12)
+nCr(15,0)
+nPr(15,0)
+nCr(15,3)
+nPr(15,3)
+nCr(15,6)
+nPr(15,6)
+nCr(15,9)
+nPr(15,9)
+nCr(15,12)
+nPr(15,12)
+nCr(15,15)
+nPr(15,15)
+nCr(16,0)
+nPr(16,0)
+nCr(16,3)
+nPr(16,3)
+nCr(16,6)
+nPr(16,6)
+nCr(16,9)
+nPr(16,9)
+nCr(16,12)
+nPr(16,12)
+nCr(16,15)
+nPr(16,15)
+nCr(17,0)
+nPr(17,0)
+nCr(17,3)
+nPr(17,3)
+nCr(17,6)
+nPr(17,6)
+nCr(17,9)
+nPr(17,9)
+nCr(17,12)
+nPr(17,12)
+nCr(17,15)
+nPr(17,15)
+nCr(18,0)
+nPr(18,0)
+nCr(18,3)
+nPr(18,3)
+nCr(18,6)
+nPr(18,6)
+nCr(18,9)
+nPr(18,9)
+nCr(18,12)
+nPr(18,12)
+nCr(18,15)
+nPr(18,15)
+nCr(18,18)
+nPr(18,18)
+nCr(19,0)
+nPr(19,0)
+nCr(19,3)
+nPr(19,3)
+nCr(19,6)
+nPr(19,6)
+nCr(19,9)
+nPr(19,9)
+nCr(19,12)
+nPr(19,12)
+nCr(19,15)
+nPr(19,15)
+nCr(19,18)
+nPr(19,18)
+nCr(20,0)
+nPr(20,0)
+nCr(20,3)
+nPr(20,3)
+nCr(20,6)
+nPr(20,6)
+nCr(20,9)
+nPr(20,9)
+nCr(20,12)
+nPr(20,12)
+nCr(20,15)
+nPr(20,15)
+nCr(20,18)
+nPr(20,18)
+nCr(21,0)
+nPr(21,0)
+nCr(21,3)
+nPr(21,3)
+nCr(21,6)
+nPr(21,6)
+nCr(21,9)
+nPr(21,9)
+nCr(21,12)
+nPr(21,12)
+nCr(21,15)
+nPr(21,15)
+nCr(21,18)
+nPr(21,18)
+nCr(21,21)
+nPr(21,21)
+nCr(22,0)
+nPr(22,0)
+nCr(22,3)
+nPr(22,3)
+nCr(22,6)
+nPr(22,6)
+nCr(22,9)
+nPr(22,9)
+nCr(22,12)
+nPr(22,12)
+nCr(22,15)
+nPr(22,15)
+nCr(22,18)
+nPr(22,18)
+nCr(22,21)
+nPr(22,21)
+nCr(23,0)
+nPr(23,0)
+nCr(23,3)
+nPr(23,3)
+nCr(23,6)
+nPr(23,6)
+nCr(23,9)
+nPr(23,9)
+nCr(23,12)
+nPr(23,12)
+nCr(23,15)
+nPr(23,15)
+nCr(23,18)
+nPr(23,18)
+nCr(23,21)
+nPr(23,21)
+nCr(24,0)
+nPr(24,0)
+nCr(24,3)
+nPr(24,3)
+nCr(24,6)
+nPr(24,6)
+nCr(24,9)
+nPr(24,9)
+nCr(24,12)
+nPr(24,12)
+nCr(24,15)
+nPr(24,15)
+nCr(24,18)
+nPr(24,18)
+nCr(24,21)
+nPr(24,21)
+nCr(24,24)
+nPr(24,24)
+nCr(25,0)
+nPr(25,0)
+nCr(25,3)
+nPr(25,3)
+nCr(25,6)
+nPr(25,6)
+nCr(25,9)
+nPr(25,9)
+nCr(25,12)
+nPr(25,12)
+nCr(25,15)
+nPr(25,15)
+nCr(25,18)
+nPr(25,18)
+nCr(25,21)
+nPr(25,21)
+nCr(25,24)
+nPr(25,24)
+nCr(26,0)
+nPr(26,0)
+nCr(26,3)
+nPr(26,3)
+nCr(26,6)
+nPr(26,6)
+nCr(26,9)
+nPr(26,9)
+nCr(26,12)
+nPr(26,12)
+nCr(26,15)
+nPr(26,15)
+nCr(26,18)
+nPr(26,18)
+nCr(26,21)
+nPr(26,21)
+nCr(26,24)
+nPr(26,24)
+nCr(27,0)
+nPr(27,0)
+nCr(27,3)
+nPr(27,3)
+nCr(27,6)
+nPr(27,6)
+nCr(27,9)
+nPr(27,9)
+nCr(27,12)
+nPr(27,12)
+nCr(27,15)
+nPr(27,15)
+nCr(27,18)
+nPr(27,18)
+nCr(27,21)
+nPr(27,21)
+nCr(27,24)
+nPr(27,24)
+nCr(27,27)
+nPr(27,27)
+nCr(28,0)
+nPr(28,0)
+nCr(28,3)
+nPr(28,3)
+nCr(28,6)
+nPr(28,6)
+nCr(28,9)
+nPr(28,9)
+nCr(28,12)
+nPr(28,12)
+nCr(28,15)
+nPr(28,15)
+nCr(28,18)
+nPr(28,18)
+nCr(28,21)
+nPr(28,21)
+nCr(28,24)
+nPr(28,24)
+nCr(28,27)
+nPr(28,27)
+nCr(29,0)
+nPr(29,0)
+nCr(29,3)
+nPr(29,3)
+nCr(29,6)
+nPr(29,6)
+nCr(29,9)
+nPr(29,9)
+nCr(29,12)
+nPr(29,12)
+nCr(29,15)
+nPr(29,15)
+nCr(29,18)
+nPr(29,18)
+nCr(29,21)
+nPr(29,21)
+nCr(29,24)
+nPr(29,24)
+nCr(29,27)
+nPr(29,27)
+nCr(30,0)
+nPr(30,0)
+nCr(30,3)
+nPr(30,3)
+nCr(30,6)
+nPr(30,6)
+nCr(30,9)
+nPr(30,9)
+nCr(30,12)
+nPr(30,12)
+nCr(30,15)
+nPr(30,15)
+nCr(30,18)
+nPr(30,18)
+nCr(30,21)
+nPr(30,21)
+nCr(30,24)
+nPr(30,24)
+nCr(30,27)
+nPr(30,27)
+nCr(30,30)
+nPr(30,30)

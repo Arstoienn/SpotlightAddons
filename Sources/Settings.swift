@@ -2,172 +2,93 @@ import AppKit
 import ServiceManagement
 import SwiftUI
 
-// The settings window: the pages in a sidebar of glass on the left, as in System Settings, and on
-// the right the page, under a card that is the real thing in small. The card answers the setting
-// the pointer is on or that was last changed, so that what a switch does is seen as it is turned.
-// It is opened by Spotlight Add-ons Preferences, the app's entry for it in Spotlight's list, or by the
-// gear at the foot of the panel. Each setting is kept in the defaults under the name the solver
-// reads it by (Options), or the app (Prefs).
+// The settings window: four pages, each a button in the toolbar, as a Mac's settings windows have
+// them. General says how things stand and what the app does on opening; Answers is how an answer
+// is written and copied; Cards is what brings a card up; Constants is the letters that stand for
+// numbers. Each setting has a short label and, under it, one line: what is typed, or what the
+// switch does. It is opened by opening the app itself, from Spotlight or Finder, or by the gear
+// at the foot of the panel. Each setting is kept in the defaults under the name the solver reads
+// it by (Options), or the app (Prefs).
 final class SettingsWindow {
     private var window: NSWindow?
+    private var pages: SettingsPages?
 
     // `status` opens it on the page that says how things stand, as opening the app itself does.
     func show(status: Bool = false) {
-        if status { UserDefaults.standard.set("status", forKey: "settingsPage") }
         if window == nil {
-            let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 780, height: 560),
-                                  styleMask: [.titled, .closable, .fullSizeContentView], backing: .buffered, defer: false)
-            window.title = "Spotlight Add-ons Preferences"
+            let pages = SettingsPages()
+            let window = NSWindow(contentViewController: pages)
+            window.styleMask = [.titled, .closable]
+            window.toolbarStyle = .preference
             window.isReleasedWhenClosed = false
-            window.contentView = NSHostingView(rootView: SettingsView())
             window.center()
+            self.pages = pages
             self.window = window
         }
+        if status { pages?.show("general") }
         // It has no Dock icon and is never in front by itself.
         NSApp.activate(ignoringOtherApps: true)
         window?.makeKeyAndOrderFront(nil)
     }
 }
 
-// A tap under the finger on a trackpad that has one: light for a switch or a choice, firmer for a
-// change of page. Nothing happens on a Mac without.
+// The pages, a toolbar button each; the window is as tall as the page chosen, and a page longer
+// than the screen allows is scrolled.
+final class SettingsPages: NSTabViewController {
+    static let width: CGFloat = 640
+
+    private static let pages: [(id: String, title: String, symbol: String, height: CGFloat, view: AnyView)] = [
+        ("general", "General", "gearshape", 660, AnyView(GeneralSettings())),
+        ("answers", "Answers", "equal.square", 600, AnyView(AnswersSettings())),
+        ("cards", "Cards", "rectangle.stack", 400, AnyView(CardsSettings())),
+        ("constants", "Constants", "atom", 450, AnyView(ConstantsSettings())),
+    ]
+
+    init() {
+        super.init(nibName: nil, bundle: nil)
+        tabStyle = .toolbar
+        transitionOptions = []   // a page is shown at once, not drawn in
+        for page in Self.pages {
+            let hosting = NSHostingController(rootView: page.view.frame(width: Self.width, height: page.height))
+            hosting.sizingOptions = []
+            hosting.title = page.title   // the window's title, as the page chosen
+            hosting.preferredContentSize = NSSize(width: Self.width, height: page.height)
+            let item = NSTabViewItem(viewController: hosting)
+            item.identifier = page.id
+            item.label = page.title
+            item.image = NSImage(systemSymbolName: page.symbol, accessibilityDescription: page.title)
+            addTabViewItem(item)
+        }
+        // The page last looked at, kept for the next time; what a version with other pages kept is
+        // the page its settings are on now.
+        show(UserDefaults.standard.string(forKey: "settingsPage") == "copying" ? "answers" : UserDefaults.standard.string(forKey: "settingsPage") ?? "general")
+    }
+
+    required init?(coder: NSCoder) { fatalError() }
+
+    func show(_ id: String) {
+        selectedTabViewItemIndex = Self.pages.firstIndex { $0.id == id } ?? 0
+    }
+
+    override func tabView(_ tabView: NSTabView, didSelect item: NSTabViewItem?) {
+        super.tabView(tabView, didSelect: item)
+        if let id = item?.identifier as? String { UserDefaults.standard.set(id, forKey: "settingsPage") }
+    }
+}
+
+// A light tap under the finger on a trackpad that has one, given once when a switch is turned or
+// one of two choices is taken, and for nothing else: not a change of page, not the pointer moving,
+// not a menu, not a setting put back by Reset. Nothing happens on a Mac without.
 enum Haptic {
     static func choice() { NSHapticFeedbackManager.defaultPerformer.perform(.alignment, performanceTime: .now) }
-    static func page() { NSHapticFeedbackManager.defaultPerformer.perform(.levelChange, performanceTime: .now) }
 }
 
-// What the card at the top of the page is showing: the examples of the setting last looked at.
-@Observable
-final class CardPreview {
-    var typed: [String] = []
-    func show(_ examples: [String]) { if !examples.isEmpty, typed != examples { typed = examples } }
-}
-
-// A setting that gives a tap when it is changed, and puts its examples on the card when it is
-// changed or the pointer is on it.
-private struct Feel<Value: Equatable>: ViewModifier {
-    let value: Value
-    let examples: [String]
-    @Environment(CardPreview.self) private var preview
-
-    func body(content: Content) -> some View {
-        content
-            .onChange(of: value) {
-                Haptic.choice()
-                preview.show(examples)
-            }
-            .onHover { if $0 { preview.show(examples) } }
-    }
-}
-
-private extension View {
-    func feel<Value: Equatable>(_ value: Value, showing examples: [String] = []) -> some View {
-        modifier(Feel(value: value, examples: examples))
-    }
-}
-
-private struct SettingsPage: Identifiable {
-    let id: String
-    let title: String
-    let symbol: String
-    // What the card shows when the page is opened, before anything is touched.
-    let examples: [String]
-}
-
-struct SettingsView: View {
-    private static let pages = [
-        SettingsPage(id: "status", title: "Status", symbol: "checkmark.seal", examples: []),
-        SettingsPage(id: "general", title: "General", symbol: "gearshape", examples: []),
-        SettingsPage(id: "answers", title: "Calculation", symbol: "equal.square", examples: ["sin(x)=0.5", "1/3+0.5*sqrt(2)", "10/4"]),
-        SettingsPage(id: "cards", title: "Cards", symbol: "rectangle.stack", examples: ["12*3+4", "5 km to miles", "x^2>4"]),
-        SettingsPage(id: "constants", title: "Constants", symbol: "atom", examples: ["h=0.5g*3^2", "2g=10", "F=G*5*6/2^2"]),
-        SettingsPage(id: "copying", title: "Clipboard", symbol: "doc.on.clipboard", examples: ["10/4"]),
-    ]
-    // The page last looked at, kept for the next time.
-    @AppStorage("settingsPage") private var page = "status"
-    @State private var preview = CardPreview()
-
-    var body: some View {
-        NavigationSplitView {
-            List(selection: Binding<String?>(get: { page }, set: { if let chosen = $0 { page = chosen } })) {
-                ForEach(Self.pages) { entry in
-                    Label(entry.title, systemImage: entry.symbol).tag(entry.id)
-                }
-            }
-            .listStyle(.sidebar)
-            .navigationSplitViewColumnWidth(190)
-        } detail: {
-            VStack(spacing: 0) {
-                if !preview.typed.isEmpty {
-                    LiveCard(typed: preview.typed)
-                        .padding(.horizontal, 20)
-                        .padding(.bottom, 4)
-                        .transition(.opacity)
-                }
-                Group {
-                    switch page {
-                    case "general": GeneralSettings()
-                    case "cards": CardsSettings()
-                    case "constants": ConstantsSettings()
-                    case "copying": CopyingSettings()
-                    case "answers": AnswersSettings()
-                    default: StatusSettings()
-                    }
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-            }
-            .navigationTitle(Self.pages.first { $0.id == page }?.title ?? "")
-        }
-        .toolbar(removing: .sidebarToggle)
-        .environment(preview)
-        .frame(width: 780, height: 560)
-        .onAppear { preview.typed = Self.pages.first { $0.id == page }?.examples ?? [] }
-        .onChange(of: page) {
-            Haptic.page()
-            withAnimation(.smooth(duration: 0.2)) { preview.typed = Self.pages.first { $0.id == page }?.examples ?? [] }
-        }
-    }
-}
-
-// The card: what is typed, and what Spotlight Add-ons puts above Spotlight for it, with the settings
-// as they stand. It is made again when any of them changes, so that turning one off is seen to take
-// the card away.
-private struct LiveCard: View {
-    let typed: [String]
-    @State private var changes = 0
-
-    var body: some View {
-        _ = changes
-        return VStack(alignment: .leading, spacing: 10) {
-            ForEach(typed, id: \.self) { line in
-                let answer = Solver.solve(line)
-                HStack(alignment: .firstTextBaseline, spacing: 10) {
-                    Text(line)
-                        .font(.system(.callout, design: .monospaced))
-                        .foregroundStyle(.secondary)
-                        .frame(width: 190, alignment: .leading)
-                        .lineLimit(1)
-                    if let answer {
-                        HStack(alignment: .firstTextBaseline, spacing: 10) {
-                            Text(answer.exact).font(.title3.weight(.medium)).lineLimit(2)
-                            if let approx = answer.approx { Text(approx).font(.callout).foregroundStyle(.secondary).lineLimit(1) }
-                        }
-                    } else {
-                        Text("No card").font(.callout).foregroundStyle(.tertiary)
-                    }
-                    Spacer(minLength: 0)
-                }
-            }
-        }
-        .frame(maxWidth: .infinity, minHeight: 100, alignment: .leading)
-        .padding(.horizontal, 20)
-        .padding(.vertical, 14)
-        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
-        .animation(.smooth(duration: 0.2), value: typed)
-        .onReceive(NotificationCenter.default.publisher(for: UserDefaults.didChangeNotification)) { _ in changes += 1 }
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("Preview of the card")
-    }
+// A setting as its control is to change it: with a tap when the hand changes it, and only then.
+private func tapped<Value: Equatable>(_ setting: Binding<Value>) -> Binding<Value> {
+    Binding(get: { setting.wrappedValue }, set: { new in
+        if new != setting.wrappedValue { Haptic.choice() }
+        setting.wrappedValue = new
+    })
 }
 
 // What the app itself does or leaves alone. The solver's own choices are in Options.
@@ -196,167 +117,292 @@ enum Prefs {
 
 // What is kept, and what it was before anything was chosen.
 private let defaultSettings: [String: Any] = [
-    "degrees": false, "figures": 6, "exact": true, "decimalFirst": true, "arithmetic": true, "numberFacts": true, "paths": true, "conversions": true,
-    "basePrefix": false, "inequalities": true, "algebra": true, "matrices": true, "constant.g": true, "constant.G": true,
+    "degrees": false, "figures": 6, "exact": true, "decimalFirst": true, "arithmetic": true, "paths": true, "commands": false, "commandReturn": true,
+    "basePrefix": false, "constant.g": true, "constant.G": true,
     "constant.c": true, "precise": false, "constantValue.g": 0.0, "constantValue.G": 0.0, "constantValue.c": 0.0, "copyAsShown": false, "copyLatex": true, "returnCopies": true, "log": false, "welcome": true,
 ]
 
-// What a setting does, under it.
+// A line under a setting or a section: what it does, in a sentence.
 private func note(_ text: String) -> some View {
     Text(text).font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
 }
 
-// A switch, with what it does; its examples are shown on the card.
-private struct CardToggle: View {
+// The name of a setting and, under it, one line: what is typed for it, as it is typed, and where
+// it is wanted a sentence on what the setting does.
+private struct RowLabel: View {
     let title: String
-    @Binding var isOn: Bool
-    let detail: String
-    var examples: [String] = []
+    var typed: String? = nil
+    var detail: String? = nil
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Toggle(title, isOn: $isOn).feel(isOn, showing: examples)
-            note(detail)
+        VStack(alignment: .leading, spacing: 2) {
+            Text(title)
+            if let typed { Text(typed).font(.system(.callout, design: .monospaced)).foregroundStyle(.secondary).lineLimit(1) }
+            if let detail { note(detail) }
         }
-        .padding(.vertical, 2)
     }
 }
 
-// How things stand now: whether it can read Spotlight, whether it opens at login, and where the
-// rates of money, coins and metals are. It is made again every two seconds, so that granting the
-// permission in System Settings is seen to take.
-struct StatusSettings: View {
+// A switch with its line, and a tap when it is turned.
+private struct Switch: View {
+    let title: String
+    var typed: String? = nil
+    var detail: String? = nil
+    @Binding var isOn: Bool
+
     var body: some View {
-        TimelineView(.periodic(from: .now, by: 2)) { _ in
-            Form {
-                Section("Spotlight Add-ons \(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "")") {
-                    let allowed = AXIsProcessTrusted()
-                    row(allowed ? .good : .bad, "Reading Spotlight",
-                        allowed ? "Allowed: the card comes up as it is typed." : "Not allowed: without Accessibility, nothing can be read of what is typed.")
-                    if !allowed {
-                        Button("Open Accessibility in System Settings") {
+        Toggle(isOn: tapped($isOn)) { RowLabel(title: title, typed: typed, detail: detail) }
+    }
+}
+
+// How things stand, and what the app does of itself: whether it can read Spotlight, opening at
+// login, the note on opening, where the rates of money, coins and metals are, and the log. What
+// is found out rather than chosen is looked at again every two seconds, so that granting the
+// permission in System Settings is seen to take.
+struct GeneralSettings: View {
+    @AppStorage("log") private var log = false
+    @AppStorage("welcome") private var welcome = true
+    @State private var allowed = AXIsProcessTrusted()
+    @State private var atLogin = SMAppService.mainApp.status == .enabled
+    @State private var loginProblem: String?
+    @State private var looked = 0
+    @State private var resetting = false
+    @State private var allAsked: Date?   // when Refresh All was clicked
+    private let clock = Timer.publish(every: 2, on: .main, in: .common).autoconnect()
+
+    private static let logFile = NSHomeDirectory() + "/Library/Logs/SpotlightAddons.log"
+
+    var body: some View {
+        let _ = looked
+        Form {
+            Section {
+                if allowed {
+                    LabeledContent {
+                        Text("Allowed").foregroundStyle(.secondary)
+                    } label: {
+                        Label { Text("Reading Spotlight") } icon: { Image(systemName: "checkmark.circle.fill").foregroundStyle(.green) }
+                    }
+                    .accessibilityElement(children: .combine)
+                } else {
+                    LabeledContent {
+                        Button("Open System Settings…") {
                             NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")!)
                         }
-                    }
-                    let login = SMAppService.mainApp.status == .enabled
-                    row(login ? .good : .neutral, "Open at login", login ? "On: it is running after the Mac is restarted." : "Off: it has to be opened again after the Mac is restarted.")
-                }
-                Section("Rates") {
-                    ForEach(Rates.Group.allCases, id: \.self) { group in
-                        let state = Rates.state(group)
-                        let when = state.recorded.map(Currency.stamp)
-                        row(state.offline ? .bad : state.recorded == nil ? .neutral : .good,
-                            group == .fiat ? "Currencies" : group == .crypto ? "Coins" : group == .moreCrypto ? "Other coins" : "Metals",
-                            state.offline ? (when.map { "No connection: the rates of \($0) are used." } ?? "No connection, and none saved.")
-                                          : (when.map { "Live. Recorded \($0), from \(group.source)." } ?? "Not fetched yet: they are asked for when money is typed."))
+                    } label: {
+                        Label {
+                            RowLabel(title: "Accessibility permission is required", detail: "Without it, nothing typed into Spotlight can be read.")
+                        } icon: {
+                            Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.orange)
+                        }
                     }
                 }
             }
-            .formStyle(.grouped)
+            Section("Startup") {
+                Toggle(isOn: Binding(get: { atLogin }, set: openAtLogin)) {
+                    RowLabel(title: "Open at login", detail: loginProblem)
+                }
+                Switch(title: "Show a note on opening", detail: "A brief note confirms that the app is running, as it has no window.", isOn: $welcome)
+            }
+            Section {
+                ForEach(Rates.Group.allCases, id: \.self) { group in RateRow(group: group, allAsked: allAsked) }
+            } header: {
+                HStack {
+                    Text("Exchange rates")
+                    Spacer()
+                    Button("Refresh All") {
+                        allAsked = Date()
+                        Rates.refresh(force: true)
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.75) { looked += 1 }
+                    }
+                        .buttonStyle(.borderless)
+                        .disabled(Rates.isRefreshing)
+                }
+            }
+            Section("Troubleshooting") {
+                Switch(title: "Keep a log", detail: "Records when a card appeared and why, never what was typed. A crash is always recorded, and a notification says so.", isOn: $log)
+                LabeledContent("SpotlightAddons.log") {
+                    Button("Show in Finder") { NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: Self.logFile)]) }
+                        .disabled(!FileManager.default.fileExists(atPath: Self.logFile))
+                }
+            }
+            Section {
+                LabeledContent("Version \(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "")") {
+                    HStack {
+                        Button("Reset All Settings…") { resetting = true }
+                        Button("Quit") { NSApp.terminate(nil) }
+                    }
+                }
+            }
         }
+        .formStyle(.grouped)
         .onAppear { Rates.refresh() }
+        .onReceive(NotificationCenter.default.publisher(for: Rates.changed)) { _ in looked += 1 }
+        .onReceive(clock) { _ in
+            allowed = AXIsProcessTrusted()
+            atLogin = SMAppService.mainApp.status == .enabled
+            looked += 1
+        }
+        .alert("Reset all settings?", isPresented: $resetting) {
+            Button("Reset", role: .destructive) { for key in defaultSettings.keys { UserDefaults.standard.removeObject(forKey: key) } }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("The choices on every page return to what they were when Spotlight Add-ons was first opened. Constants that were added are kept.")
+        }
     }
 
-    private enum Mark { case good, bad, neutral }
-
-    private func row(_ mark: Mark, _ title: String, _ detail: String) -> some View {
-        HStack(alignment: .top, spacing: 10) {
-            Image(systemName: mark == .good ? "checkmark.circle.fill" : mark == .bad ? "exclamationmark.triangle.fill" : "circle.dashed")
-                .foregroundStyle(mark == .good ? Color.green : mark == .bad ? Color.orange : Color.secondary)
-                .font(.system(size: 16))
-                .frame(width: 20)
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title)
-                Text(detail).font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
-            }
-            Spacer(minLength: 0)
+    // Asked of the system, and shown as the system then has it: a refusal leaves the switch where it was.
+    private func openAtLogin(_ wanted: Bool) {
+        do {
+            if wanted { try SMAppService.mainApp.register() } else { try SMAppService.mainApp.unregister() }
+            loginProblem = nil
+        } catch {
+            loginProblem = error.localizedDescription
         }
-        .padding(.vertical, 2)
-        .accessibilityElement(children: .combine)
+        let now = SMAppService.mainApp.status == .enabled
+        if now != atLogin { Haptic.choice() }
+        atLogin = now
     }
 }
 
+// One source of exchange rates on one line: whether it is up to date, when it was last updated,
+// and a button to update it now. What it covers, where it comes from and why an update failed are
+// in its tooltip.
+private struct RateRow: View {
+    let group: Rates.Group
+    var allAsked: Date?
+    // A refresh asked for here: the spinner is shown for at least a moment, however quickly the
+    // rates come, so that the click is seen to have done something.
+    @State private var asked: Date?
+    @State private var tick = 0
+
+    // 01:02 for today, 10 Nov for another day, and "just now" within the minute.
+    private static func when(_ date: Date) -> String {
+        if Date().timeIntervalSince(date) < 60 { return "just now" }
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "en_GB")
+        f.dateFormat = Calendar.current.isDateInToday(date) ? "HH:mm" : "d MMM"
+        return f.string(from: date)
+    }
+
+    var body: some View {
+        let _ = tick
+        let state = Rates.state(group)
+        let busy = state.updating || [asked, allAsked].compactMap { $0 }.contains { Date().timeIntervalSince($0) < 0.7 }
+        let fresh = state.recorded.map { Date().timeIntervalSince($0) < 60 } ?? false
+        let status = busy ? "Updating…"
+            : state.offline ? "Update failed" + (state.recorded.map { ", using rates from " + Self.when($0) } ?? "")
+            : state.recorded.map { "Updated " + Self.when($0) } ?? "Not yet downloaded"
+        HStack(spacing: 8) {
+            Image(systemName: state.offline ? "exclamationmark.triangle.fill" : state.recorded == nil ? "circle.dashed" : "checkmark.circle.fill")
+                .foregroundStyle(state.offline ? Color.orange : state.recorded == nil ? Color.secondary : Color.green)
+            Text(group.title)
+            Spacer()
+            Text(status)
+                .foregroundStyle(!busy && fresh && !state.offline ? Color.green : Color.secondary)
+                .contentTransition(.opacity)
+                .animation(.easeOut(duration: 0.2), value: status)
+            ZStack {
+                if busy {
+                    ProgressView().controlSize(.small)
+                } else {
+                    Button { refresh() } label: { Image(systemName: "arrow.clockwise") }
+                        .buttonStyle(.borderless)
+                        .help("Update now")
+                }
+            }
+            .frame(width: 18)
+        }
+        .help([group.explanation, "Source: " + group.source, state.error].compactMap { $0 }.joined(separator: "\n"))
+    }
+
+    private func refresh() {
+        asked = Date()
+        Rates.refresh(group, force: true)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.75) { tick += 1 }
+    }
+}
+
+// How an answer is written, and what is put on the clipboard.
 struct AnswersSettings: View {
     @AppStorage("degrees") private var degrees = false
     @AppStorage("figures") private var figures = 6
     @AppStorage("exact") private var exact = true
     @AppStorage("decimalFirst") private var decimalFirst = true
+    @AppStorage("basePrefix") private var basePrefix = false
+    @AppStorage("copyAsShown") private var copyAsShown = false
+    @AppStorage("copyLatex") private var copyLatex = true
+    @AppStorage("returnCopies") private var returnCopies = true
 
     var body: some View {
         Form {
-            Section("Angles") {
-                Picker("Angles are in", selection: $degrees) {
+            Section {
+                Picker(selection: tapped($degrees)) {
                     Text("Radians").tag(false)
                     Text("Degrees").tag(true)
+                } label: {
+                    RowLabel(title: "Angles", detail: degrees ? "An angle marked rad, or containing π, remains in radians."
+                                                              : "An angle marked deg or ° remains in degrees.")
                 }
                 .pickerStyle(.segmented)
-                .feel(degrees, showing: ["sin(x)=0.5", "sin(30°)"])
-                note(degrees ? "An angle marked rad, or with π in it, is still in radians: sin(x rad), sin(π/6)."
-                             : "An angle marked deg or ° is in degrees: sin(x deg), cos(35°).")
             }
             Section("Numbers") {
                 Picker("Significant figures", selection: $figures) {
                     ForEach(3...10, id: \.self) { Text("\($0)").tag($0) }
                 }
-                .feel(figures, showing: ["1/3+0.5*sqrt(2)"])
-                note("How far a decimal is carried. Six is what a calculator shows; three is what an answer is usually asked to.")
-
-                Toggle("Exact answers where there are any", isOn: $exact)
-                    .feel(exact, showing: ["2n^2=10", "sqrt(8)"])
-                note("Fractions, roots and π where they are exact; otherwise decimals only.")
-
-                Toggle("Decimals before fractions in a sum", isOn: $decimalFirst)
-                    .disabled(!exact)
-                    .feel(decimalFirst, showing: ["10/4", "1/3+1/6"])
-                note(decimalFirst ? "A sum is answered as a decimal first, with the fraction beneath it."
-                                  : "A sum is answered as a fraction first, with the decimal beneath it.")
+                Switch(title: "Exact answers", detail: "Fractions, roots and π are kept where the answer is exact: 5/2, √5, π/6.", isOn: $exact)
+                Picker(selection: tapped($decimalFirst)) {
+                    Text("Decimal").tag(true)
+                    Text("Fraction").tag(false)
+                } label: {
+                    RowLabel(title: "A sum is shown first as", detail: decimalFirst ? "10/4 gives 2.5, with 5/2 beneath." : "10/4 gives 5/2, with 2.5 beneath.")
+                }
+                .pickerStyle(.segmented)
+                .disabled(!exact)
+                Switch(title: "Prefix on a number base", detail: "255 in hex gives 0xFF rather than FF.", isOn: $basePrefix)
+            }
+            Section {
+                Picker("The copy button copies", selection: $copyAsShown) {
+                    Text("A decimal: 2.5").tag(false)
+                    Text("The answer as shown: 5/2").tag(true)
+                }
+                Picker(selection: $copyLatex) {
+                    Text("LaTeX: \\frac{5}{2}").tag(true)
+                    Text("The line as shown: 5/2").tag(false)
+                } label: {
+                    RowLabel(title: "A line of the working copies", detail: "A right-click copies the other form.")
+                }
+                Switch(title: "Return copies the answer", detail: "Applies while the pointer is on the card; elsewhere Return remains Spotlight's.", isOn: $returnCopies)
+            } header: {
+                Text("Copying")
+            } footer: {
+                note("A copied answer becomes ans in the next calculation, and clip is the number on the clipboard: ans*2, 20*clip.")
+                    .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
         .formStyle(.grouped)
     }
 }
 
+// What brings up a card where it might not be wanted: arithmetic, which Spotlight answers too, and
+// a path or a command. Everything else typed that is mathematics always has its card.
 struct CardsSettings: View {
     @AppStorage("arithmetic") private var arithmetic = true
-    @AppStorage("numberFacts") private var numberFacts = true
     @AppStorage("paths") private var paths = true
-    @AppStorage("conversions") private var conversions = true
-    @AppStorage("basePrefix") private var basePrefix = false
-    @AppStorage("inequalities") private var inequalities = true
-    @AppStorage("algebra") private var algebra = true
-    @AppStorage("matrices") private var matrices = true
+    @AppStorage("commands") private var commands = false
+    @AppStorage("commandReturn") private var commandReturn = true
 
     var body: some View {
         Form {
-            Section("Typed with no equals sign") {
-                CardToggle(title: "Arithmetic", isOn: $arithmetic,
-                           detail: "Turn this off if Spotlight's own calculator is on, or the two will both answer. A name still works: x = 12*3+4.",
-                           examples: ["12*3+4", "5!/(3!2!)"])
-                CardToggle(title: "A number by itself", isOn: $numberFacts,
-                           detail: "Every number typed into Spotlight brings up a card when this is on, a year among them.",
-                           examples: ["2048", "0.375"])
-                CardToggle(title: "A path to a file or folder", isOn: $paths,
-                           detail: "Names the file, and shows it in Finder when the card is clicked, or Return is pressed with the pointer on it. Only a path that exists brings up a card.",
-                           examples: ["/usr/bin"])
+            Section {
+                Switch(title: "Arithmetic", typed: "12*3+4", detail: "Spotlight's own calculator answers this as well. When off, only Spotlight's answer is shown.", isOn: $arithmetic)
+            } header: {
+                Text("Spotlight's calculator")
             }
-            Section("Units and bases") {
-                CardToggle(title: "Units and number bases", isOn: $conversions,
-                           detail: "A quantity and a unit known to the calculator, and a unit of the same kind to convert to.",
-                           examples: ["5 km to miles", "255 in hex"])
-                CardToggle(title: "Mark a base with its prefix", isOn: $basePrefix,
-                           detail: "The prefix is always understood when typed: 0xFF + 1 is 256.",
-                           examples: ["3 in binary", "255 in hex"])
-            }
-            Section("Algebra and calculus") {
-                CardToggle(title: "Inequalities", isOn: $inequalities,
-                           detail: "In one letter: polynomials, and abs, exp and the like. Several taken together with && and ||.",
-                           examples: ["x^2>4", "1<x<5"])
-                CardToggle(title: "Algebra by name", isOn: $algebra,
-                           detail: "Nothing is done to an expression unless it is asked for by name. Includes limits and trigonometric identities.",
-                           examples: ["expand((x+1)^2)", "integrate(x^2, 0, 1)", "sin(x)^2+cos(x)^2"])
-                CardToggle(title: "Matrices and vectors", isOn: $matrices,
-                           detail: "Determinants, inverses, products, dot and cross products.",
-                           examples: ["det([[1,2],[3,4]])"])
+            Section("Files and Terminal") {
+                Switch(title: "A path to a file or folder", typed: "/usr/bin", detail: "A click, or Return with the pointer on the card, shows it in Finder.", isOn: $paths)
+                Switch(title: "A command for Terminal", typed: "> top", detail: "The command is typed in a new Terminal window and is not run until Return is pressed there.", isOn: $commands)
+                Switch(title: "Return types the command from anywhere", detail: "When off, Return does so only with the pointer on the card.", isOn: $commandReturn)
+                    .disabled(!commands)
             }
         }
         .formStyle(.grouped)
@@ -376,38 +422,34 @@ struct ConstantsSettings: View {
     @AppStorage("customConstants") private var customRaw = ""
     @AppStorage("precise") private var precise = false
 
-    // What each constant is shown working in.
-    private static let examples = ["g": ["h=0.5g*3^2", "2g=10"], "G": ["F=G*5*6/2^2"], "c": ["9e16=!c^2"]]
-
     var body: some View {
         let _ = (gValue, bigGValue, cValue, customRaw, precise)
         Form {
             Section {
                 ForEach(Array(Constants.table.enumerated()), id: \.offset) { index, row in
-                    let isOn = [$g, $bigG, $c][index]
                     let value = Constants.chosen(row.name)?.value ?? 0
-                    ConstantRow(name: row.name, title: row.title, value: value, unit: Text(Constants.units[row.name] ?? ""), isOn: isOn,
+                    ConstantRow(name: row.name, title: row.title, value: value, unit: Text(Constants.units[row.name] ?? ""), isOn: tapped([$g, $bigG, $c][index]),
                                 presets: Constants.presets[row.name] ?? []) { typed in
                         let usual = precise ? row.precise.value : row.booklet.value
                         if let typed, typed != usual { UserDefaults.standard.set(typed, forKey: "constantValue." + row.name) }
                         else { UserDefaults.standard.removeObject(forKey: "constantValue." + row.name) }
                     }
-                    .feel(value, showing: Self.examples[row.name] ?? [])
-                    .feel(isOn.wrappedValue, showing: Self.examples[row.name] ?? [])
                 }
+            } header: {
+                Text("Physical constants")
+            } footer: {
+                note("A value may be typed over, and clearing it restores the usual one. A letter stands for its constant only where another letter is solved for: h\u{00A0}=\u{00A0}0.5g·3² uses g, whereas 2g\u{00A0}=\u{00A0}10 is solved for g. A ! before the letter reverses this.")
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            Section("Other constants") {
                 ForEach(Constants.custom) { constant in
                     let isOn = Binding(get: { constant.off != true }, set: { on in update(constant.name) { $0.off = on ? nil : true } })
-                    ConstantRow(name: constant.name, title: nil, value: constant.value, unit: Text(constant.unit), isOn: isOn,
+                    ConstantRow(name: constant.name, title: nil, value: constant.value, unit: Text(constant.unit), isOn: tapped(isOn),
                                 remove: { Constants.custom.removeAll { $0.name == constant.name } }) { typed in
                         if let typed { update(constant.name) { $0.value = typed } }
                     }
-                    .feel(constant, showing: ["x=2*\(constant.name)"])
                 }
                 AddConstantRow()
-            } header: {
-                Text("Constants")
-            } footer: {
-                note("A letter is taken as its constant only where the equation has another letter to be solved for: h = 0.5g·3² uses g, whereas 2g = 10 is solved for g. A ! before the letter reverses this. Clearing the value of g, G or c restores the usual one.")
             }
         }
         .formStyle(.grouped)
@@ -557,98 +599,6 @@ private struct AddConstantRow: View {
         guard case .success(let constant) = entry else { return }
         Constants.custom.append(constant)
         (name, value, unit) = ("", "", "")
-    }
-}
-
-struct CopyingSettings: View {
-    @AppStorage("copyAsShown") private var copyAsShown = false
-    @AppStorage("copyLatex") private var copyLatex = true
-    @AppStorage("returnCopies") private var returnCopies = true
-
-    var body: some View {
-        Form {
-            Section("What is copied") {
-                Picker("The copy button copies", selection: $copyAsShown) {
-                    Text("A decimal: 2.5").tag(false)
-                    Text("The answer as shown: 5/2").tag(true)
-                }
-                .pickerStyle(.radioGroup)
-                .feel(copyAsShown)
-                note("A decimal is what another program can read, and is given to twelve figures whatever is chosen on the Calculation page. Several answers are copied with commas between: 2, 3.")
-            }
-            Section("The panel") {
-                Picker("A line of the working copies", selection: $copyLatex) {
-                    Text("LaTeX: \\frac{5}{2}").tag(true)
-                    Text("The line as shown: 5/2").tag(false)
-                }
-                .pickerStyle(.radioGroup)
-                .feel(copyLatex)
-                note("Click a line of the working or the solutions to copy it; right-click it for the other. The first line is what was typed, as it was read.")
-            }
-            Section("Return") {
-                Toggle("Return copies, while the pointer is on the card", isOn: $returnCopies)
-                    .feel(returnCopies)
-                note("With the pointer anywhere else, Return is Spotlight's and opens what is chosen in its list.")
-            }
-            Section("Afterwards") {
-                note("What is copied becomes ans, for the next sum: ans*2. Where there were several answers they are ans1, ans2 and so on. clip is the number on the clipboard: 20*clip.")
-            }
-        }
-        .formStyle(.grouped)
-    }
-}
-
-struct GeneralSettings: View {
-    @State private var resetting = false
-    @AppStorage("log") private var log = false
-    @AppStorage("welcome") private var welcome = true
-    @State private var atLogin = SMAppService.mainApp.status == .enabled
-    @State private var loginProblem: String?
-
-    var body: some View {
-        Form {
-            Section("Starting") {
-                Toggle("Open at login", isOn: $atLogin)
-                    .feel(atLogin)
-                    .onChange(of: atLogin) { _, wanted in
-                        do {
-                            if wanted { try SMAppService.mainApp.register() } else { try SMAppService.mainApp.unregister() }
-                            loginProblem = nil
-                        } catch {
-                            loginProblem = error.localizedDescription
-                            atLogin = SMAppService.mainApp.status == .enabled
-                        }
-                    }
-                note(loginProblem ?? "Without this, Spotlight Add-ons has to be opened again after the Mac is restarted.")
-
-                Toggle("Show a note when it is opened", isOn: $welcome)
-                    .feel(welcome)
-                note("A moment's note at the top of the screen that Spotlight Add-ons is running, since it has no window. It says so too when the permission it needs has not been given.")
-            }
-            Section("Troubleshooting") {
-                Toggle("Keep a log", isOn: $log)
-                    .feel(log)
-                note("When the card came and went, and why, in ~/Library/Logs/SpotlightAddons.log: for finding out why a card went missing. It has how many characters were typed and never what they were.")
-                Button("Show the log in Finder") {
-                    NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: NSHomeDirectory() + "/Library/Logs/SpotlightAddons.log")])
-                }
-                .disabled(!FileManager.default.fileExists(atPath: NSHomeDirectory() + "/Library/Logs/SpotlightAddons.log"))
-            }
-            Section("Spotlight Add-ons \(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "")") {
-                HStack {
-                    Button("Reset every setting…") { resetting = true }
-                    Spacer()
-                    Button("Quit Spotlight Add-ons") { NSApp.terminate(nil) }
-                }
-            }
-        }
-        .formStyle(.grouped)
-        .alert("Reset every setting?", isPresented: $resetting) {
-            Button("Reset", role: .destructive) { for key in defaultSettings.keys { UserDefaults.standard.removeObject(forKey: key) } }
-            Button("Cancel", role: .cancel) {}
-        } message: {
-            Text("The choices on every page go back to what they were when Spotlight Add-ons was first opened. Nothing else is touched.")
-        }
     }
 }
 

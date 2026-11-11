@@ -8,9 +8,11 @@ indirect enum Math: Equatable {
     case row([Math])
     case fraction(Math, Math)
     case root(Math)
+    case radical(Math, index: Math)                      // ∛x: a root with its index written small above the sign
     case power(Math, Math)
-    case bigOperator(String, lower: Math, upper: Math)   // ∑ or ∏ with its limits
+    case bigOperator(String, lower: Math, upper: Math)   // ∑, ∏ or ∫ with its limits
     case group(Math)                                     // in brackets that grow with what is inside
+    case matrix([[Math]])                                // its entries in rows and columns, between square brackets
 
     // "(−3 ± √17)/4", "n²", "e^2.5": brackets only where a single line needs them.
     var plain: String {
@@ -24,7 +26,17 @@ indirect enum Math: Equatable {
             let isCall = below.range(of: "^[A-Za-z]+\\([^()]*\\)$", options: .regularExpression) != nil
             if case .row(let parts) = d, parts.filter({ !$0.plain.isEmpty }).count > 1, !below.hasPrefix("("), !isCall { below = "(\(below))" }
             return Math.bracketed(n) + "/" + below
-        case .root(let x): return "√" + Math.bracketed(x)
+        // √(2gh) on one line, for √2gh would be √2 times gh.
+        case .root(let x):
+            let inner = Math.bracketed(x)
+            return inner.count > 1 && !inner.hasPrefix("(") && inner.contains(where: \.isLetter) ? "√(\(inner))" : "√" + inner
+        // ∛(−8) and ∜16, as the parser reads them back; a larger index raised before the sign, ⁵√32.
+        case .radical(let x, let index):
+            let inner = Math.bracketed(x)
+            let sign = index.plain == "3" ? "∛" : index.plain == "4" ? "∜" : Int(index.plain).map { superscript($0) + "√" } ?? "(\(index.plain))√"
+            // ∛27 and ∛x bare; ∛(−8) and ∛(x + 1) in brackets.
+            let bare = inner.hasPrefix("(") || inner.allSatisfy { $0.isNumber || $0 == "." } || inner.count == 1
+            return sign + (bare ? inner : "(\(inner))")
         case .power(let base, let exponent):
             let e = exponent.plain
             // Plain digits only: ² is a whole number too, as far as Swift is concerned, and 2^3² is not 2 to the 32.
@@ -35,6 +47,10 @@ indirect enum Math: Equatable {
         case .bigOperator(let symbol, let lower, let upper):
             return "\(symbol)(\(lower.plain)…\(upper.plain)) "
         case .group(let x): return "(" + x.plain + ")"
+        // A matrix as it is typed, [[1, 2], [3, 4]], a single row as a vector, [1, 2, 3].
+        case .matrix(let rows):
+            let lines = rows.map { "[" + $0.map(\.plain).joined(separator: ", ") + "]" }
+            return rows.count == 1 ? lines[0] : "[" + lines.joined(separator: ", ") + "]"
         }
     }
 
@@ -78,9 +94,12 @@ indirect enum Math: Equatable {
         case .group(let x): return "(" + x.latexParts + ")"   // \left( \right) where it holds a fraction: sizedBrackets
         case .fraction(let n, let d): return "\\frac{\(n.latexParts)}{\(d.latexParts)}"
         case .root(let x): return "\\sqrt{\(x.latexParts)}"
+        case .radical(let x, let index): return "\\sqrt[\(index.latexParts)]{\(x.latexParts)}"
         case .power(let base, let exponent): return "\(base.latexParts)^{\(exponent.latexParts)}"
         case .bigOperator(let symbol, let lower, let upper):
-            return "\(symbol == "∏" ? "\\prod" : "\\sum")_{\(lower.latexParts)}^{\(upper.latexParts)} "
+            return "\(symbol == "∏" ? "\\prod" : symbol == "∫" ? "\\int" : "\\sum")_{\(lower.latexParts)}^{\(upper.latexParts)} "
+        case .matrix(let rows):
+            return "\\begin{bmatrix} " + rows.map { $0.map(\.latexParts).joined(separator: " & ") }.joined(separator: " \\\\ ") + " \\end{bmatrix}"
         }
     }
 
@@ -141,16 +160,28 @@ indirect enum Math: Equatable {
         case .text: return false
         case .row(let parts): return parts.contains(where: \.hasFraction)
         case .fraction: return true
-        case .root(let x): return x.hasFraction
+        case .root(let x), .radical(let x, _): return x.hasFraction
         case .power(let b, let e): return b.hasFraction || e.hasFraction
         case .bigOperator: return false
         case .group(let x): return x.hasFraction
+        case .matrix(let rows): return rows.joined().contains(where: \.hasFraction)
         }
     }
 
     // An operator anywhere but at the very start (a leading minus is part of the number).
     private static func bracketed(_ m: Math) -> String {
         let s = m.plain
+        // (n − r)! is in brackets already, and is one factor: n!/(n − r)!, not n!/((n − r)!).
+        if s.hasPrefix("(") {
+            var depth = 0
+            for (i, c) in s.enumerated() {
+                depth += c == "(" ? 1 : c == ")" ? -1 : 0
+                if depth == 0 {
+                    if ["", "!"].contains(String(s.dropFirst(i + 1))) { return s }
+                    break
+                }
+            }
+        }
         return s.dropFirst().contains(where: { "+−±·×/".contains($0) }) ? "(\(s))" : s
     }
 }

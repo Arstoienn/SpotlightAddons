@@ -54,9 +54,13 @@ struct Sequence {
             let asked = right == "?"
             let value: Double? = asked ? nil : (try? Parser.constant(right, physical: false))?.eval(0)
             guard asked || (value?.isFinite ?? false) else { return nil }
+            if asked, ["S_inf", "S_infty", "S_∞", "S∞"].contains(left) { queries.append("S_∞"); continue }
             if let m = left.range(of: "^([A-Za-z])_\\{?([0-9]+)\\}?$", options: .regularExpression) {
                 let text = String(left[m])
-                let name = String(text.first!), index = Int(text.filter(\.isNumber))!
+                // A term so far along that its number will not fit in 64 bits, u_9223372036854775808,
+                // is no term worked here: no card, rather than a stopped program.
+                guard let index = Int(text.filter(\.isNumber)), index <= 1_000_000_000_000_000 else { return nil }
+                let name = String(text.first!)
                 if name == "S" {
                     guard asked else { return nil }
                     queries.append("S_\(index)")
@@ -88,7 +92,11 @@ struct Sequence {
         }
         func geometric() -> Progression? {
             if let r {
-                guard r != 0, known[0].value != 0 else { return nil }
+                if r == 0 {
+                    guard known[0].index == 1, known.dropFirst().allSatisfy({ $0.value == 0 }) else { return nil }
+                    return Progression(geometric: true, first: known[0].value, step: 0, exactStep: "0")
+                }
+                guard known[0].value != 0 else { return nil }
                 guard known.allSatisfy({ abs(known[0].value * pow(r, Double($0.index - known[0].index)) - $0.value) <= 1e-9 * max(1, abs($0.value)) }) else { return nil }
                 return Progression(geometric: true, first: known[0].value / pow(r, Double(known[0].index - 1)), step: r, exactStep: number(r))
             }
@@ -159,6 +167,16 @@ struct Sequence {
         return decimal(pow(positive, 1 / Double(k))) 
     }
 
+    // Whether a term is asked for, or given, so far along that its number will not fit in 64 bits,
+    // u_9223372036854775808: no sequence to work, and nothing else to take it for.
+    static func tooFarAlong(_ input: String) -> Bool {
+        guard let pattern = try? NSRegularExpression(pattern: "[A-Za-z]_\\{?([0-9]+)") else { return false }
+        return pattern.matches(in: input, range: NSRange(input.startIndex..., in: input)).contains { m in
+            guard let r = Range(m.range(at: 1), in: input) else { return false }
+            return Int(input[r]).map { $0 > 1_000_000_000_000_000 } ?? true
+        }
+    }
+
     // The nth term, and the sum of the first n.
     private func term(_ p: Progression, _ n: Int, sign: Double = 1) -> Double {
         let step = p.step * sign
@@ -168,8 +186,13 @@ struct Sequence {
     }
 
     private func sum(_ p: Progression, _ n: Int, sign: Double = 1) -> Double {
-        if p.geometric, p.alsoNegative { return (1...max(n, 1)).reduce(0) { $0 + term(p, $1, sign: sign) } }
         let step = p.step * sign
+        // With r of either sign, the sum for each is by the same formula from that sign's first term,
+        // and not term by term: S_1000000000 is as quick as S_5.
+        if p.geometric, p.alsoNegative {
+            let first = term(p, 1, sign: sign)
+            return step == 1 ? Double(n) * first : first * (1 - pow(step, Double(n))) / (1 - step)
+        }
         if !p.geometric { return Double(n) / 2 * (2 * p.first + Double(n - 1) * step) }
         return step == 1 ? Double(n) * p.first : p.first * (1 - pow(step, Double(n))) / (1 - step)
     }
@@ -177,6 +200,13 @@ struct Sequence {
     // MARK: Showing
 
     private func asked(_ p: Progression, _ q: String) -> String? {
+        if q == "S_∞" {
+            guard p.geometric, abs(p.step) < 1 else { return "Does not converge" }
+            let value = p.first / (1 - p.step)
+            guard value.isFinite else { return "Too large" }
+            if p.alsoNegative { return "S_∞ = \(Sequence.number(value)) or \(Sequence.number(term(p, 1, sign: -1) / (1 + p.step)))" }
+            return "S_∞ = \(Sequence.number(value))"
+        }
         let parts = q.split(separator: "_")
         if q == "d", !p.geometric { return "d = \(Sequence.number(p.step))" }
         if q == "r", p.geometric { return "r = \(p.exactStep)" }
@@ -184,6 +214,8 @@ struct Sequence {
         let isSum = parts[0] == "S"
         func value(_ sign: Double) -> Double { isSum ? sum(p, n, sign: sign) : term(p, n, sign: sign) }
         let (a, b) = (value(1), value(-1))
+        // S_1000000000 with r = 2: no number that can be held, and not inf.
+        guard a.isFinite, !p.alsoNegative || b.isFinite else { return "\(q) is beyond the largest number that can be held" }
         let text = Sequence.number(a)
         if p.alsoNegative, abs(a - b) > 1e-9 * max(1, abs(a)) {
             let exact = isExact(a) && isExact(b)
@@ -195,6 +227,9 @@ struct Sequence {
     private func name(_ p: Progression) -> String { p.geometric ? "Geometric" : "Arithmetic" }
 
     var solution: Solution {
+        if queries == ["S_∞"], progressions.allSatisfy({ !$0.geometric || abs($0.step) >= 1 }) {
+            return Solution(exact: "Does not converge", approx: "An infinite geometric series converges only when |r| < 1.")
+        }
         if let failure { return Solution(exact: wanted == true ? "No common ratio" : "No common difference", approx: failure) }
         let both = progressions.count == 2
         var lines: [String] = []
@@ -233,7 +268,14 @@ struct Sequence {
                 }
                 if first.index != 1, !p.alsoNegative { d.steps.append(Step(label: "Finding the first term", math: t("\(letter)_1 = \(Sequence.number(first.value))/r^\(first.index - 1) = \(Sequence.number(p.first))"))) }
                 d.steps.append(Step(label: "Writing the general term", math: t(geometricTerm(p)), note: p.alsoNegative ? "r may be taken with either sign, the terms given being an even number of steps apart; the first term is then \(Sequence.number(p.first)) or the same with the sign of r^\(first.index - 1)." : nil))
-                if !p.alsoNegative { d.steps.append(Step(label: "Writing the sum of n terms", math: t("S_n = \(Sequence.number(p.first))(1 − r^n)/(1 − r)"))) }
+                if !p.alsoNegative {
+                    d.steps.append(Step(label: "Writing the sum of n terms", math: t(p.step == 1 ? "S_n = n·\(Sequence.number(p.first))" : "S_n = \(Sequence.number(p.first))(1 − r^n)/(1 − r)")))
+                }
+                if queries.contains("S_∞") {
+                    d.steps.append(Step(label: "Checking convergence of the infinite series", math: t("|r| = \(Sequence.number(abs(p.step)))"),
+                                        note: abs(p.step) < 1 ? "Since |r| < 1, rⁿ tends to zero." : "Since |r| ≥ 1, this geometric series does not converge."))
+                    if abs(p.step) < 1 { d.steps.append(Step(label: "Infinite geometric sum", math: row(t("S_∞ = "), .fraction(t("u_1"), t("1 − r")), t(" = "), .fraction(t(Sequence.number(p.first)), t("1 − \(Sequence.paren(p.step))"))))) }
+                }
             } else {
                 if terms.count >= 2 {
                     let second = terms[1], gap = second.index - first.index
@@ -250,7 +292,7 @@ struct Sequence {
             for q in queries { if let line = asked(p, q) { d.steps.append(Step(label: "Evaluating \(q)", math: t(line))) } }
         }
         let s = solution
-        d.solutions = [t(s.exact)] + (s.approx.map { [t($0)] } ?? [])
+        d.solutions = answerLines(s)
         d.graph = graph()
         return d
     }
@@ -287,6 +329,7 @@ struct Sequence {
 
     var copyText: String {
         guard let p = progressions.first else { return "" }
+        if queries.first == "S_∞" { return p.geometric && abs(p.step) < 1 ? String(format: "%.12g", p.first / (1 - p.step)) : "" }
         if let q = queries.first, q.contains("_"), let n = Int(q.split(separator: "_")[1]) {
             return String(format: "%.12g", q.hasPrefix("S") ? sum(p, n) : term(p, n))
         }

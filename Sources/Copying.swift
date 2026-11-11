@@ -9,14 +9,16 @@ import SwiftUI
 
     var available = false   // there is something to copy for what is typed
     var done = false        // it has just been copied, and the card says so for a moment
-    var symbol = "function" // the card's sign: f(x) for an answer, a folder or a page for a path
     var isPlace = false     // what is typed is a path: the button and Return go there instead
+    var isCommand = false   // what is typed is a line for Terminal: the button and Return type it there instead
     @ObservationIgnored var go: () -> Void = {}
     @ObservationIgnored var text: () -> String? = { nil }
     @ObservationIgnored var copied: () -> Void = {}
     @ObservationIgnored private var generation = 0
 
     @discardableResult func copy() -> Bool {
+        // A command is typed in Terminal, or, where it cannot be, nothing is done; either way Return goes no further.
+        if isCommand { go(); return true }
         if isPlace { go(); return true }
         guard let text = text() else { return false }
         NSPasteboard.general.clearContents()
@@ -40,7 +42,7 @@ struct CopyButton: View {
     var body: some View {
         if copying.available {
             HStack(spacing: 5) {
-                Image(systemName: copying.isPlace ? "folder" : copying.done ? "checkmark" : "doc.on.doc")
+                Image(systemName: copying.isCommand ? "keyboard" : copying.isPlace ? "folder" : copying.done ? "checkmark" : "doc.on.doc")
                     .font(.system(size: 13, weight: .medium))
                 if copying.done { Text("Copied").font(.system(size: 12, weight: .medium)) }
             }
@@ -49,7 +51,7 @@ struct CopyButton: View {
             .padding(.horizontal, 6)
             .contentShape(Rectangle())
             .overlay(ClickTarget { copying.copy() })
-            .help(copying.isPlace ? "Show in Finder" : "Copy the answer")
+            .help(copying.isCommand ? "Type in Terminal, without running it" : copying.isPlace ? "Show in Finder" : "Copy the answer")
             .padding(.trailing, 12)
         }
     }

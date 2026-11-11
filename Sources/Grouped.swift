@@ -7,6 +7,8 @@ import Foundation
 struct Grouped {
     var equation: Equation   // with the group as its unknown
     var letters: [String]
+    var cancelled: [String] = []   // the m of mgh = ½mv², divided out
+    var typed: (left: Expr, right: Expr)
 
     static func parse(_ input: String) -> Grouped? {
         guard var tokens = try? Parser.tokenize(input), tokens.filter({ $0 == .symbol("=") }).count == 1,
@@ -15,16 +17,32 @@ struct Grouped {
         var letters: [String] = []
         for token in tokens { if case .letter(let s) = token, !ks.contains(s), !letters.contains(s) { letters.append(s) } }
         // e is Euler's number, and g and c the constants they name, as they are with one unknown.
-        let constants = Set(letters).intersection(Constants.all.keys)
+        let constants = Roles.constants(among: Set(letters))   // the shared rules (Roles.swift)
         letters = letters.filter { $0 != "e" && !constants.contains($0) }
         guard letters.count >= 2 else { return nil }
         tokens = tokens.map { $0 == .letter("e") ? .constant(M_E) : $0 }
         var state = Parser.State(tokens: tokens, unknown: "", constants: constants, bound: letters)
-        guard let left = try? state.expression(), state.take("="), let right = try? state.expression(), state.at == tokens.count,
-              !left.hasSum, !right.hasSum else { return nil }
+        guard let typedLeft = try? state.expression(), state.take("="), let typedRight = try? state.expression(), state.at == tokens.count,
+              !typedLeft.hasSum, !typedRight.hasSum else { return nil }
+
+        // A letter that is a factor of both sides, and nowhere else, divides out: mgh = ½mv² is
+        // gh = ½v², in v alone where h is given.
+        var (left, right) = (typedLeft, typedRight)
+        var cancelled: [String] = []
+        for name in letters {
+            guard let l = without(left, name), let r = without(right, name), !mentions(l, [name]), !mentions(r, [name]) else { continue }
+            (left, right) = (l, r)
+            cancelled.append(name)
+        }
+        let remaining = letters.filter { !cancelled.contains($0) && (mentions(left, [$0]) || mentions(right, [$0])) }
+        if !cancelled.isEmpty, remaining.count == 1, let n = remaining.first {
+            return Grouped(equation: Equation(left: unknown(left, n), right: unknown(right, n), unknown: n), letters: remaining,
+                           cancelled: cancelled, typed: (typedLeft, typedRight))
+        }
+        guard remaining.count >= 2 else { return nil }
 
         // The letters on one side only, and there all within the one product.
-        let lettered = Set(letters)
+        let lettered = Set(remaining)
         guard mentions(left, lettered) != mentions(right, lettered),
               let (side, group) = taken(mentions(left, lettered) ? left : right, lettered) else { return nil }
         let name = typeset(group, "").plain.replacingOccurrences(of: "·(?=[a-z]+\\()", with: " ", options: .regularExpression)
@@ -33,7 +51,7 @@ struct Grouped {
         // v cos(θ) = 2.55 is already its own answer.
         if case .unknown = equation.left, case .num = equation.right { return nil }
         if case .num = equation.left, case .unknown = equation.right { return nil }
-        return Grouped(equation: equation, letters: letters)
+        return Grouped(equation: equation, letters: remaining, cancelled: cancelled, typed: (typedLeft, typedRight))
     }
 
     // Whether a name is of several letters taken together, and not of one, θ or x_1.
@@ -50,17 +68,50 @@ struct Grouped {
 
     var solution: Solution? {
         guard var s = Solver.solve(equation) else { return nil }
-        if s.approx == nil { s.approx = note }
+        if s.approx == nil, letters.count > 1 { s.approx = note }
         return s
     }
 
     var details: Details {
         var d = Solver.details(of: equation)
-        if d.note == nil { d.note = note }
+        if d.note == nil, letters.count > 1 { d.note = note }
+        if !cancelled.isEmpty {
+            let n = equation.unknown
+            d.steps.insert(Step(label: "Dividing both sides by " + cancelled.joined(separator: ""),
+                                math: row(typeset(equation.left, n), t(" = "), typeset(equation.right, n))), at: 0)
+            d.equation = row(typeset(typed.left, n), t(" = "), typeset(typed.right, n))
+        }
         return d
     }
 
-    private static func mentions(_ e: Expr, _ letters: Set<String>) -> Bool {
+    // The side with one factor of the letter taken out; nil where it is no factor of the side.
+    static func without(_ e: Expr, _ name: String) -> Expr? {
+        switch e {
+        case .index(let k) where k == name: return .num(1)
+        case .op("*", let a, let b):
+            if let rest = without(a, name) { if case .num(1) = rest { return b }; return .op("*", rest, b) }
+            if let rest = without(b, name) { if case .num(1) = rest { return a }; return .op("*", a, rest) }
+            return nil
+        case .op("/", let a, let b): return without(a, name).map { .op("/", $0, b) }
+        case .neg(let a): return without(a, name).map { .neg($0) }
+        default: return nil
+        }
+    }
+
+    // The letter made the unknown.
+    private static func unknown(_ e: Expr, _ name: String) -> Expr {
+        switch e {
+        case .index(let k) where k == name: return .unknown
+        case .num, .unknown, .constant, .index: return e
+        case .neg(let a): return .neg(unknown(a, name))
+        case .op(let o, let a, let b): return .op(o, unknown(a, name), unknown(b, name))
+        case .call(let f, let a): return .call(f, unknown(a, name))
+        case .apply(let f, let args): return .apply(f, args.map { unknown($0, name) })
+        case .sum: return e
+        }
+    }
+
+    static func mentions(_ e: Expr, _ letters: Set<String>) -> Bool {
         switch e {
         case .index(let k): return letters.contains(k)
         case .num, .unknown, .constant: return false

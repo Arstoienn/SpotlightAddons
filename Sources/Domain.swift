@@ -15,7 +15,6 @@ struct Domain {
     private static let relations: Set<Character> = ["<", ">", "≤", "≥"]
 
     static func parse(_ input: String) -> Domain? {
-        guard Options.inequalities else { return nil }
         let parts = LinearSystem.parts(input)
         guard parts.count >= 2, let clause = parts.last, parts.dropLast().count == 1 else { return nil }
         let equation = parts[0]

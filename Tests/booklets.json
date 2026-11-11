@@ -1,0 +1,1556 @@
+[
+  {
+    "ref": "M 1.2",
+    "input": "u_1=3,d=4,u_10=?",
+    "kind": "value",
+    "expected": 39
+  },
+  {
+    "ref": "M 1.2",
+    "input": "u_1=3,d=4,S_10=?",
+    "kind": "value",
+    "expected": 210
+  },
+  {
+    "ref": "M 1.3",
+    "input": "u_1=2,r=3,u_5=?",
+    "kind": "value",
+    "expected": 162
+  },
+  {
+    "ref": "M 1.3",
+    "input": "u_1=2,r=3,S_5=?",
+    "kind": "value",
+    "expected": 242
+  },
+  {
+    "ref": "M 1.3",
+    "input": "u_1=2,r=1,S_10=?",
+    "kind": "value",
+    "expected": 20
+  },
+  {
+    "ref": "M 1.8",
+    "input": "u_1=3,r=0.5,S_inf=?",
+    "kind": "value",
+    "expected": 6
+  },
+  {
+    "ref": "M 1.8",
+    "input": "u_1=3,r=1,S_inf=?",
+    "kind": "text",
+    "expected": "Does not converge"
+  },
+  {
+    "ref": "M 1.4",
+    "input": "FV=PV*(1+r/(100*k))^(k*n),PV=1000,r=5,k=12,n=3",
+    "kind": "value",
+    "expected": 1161.4722313334678
+  },
+  {
+    "ref": "M 1.5",
+    "input": "2^x=32",
+    "kind": "roots",
+    "expected": [
+      5.0
+    ]
+  },
+  {
+    "ref": "M 1.7",
+    "input": "log(81)/log(3)",
+    "kind": "value",
+    "expected": 4
+  },
+  {
+    "ref": "M 1.9",
+    "input": "expand((2x-1)^4)",
+    "kind": "function",
+    "expected": [
+      0.11316496000000001,
+      0.00038415999999999895,
+      2.5204737599999985
+    ],
+    "points": [
+      0.21,
+      0.57,
+      1.13
+    ]
+  },
+  {
+    "ref": "M 1.10",
+    "input": "nCr(12,3)",
+    "kind": "value",
+    "expected": 220
+  },
+  {
+    "ref": "M 1.10",
+    "input": "nPr(12,3)",
+    "kind": "value",
+    "expected": 1320
+  },
+  {
+    "ref": "M 1.10",
+    "input": "nCr(1/2,3)",
+    "kind": "value",
+    "expected": 0.0625
+  },
+  {
+    "ref": "M 1.10",
+    "input": "taylor((1+x)^(-1),4)",
+    "kind": "function",
+    "expected": [
+      0.82678381,
+      0.67526701,
+      1.3344766099999996
+    ],
+    "points": [
+      0.21,
+      0.57,
+      1.13
+    ]
+  },
+  {
+    "ref": "M 1.12",
+    "input": "(1+2i)*(3-i)",
+    "kind": "complex",
+    "expected": [
+      5.0,
+      5.0
+    ]
+  },
+  {
+    "ref": "M 1.12",
+    "input": "i=sqrt(-1)",
+    "kind": "text",
+    "expected": "True"
+  },
+  {
+    "ref": "M 1.12",
+    "input": "-i=sqrt(-1)",
+    "kind": "text",
+    "expected": "False"
+  },
+  {
+    "ref": "M 1.13",
+    "input": "abs(3+4i)",
+    "kind": "value",
+    "expected": 5
+  },
+  {
+    "ref": "M 1.13",
+    "input": "arg(1+i)",
+    "kind": "value",
+    "expected": 0.7853981633974483
+  },
+  {
+    "ref": "M 1.13",
+    "input": "2cis(pi/3)",
+    "kind": "complex",
+    "expected": [
+      1.0,
+      1.7320508075688772
+    ]
+  },
+  {
+    "ref": "M 1.14",
+    "input": "(cos(pi/6)+i*sin(pi/6))^6",
+    "kind": "value",
+    "expected": -1
+  },
+  {
+    "ref": "M 2.1",
+    "input": "m=(7-1)/(5-2)",
+    "kind": "value",
+    "expected": 2
+  },
+  {
+    "ref": "M 2.1",
+    "input": "y=2x+1,x=3",
+    "kind": "value",
+    "expected": 7
+  },
+  {
+    "ref": "M 2.6",
+    "input": "x=-b/(2a),a=2,b=-8",
+    "kind": "value",
+    "expected": 2
+  },
+  {
+    "ref": "M 2.7",
+    "input": "x^2-5x+6=0",
+    "kind": "roots",
+    "expected": [
+      2.0,
+      3.0
+    ]
+  },
+  {
+    "ref": "M 2.7",
+    "input": "x^2+1=0",
+    "kind": "text",
+    "expected": "x = ±i"
+  },
+  {
+    "ref": "M 2.12",
+    "input": "-( -6)/2",
+    "kind": "value",
+    "expected": 3
+  },
+  {
+    "ref": "M 2.12",
+    "input": "(-1)^3*(-12)/2",
+    "kind": "value",
+    "expected": 6
+  },
+  {
+    "ref": "M 3.1 parallelogram",
+    "input": "A=b*h,b=4,h=5",
+    "kind": "value",
+    "expected": 20
+  },
+  {
+    "ref": "M 3.1 triangle",
+    "input": "A=b*h/2,b=4,h=5",
+    "kind": "value",
+    "expected": 10
+  },
+  {
+    "ref": "M 3.1 trapezoid",
+    "input": "A=(a+b)*h/2,a=3,b=5,h=4",
+    "kind": "value",
+    "expected": 16
+  },
+  {
+    "ref": "M 3.1 circle",
+    "input": "A=pi*r^2,r=3",
+    "kind": "value",
+    "expected": 28.274333882308138
+  },
+  {
+    "ref": "M 3.1 circumference",
+    "input": "C=2*pi*r,r=3",
+    "kind": "value",
+    "expected": 18.84955592153876
+  },
+  {
+    "ref": "M 3.1 cuboid",
+    "input": "V=l*w*h,l=2,w=3,h=4",
+    "kind": "value",
+    "expected": 24
+  },
+  {
+    "ref": "M 3.1 cylinder",
+    "input": "V=pi*r^2*h,r=2,h=5",
+    "kind": "value",
+    "expected": 62.83185307179586
+  },
+  {
+    "ref": "M 3.1 prism",
+    "input": "V=A*h,A=12,h=3",
+    "kind": "value",
+    "expected": 36
+  },
+  {
+    "ref": "M 3.1 cylinder surface",
+    "input": "A=2*pi*r*h,r=2,h=5",
+    "kind": "value",
+    "expected": 62.83185307179586
+  },
+  {
+    "ref": "M 3.1 pyramid",
+    "input": "V=A*h/3,A=12,h=6",
+    "kind": "value",
+    "expected": 24
+  },
+  {
+    "ref": "M 3.1 cone",
+    "input": "V=pi*r^2*h/3,r=3,h=4",
+    "kind": "value",
+    "expected": 37.69911184307752
+  },
+  {
+    "ref": "M 3.1 cone surface",
+    "input": "A=pi*r*l,r=3,l=5",
+    "kind": "value",
+    "expected": 47.12388980384689
+  },
+  {
+    "ref": "M 3.1 sphere",
+    "input": "V=4*pi*r^3/3,r=3",
+    "kind": "value",
+    "expected": 113.09733552923255
+  },
+  {
+    "ref": "M 3.1 sphere surface",
+    "input": "A=4*pi*r^2,r=3",
+    "kind": "value",
+    "expected": 113.09733552923255
+  },
+  {
+    "ref": "M 3.1",
+    "input": "sqrt((4-1)^2+(6-2)^2)",
+    "kind": "value",
+    "expected": 5
+  },
+  {
+    "ref": "M 3.1",
+    "input": "norm([1,2,2])",
+    "kind": "value",
+    "expected": 3
+  },
+  {
+    "ref": "M 3.1",
+    "input": "[(1+5)/2,(2+8)/2,(3+7)/2]",
+    "kind": "vector",
+    "expected": [
+      3.0,
+      5.0,
+      5.0
+    ]
+  },
+  {
+    "ref": "M 3.2",
+    "input": "a/sin(30°)=4/sin(60°)",
+    "kind": "roots",
+    "expected": [
+      2.3094010767585034
+    ]
+  },
+  {
+    "ref": "M 3.2",
+    "input": "c=sqrt(a^2+b^2-2*a*b*cos(C)),a=3,b=4,C=90°",
+    "kind": "value",
+    "expected": 5
+  },
+  {
+    "ref": "M 3.2",
+    "input": "A=a*b*sin(C)/2,a=3,b=4,C=30°",
+    "kind": "value",
+    "expected": 3
+  },
+  {
+    "ref": "M 3.4",
+    "input": "l=r*theta,r=3,theta=pi/3",
+    "kind": "value",
+    "expected": 3.141592653589793
+  },
+  {
+    "ref": "M 3.4",
+    "input": "A=r^2*theta/2,r=3,theta=pi/3",
+    "kind": "value",
+    "expected": 4.71238898038469
+  },
+  {
+    "ref": "M 3.5",
+    "input": "tan(x)=sin(x)/cos(x)",
+    "kind": "proof",
+    "expected": true
+  },
+  {
+    "ref": "M 3.6",
+    "input": "sin(x)^2+cos(x)^2=1",
+    "kind": "proof",
+    "expected": true
+  },
+  {
+    "ref": "M 3.6",
+    "input": "sin2x+cos2x-1=2sinx(cosx-sinx)",
+    "kind": "proof",
+    "expected": true
+  },
+  {
+    "ref": "M 3.9",
+    "input": "sec(x)=1/cos(x)",
+    "kind": "proof",
+    "expected": true
+  },
+  {
+    "ref": "M 3.9",
+    "input": "1+tan(x)^2=sec(x)^2",
+    "kind": "proof",
+    "expected": true
+  },
+  {
+    "ref": "M 3.9",
+    "input": "1+cot(x)^2=csc(x)^2",
+    "kind": "proof",
+    "expected": true
+  },
+  {
+    "ref": "M 3.10",
+    "input": "sin(A+B)=sin(A)*cos(B)+cos(A)*sin(B)",
+    "kind": "proof",
+    "expected": true
+  },
+  {
+    "ref": "M 3.10",
+    "input": "cos(A-B)=cos(A)*cos(B)+sin(A)*sin(B)",
+    "kind": "proof",
+    "expected": true
+  },
+  {
+    "ref": "M 3.10",
+    "input": "tan(2x)=2tan(x)/(1-tan(x)^2)",
+    "kind": "proof",
+    "expected": true
+  },
+  {
+    "ref": "M 3.13",
+    "input": "dot([1,2,3],[4,5,6])",
+    "kind": "value",
+    "expected": 32
+  },
+  {
+    "ref": "M 3.13",
+    "input": "acos(dot([1,0,0],[1,1,0])/(norm([1,0,0])*norm([1,1,0])))",
+    "kind": "value",
+    "expected": 0.7853981633974483
+  },
+  {
+    "ref": "M 3.14",
+    "input": "A+2B,A=[1,2,3],B=[2,-1,0]",
+    "kind": "vector",
+    "expected": [
+      5.0,
+      0.0,
+      3.0
+    ]
+  },
+  {
+    "ref": "M 3.16",
+    "input": "cross([1,2,3],[4,5,6])",
+    "kind": "vector",
+    "expected": [
+      -3.0,
+      6.0,
+      -3.0
+    ]
+  },
+  {
+    "ref": "M 3.16",
+    "input": "norm(cross([1,0,0],[0,2,0]))",
+    "kind": "value",
+    "expected": 2
+  },
+  {
+    "ref": "M 3.17",
+    "input": "x+y+z=6,x-y=0,z=2",
+    "kind": "roots",
+    "expected": [
+      2.0,
+      2.0,
+      2.0
+    ]
+  },
+  {
+    "ref": "M 4.2",
+    "input": "iqr([1,2,3,4,5,6,7,8])",
+    "kind": "value",
+    "expected": 3.5
+  },
+  {
+    "ref": "M 4.3",
+    "input": "mean([1,2,3,4])",
+    "kind": "value",
+    "expected": 2.5
+  },
+  {
+    "ref": "M 4.3 frequencies",
+    "input": "mean([1,2,3],[2,1,1])",
+    "kind": "value",
+    "expected": 1.75
+  },
+  {
+    "ref": "M 4.5 complement",
+    "input": "1-0.3",
+    "kind": "value",
+    "expected": 0.7
+  },
+  {
+    "ref": "M 4.6 union",
+    "input": "0.3+0.4-0.1",
+    "kind": "value",
+    "expected": 0.6
+  },
+  {
+    "ref": "M 4.6 conditional",
+    "input": "0.1/0.4",
+    "kind": "value",
+    "expected": 0.25
+  },
+  {
+    "ref": "M 4.6 independent",
+    "input": "0.3*0.4",
+    "kind": "value",
+    "expected": 0.12
+  },
+  {
+    "ref": "M 4.7",
+    "input": "dot([0,1,2],[0.25,0.5,0.25])",
+    "kind": "value",
+    "expected": 1
+  },
+  {
+    "ref": "M 4.8",
+    "input": "binompdf(10,0.3,2)",
+    "kind": "value",
+    "expected": 0.23347444049999988
+  },
+  {
+    "ref": "M 4.8",
+    "input": "binomcdf(10,0.3,2)",
+    "kind": "value",
+    "expected": 0.3827827863999998
+  },
+  {
+    "ref": "M 4.8",
+    "input": "binompdf(10,0,0)",
+    "kind": "value",
+    "expected": 1
+  },
+  {
+    "ref": "M 4.12",
+    "input": "normalcdf(-1.96,1.96)",
+    "kind": "value",
+    "expected": 0.9500042097035591
+  },
+  {
+    "ref": "M 4.12",
+    "input": "normalcdf(9,10)",
+    "kind": "value",
+    "expected": 1.1285122074235991e-19,
+    "atol": 1e-30
+  },
+  {
+    "ref": "M 4.12",
+    "input": "invnorm(0.975)",
+    "kind": "value",
+    "expected": 1.9599639845400543
+  },
+  {
+    "ref": "M 4.12",
+    "input": "zscore(85,70,10)",
+    "kind": "value",
+    "expected": 1.5
+  },
+  {
+    "ref": "M 4.13 Bayes",
+    "input": "0.01*0.99/(0.01*0.99+0.99*0.05)",
+    "kind": "value",
+    "expected": 0.16666666666666666
+  },
+  {
+    "ref": "M 4.14",
+    "input": "varp([1,2,3,4])",
+    "kind": "value",
+    "expected": 1.25
+  },
+  {
+    "ref": "M 4.14 frequencies",
+    "input": "varp([1,2,3],[2,1,1])",
+    "kind": "value",
+    "expected": 0.6875
+  },
+  {
+    "ref": "M 4.14 frequencies",
+    "input": "stdevp([1,2,3],[2,1,1])",
+    "kind": "value",
+    "expected": 0.82915619758885
+  },
+  {
+    "ref": "M 4.14 continuous mean",
+    "input": "integrate(2*x^2,0,1)",
+    "kind": "value",
+    "expected": 0.6666666666666666
+  },
+  {
+    "ref": "M 4.14 continuous second moment",
+    "input": "integrate(2*x^3,0,1)",
+    "kind": "value",
+    "expected": 0.5
+  },
+  {
+    "ref": "M 5.3/5.6/5.15",
+    "input": "derivative(x^5)",
+    "kind": "function",
+    "expected": [
+      0.009724049999999998,
+      0.5278000499999999,
+      8.152368049999996
+    ],
+    "points": [
+      0.21,
+      0.57,
+      1.13
+    ]
+  },
+  {
+    "ref": "M 5.3/5.6/5.15",
+    "input": "derivative(sin(x))",
+    "kind": "function",
+    "expected": [
+      0.9780309147241483,
+      0.8419009751622688,
+      0.4266598079301574
+    ],
+    "points": [
+      0.21,
+      0.57,
+      1.13
+    ]
+  },
+  {
+    "ref": "M 5.3/5.6/5.15",
+    "input": "derivative(cos(x))",
+    "kind": "function",
+    "expected": [
+      -0.20845989984609956,
+      -0.5396320487339692,
+      -0.9044121893788258
+    ],
+    "points": [
+      0.21,
+      0.57,
+      1.13
+    ]
+  },
+  {
+    "ref": "M 5.3/5.6/5.15",
+    "input": "derivative(exp(x))",
+    "kind": "function",
+    "expected": [
+      1.2336780599567432,
+      1.768267051433735,
+      3.095656500124711
+    ],
+    "points": [
+      0.21,
+      0.57,
+      1.13
+    ]
+  },
+  {
+    "ref": "M 5.3/5.6/5.15",
+    "input": "derivative(ln(x))",
+    "kind": "function",
+    "expected": [
+      4.761904761904762,
+      1.7543859649122808,
+      0.8849557522123894
+    ],
+    "points": [
+      0.21,
+      0.57,
+      1.13
+    ]
+  },
+  {
+    "ref": "M 5.3/5.6/5.15",
+    "input": "derivative(x^2*sin(x))",
+    "kind": "function",
+    "expected": [
+      0.13068432127469676,
+      0.8887141623869459,
+      2.5887734567421643
+    ],
+    "points": [
+      0.21,
+      0.57,
+      1.13
+    ]
+  },
+  {
+    "ref": "M 5.3/5.6/5.15",
+    "input": "derivative(sin(x)/x)",
+    "kind": "function",
+    "expected": [
+      -0.06969178580563354,
+      -0.18389810062011713,
+      -0.330712355249235
+    ],
+    "points": [
+      0.21,
+      0.57,
+      1.13
+    ]
+  },
+  {
+    "ref": "M 5.3/5.6/5.15",
+    "input": "derivative(sin(x^2))",
+    "kind": "function",
+    "expected": [
+      0.41959165608571314,
+      1.0803582239128078,
+      0.6546851086112678
+    ],
+    "points": [
+      0.21,
+      0.57,
+      1.13
+    ]
+  },
+  {
+    "ref": "M 5.3/5.6/5.15",
+    "input": "derivative(tan(x))",
+    "kind": "function",
+    "expected": [
+      1.045429701597409,
+      1.4108406842826966,
+      5.493340673781573
+    ],
+    "points": [
+      0.21,
+      0.57,
+      1.13
+    ]
+  },
+  {
+    "ref": "M 5.3/5.6/5.15",
+    "input": "derivative(sec(x))",
+    "kind": "function",
+    "expected": [
+      0.21793017089113365,
+      0.7613348488967067,
+      4.968244265778546
+    ],
+    "points": [
+      0.21,
+      0.57,
+      1.13
+    ]
+  },
+  {
+    "ref": "M 5.3/5.6/5.15",
+    "input": "derivative(csc(x))",
+    "kind": "function",
+    "expected": [
+      -22.506477731111044,
+      -2.8911161755316717,
+      -0.5216136159998853
+    ],
+    "points": [
+      0.21,
+      0.57,
+      1.13
+    ]
+  },
+  {
+    "ref": "M 5.3/5.6/5.15",
+    "input": "derivative(cot(x))",
+    "kind": "function",
+    "expected": [
+      -23.012031002577206,
+      -3.4340335274875233,
+      -1.222551565216266
+    ],
+    "points": [
+      0.21,
+      0.57,
+      1.13
+    ]
+  },
+  {
+    "ref": "M 5.3/5.6/5.15",
+    "input": "derivative(2^x)",
+    "kind": "function",
+    "expected": [
+      0.8017551534609535,
+      1.0289933274563081,
+      1.5170131874667772
+    ],
+    "points": [
+      0.21,
+      0.57,
+      1.13
+    ]
+  },
+  {
+    "ref": "M 5.3/5.6/5.15",
+    "input": "derivative(log(x)/log(2))",
+    "kind": "function",
+    "expected": [
+      6.869976385185541,
+      2.5310439313841466,
+      1.2767212751229766
+    ],
+    "points": [
+      0.21,
+      0.57,
+      1.13
+    ]
+  },
+  {
+    "ref": "M 5.3/5.6/5.15",
+    "input": "derivative(asin(x/2))",
+    "kind": "function",
+    "expected": [
+      0.5027792521723377,
+      0.5216334339520565,
+      0.6059938335593225
+    ],
+    "points": [
+      0.21,
+      0.57,
+      1.13
+    ]
+  },
+  {
+    "ref": "M 5.3/5.6/5.15",
+    "input": "derivative(acos(x/2))",
+    "kind": "function",
+    "expected": [
+      -0.5027792521723377,
+      -0.5216334339520565,
+      -0.6059938335593225
+    ],
+    "points": [
+      0.21,
+      0.57,
+      1.13
+    ]
+  },
+  {
+    "ref": "M 5.3/5.6/5.15",
+    "input": "derivative(atan(x))",
+    "kind": "function",
+    "expected": [
+      0.9577626664112633,
+      0.7547739452034116,
+      0.43919364047608594
+    ],
+    "points": [
+      0.21,
+      0.57,
+      1.13
+    ]
+  },
+  {
+    "ref": "M 5.12 first principles",
+    "input": "limit(((x+h)^2-x^2)/h,h,0)",
+    "kind": "symbolic",
+    "expected": "2x"
+  },
+  {
+    "ref": "M 5.9 distance",
+    "input": "integrate(abs(x-2),0,4)",
+    "kind": "value",
+    "expected": 4
+  },
+  {
+    "ref": "M 5.9 displacement",
+    "input": "integrate(x-2,0,4)",
+    "kind": "value",
+    "expected": 0
+  },
+  {
+    "ref": "M 5.5/5.10/5.15/5.16",
+    "input": "integrate(x^2)",
+    "kind": "function",
+    "expected": [
+      0.0030869999999999995,
+      0.06173099999999999,
+      0.4809656666666665
+    ],
+    "points": [
+      0.21,
+      0.57,
+      1.13
+    ]
+  },
+  {
+    "ref": "M 5.5/5.10/5.15/5.16",
+    "input": "integrate(1/x)",
+    "kind": "function",
+    "expected": [
+      -1.5606477482646683,
+      -0.5621189181535413,
+      0.12221763272424911
+    ],
+    "points": [
+      0.21,
+      0.57,
+      1.13
+    ]
+  },
+  {
+    "ref": "M 5.5/5.10/5.15/5.16",
+    "input": "integrate(sin(x))",
+    "kind": "function",
+    "expected": [
+      -0.9780309147241483,
+      -0.8419009751622688,
+      -0.4266598079301574
+    ],
+    "points": [
+      0.21,
+      0.57,
+      1.13
+    ]
+  },
+  {
+    "ref": "M 5.5/5.10/5.15/5.16",
+    "input": "integrate(cos(x))",
+    "kind": "function",
+    "expected": [
+      0.20845989984609956,
+      0.5396320487339692,
+      0.9044121893788258
+    ],
+    "points": [
+      0.21,
+      0.57,
+      1.13
+    ]
+  },
+  {
+    "ref": "M 5.5/5.10/5.15/5.16",
+    "input": "integrate(exp(x))",
+    "kind": "function",
+    "expected": [
+      1.2336780599567432,
+      1.768267051433735,
+      3.095656500124711
+    ],
+    "points": [
+      0.21,
+      0.57,
+      1.13
+    ]
+  },
+  {
+    "ref": "M 5.5/5.10/5.15/5.16",
+    "input": "integrate(2^x)",
+    "kind": "function",
+    "expected": [
+      1.6687483067750195,
+      2.1417147934293057,
+      3.1574641921697952
+    ],
+    "points": [
+      0.21,
+      0.57,
+      1.13
+    ]
+  },
+  {
+    "ref": "M 5.5/5.10/5.15/5.16",
+    "input": "integrate(1/(4+x^2))",
+    "kind": "function",
+    "expected": [
+      0.05230832881625985,
+      0.1388195785598281,
+      0.25714327063472475
+    ],
+    "points": [
+      0.21,
+      0.57,
+      1.13
+    ]
+  },
+  {
+    "ref": "M 5.5/5.10/5.15/5.16",
+    "input": "integrate(1/sqrt(4-x^2))",
+    "kind": "function",
+    "expected": [
+      0.10519390104038849,
+      0.2890064281735013,
+      0.6004332535805232
+    ],
+    "points": [
+      0.21,
+      0.57,
+      1.13
+    ]
+  },
+  {
+    "ref": "M 5.5/5.10/5.15/5.16",
+    "input": "integrate(x*exp(x))",
+    "kind": "function",
+    "expected": [
+      -0.9746056673658272,
+      -0.7603548321165061,
+      0.40243534501621214
+    ],
+    "points": [
+      0.21,
+      0.57,
+      1.13
+    ]
+  },
+  {
+    "ref": "M 5.11",
+    "input": "integrate(abs(x^2-1),-2,2)",
+    "kind": "value",
+    "expected": 4
+  },
+  {
+    "ref": "M 5.17 revolution",
+    "input": "integrate(pi*x^4,0,2)",
+    "kind": "value",
+    "expected": 20.106192982974676
+  },
+  {
+    "ref": "M 5.18 Euler",
+    "input": "euler(x+y,0,1,0.1,3)",
+    "kind": "value",
+    "expected": 1.362
+  },
+  {
+    "ref": "M 5.19",
+    "input": "taylor(exp(x),5)",
+    "kind": "function",
+    "expected": [
+      1.2336779371675,
+      1.7682152437974998,
+      3.092222860244166
+    ],
+    "points": [
+      0.21,
+      0.57,
+      1.13
+    ]
+  },
+  {
+    "ref": "M 5.19",
+    "input": "taylor(ln(1+x),5)",
+    "kind": "function",
+    "expected": [
+      0.19063247951999998,
+      0.45492483863999994,
+      0.9333843000266665
+    ],
+    "points": [
+      0.21,
+      0.57,
+      1.13
+    ]
+  },
+  {
+    "ref": "M 5.19",
+    "input": "taylor(sin(x),5)",
+    "kind": "function",
+    "expected": [
+      0.20845990341749998,
+      0.5396359100475,
+      0.9048707931608333
+    ],
+    "points": [
+      0.21,
+      0.57,
+      1.13
+    ]
+  },
+  {
+    "ref": "M 5.19",
+    "input": "taylor(cos(x),5)",
+    "kind": "function",
+    "expected": [
+      0.97803103375,
+      0.84194833375,
+      0.42948640041666675
+    ],
+    "points": [
+      0.21,
+      0.57,
+      1.13
+    ]
+  },
+  {
+    "ref": "M 5.19",
+    "input": "taylor(atan(x),5)",
+    "kind": "function",
+    "expected": [
+      0.20699468202,
+      0.5203028411399999,
+      1.0175213691933331
+    ],
+    "points": [
+      0.21,
+      0.57,
+      1.13
+    ]
+  },
+  {
+    "ref": "P uncertainty sum",
+    "input": "0.1+0.2",
+    "kind": "value",
+    "expected": 0.3,
+    "atol": 3e-09
+  },
+  {
+    "ref": "P uncertainty product",
+    "input": "0.1/2+0.2/4+0.3/6",
+    "kind": "value",
+    "expected": 0.15,
+    "atol": 1.5e-09
+  },
+  {
+    "ref": "P uncertainty power",
+    "input": "2*0.1/5",
+    "kind": "value",
+    "expected": 0.04,
+    "atol": 4e-10
+  },
+  {
+    "ref": "P A.1",
+    "input": "v=u+a*t,u=2,a=3,t=4",
+    "kind": "value",
+    "expected": 14,
+    "atol": 1.4e-07
+  },
+  {
+    "ref": "P A.1",
+    "input": "s=u*t+0.5*a*t^2,u=2,a=3,t=4",
+    "kind": "value",
+    "expected": 32,
+    "atol": 3.2e-07
+  },
+  {
+    "ref": "P A.1",
+    "input": "s=(u+v)*t/2,u=2,v=14,t=4",
+    "kind": "value",
+    "expected": 32,
+    "atol": 3.2e-07
+  },
+  {
+    "ref": "P A.2",
+    "input": "F_f=mu_d*F_N,mu_d=0.2,F_N=100",
+    "kind": "value",
+    "expected": 20,
+    "atol": 2e-07
+  },
+  {
+    "ref": "P A.2",
+    "input": "F_H=-k*x,k=200,x=0.03",
+    "kind": "value",
+    "expected": -6,
+    "atol": 6.000000000000001e-08
+  },
+  {
+    "ref": "P A.2",
+    "input": "F_d=6*pi*η*r*v,η=0.001,r=0.01,v=2",
+    "kind": "value",
+    "expected": 0.0003769911184307752,
+    "atol": 3.769911184307752e-12
+  },
+  {
+    "ref": "P A.2",
+    "input": "F_b=rho*V*g,rho=1000,V=0.01",
+    "kind": "value",
+    "expected": 98,
+    "atol": 9.8e-07
+  },
+  {
+    "ref": "P A.2",
+    "input": "p=m*v,m=0.2,v=3",
+    "kind": "value",
+    "expected": 0.6,
+    "atol": 6e-09
+  },
+  {
+    "ref": "P A.2",
+    "input": "J=F*Δt,F=50,Δt=0.2",
+    "kind": "value",
+    "expected": 10,
+    "atol": 1e-07
+  },
+  {
+    "ref": "P A.2",
+    "input": "a=v^2/r,v=10,r=2",
+    "kind": "value",
+    "expected": 50,
+    "atol": 5e-07
+  },
+  {
+    "ref": "P A.3",
+    "input": "W=F*s*cos(theta),F=10,s=2,theta=60°",
+    "kind": "value",
+    "expected": 10,
+    "atol": 1e-07
+  },
+  {
+    "ref": "P A.3",
+    "input": "E_k=m*v^2/2,m=2,v=3",
+    "kind": "value",
+    "expected": 9,
+    "atol": 9e-08
+  },
+  {
+    "ref": "P A.3",
+    "input": "ΔE_p=m*g*Δh,m=2,Δh=3",
+    "kind": "value",
+    "expected": 58.8,
+    "atol": 5.88e-07
+  },
+  {
+    "ref": "P A.3",
+    "input": "E_H=k*Δx^2/2,k=200,Δx=0.1",
+    "kind": "value",
+    "expected": 1,
+    "atol": 1e-08
+  },
+  {
+    "ref": "P A.3",
+    "input": "P=F*v,F=20,v=3",
+    "kind": "value",
+    "expected": 60,
+    "atol": 6e-07
+  },
+  {
+    "ref": "P A.4",
+    "input": "tau=F*r*sin(theta),F=10,r=0.2,theta=30°",
+    "kind": "value",
+    "expected": 1,
+    "atol": 1e-08
+  },
+  {
+    "ref": "P A.4",
+    "input": "theta=omega_i*t+alpha*t^2/2,omega_i=2,t=3,alpha=4",
+    "kind": "value",
+    "expected": 24,
+    "atol": 2.4000000000000003e-07
+  },
+  {
+    "ref": "P A.4",
+    "input": "tau=I*alpha,I=2,alpha=3",
+    "kind": "value",
+    "expected": 6,
+    "atol": 6.000000000000001e-08
+  },
+  {
+    "ref": "P A.4",
+    "input": "L=I*omega,I=2,omega=3",
+    "kind": "value",
+    "expected": 6,
+    "atol": 6.000000000000001e-08
+  },
+  {
+    "ref": "P A.4",
+    "input": "E_k=I*omega^2/2,I=2,omega=3",
+    "kind": "value",
+    "expected": 9,
+    "atol": 9e-08
+  },
+  {
+    "ref": "P A.5",
+    "input": "gamma=1/sqrt(1-v^2/c^2),v=0.6*c",
+    "kind": "value",
+    "expected": 1.25,
+    "atol": 1.25e-08
+  },
+  {
+    "ref": "P A.5",
+    "input": "L=L_0/gamma,L_0=10,gamma=1.25",
+    "kind": "value",
+    "expected": 8,
+    "atol": 8e-08
+  },
+  {
+    "ref": "P B.1",
+    "input": "rho=m/V,m=2,V=0.001",
+    "kind": "value",
+    "expected": 2000,
+    "atol": 2e-05
+  },
+  {
+    "ref": "P B.1",
+    "input": "Q=m*c*ΔT,m=0.5,c=4200,ΔT=20",
+    "kind": "value",
+    "expected": 42000,
+    "atol": 0.00042
+  },
+  {
+    "ref": "P B.1",
+    "input": "Q=m*L,m=0.5,L=334000",
+    "kind": "value",
+    "expected": 167000,
+    "atol": 0.00167
+  },
+  {
+    "ref": "P B.1",
+    "input": "L=sigma*A*T^4,sigma=5.67e-8,A=0.5,T=300",
+    "kind": "value",
+    "expected": 229.635,
+    "atol": 2.29635e-06
+  },
+  {
+    "ref": "P B.1",
+    "input": "b=L/(4*pi*d^2),L=100,d=2",
+    "kind": "value",
+    "expected": 1.9894367886486917,
+    "atol": 1.989436788648692e-08
+  },
+  {
+    "ref": "P B.1",
+    "input": "lambda=2.9e-3/T,T=5800",
+    "kind": "value",
+    "expected": 5e-07,
+    "atol": 5e-15
+  },
+  {
+    "ref": "P B.3",
+    "input": "P=n*R*T/V,n=1,R=8.31,T=300,V=0.01",
+    "kind": "value",
+    "expected": 249300,
+    "atol": 0.002493
+  },
+  {
+    "ref": "P B.3",
+    "input": "n=N/N_A,N=1.204e24,N_A=6.02e23",
+    "kind": "value",
+    "expected": 2,
+    "atol": 2e-08
+  },
+  {
+    "ref": "P B.3",
+    "input": "U=3*n*R*T/2,n=1,R=8.31,T=300",
+    "kind": "value",
+    "expected": 3739.5,
+    "atol": 3.7395000000000004e-05
+  },
+  {
+    "ref": "P B.4",
+    "input": "eta=1-T_c/T_h,T_c=300,T_h=500",
+    "kind": "value",
+    "expected": 0.4,
+    "atol": 4e-09
+  },
+  {
+    "ref": "P B.4",
+    "input": "ΔS=ΔQ/T,ΔQ=3000,T=300",
+    "kind": "value",
+    "expected": 10,
+    "atol": 1e-07
+  },
+  {
+    "ref": "P B.4",
+    "input": "S=k_B*ln(Ω),k_B=1.38e-23,Ω=1000",
+    "kind": "value",
+    "expected": 9.53270228499535e-23,
+    "atol": 9.53270228499535e-31
+  },
+  {
+    "ref": "P B.5",
+    "input": "I=Δq/Δt,Δq=2,Δt=0.5",
+    "kind": "value",
+    "expected": 4,
+    "atol": 4e-08
+  },
+  {
+    "ref": "P B.5",
+    "input": "R=V/I,V=10,I=2",
+    "kind": "value",
+    "expected": 5,
+    "atol": 5e-08
+  },
+  {
+    "ref": "P B.5",
+    "input": "rho=R*A/L,R=2,A=1e-6,L=2",
+    "kind": "value",
+    "expected": 1e-06,
+    "atol": 1e-14
+  },
+  {
+    "ref": "P B.5",
+    "input": "P=I^2*R,I=2,R=5",
+    "kind": "value",
+    "expected": 20,
+    "atol": 2e-07
+  },
+  {
+    "ref": "P B.5",
+    "input": "1/(1/3+1/6)",
+    "kind": "value",
+    "expected": 2,
+    "atol": 2e-08
+  },
+  {
+    "ref": "P B.5",
+    "input": "epsilon=I*(R+r),I=2,R=4,r=1",
+    "kind": "value",
+    "expected": 10,
+    "atol": 1e-07
+  },
+  {
+    "ref": "P C.1",
+    "input": "T=2*pi*sqrt(m/k),m=0.2,k=20",
+    "kind": "value",
+    "expected": 0.6283185307179586,
+    "atol": 6.283185307179586e-09
+  },
+  {
+    "ref": "P C.1",
+    "input": "T=2*pi*sqrt(l/g),l=1",
+    "kind": "value",
+    "expected": 2.007089923154493,
+    "atol": 2.007089923154493e-08
+  },
+  {
+    "ref": "P C.1",
+    "input": "x=x_0*sin(omega*t+phi),x_0=0.1,omega=2,t=0.5,phi=0",
+    "kind": "value",
+    "expected": 0.08414709848078966,
+    "atol": 8.414709848078966e-10
+  },
+  {
+    "ref": "P C.2",
+    "input": "f=v/lambda,v=340,lambda=0.5",
+    "kind": "value",
+    "expected": 680,
+    "atol": 6.8e-06
+  },
+  {
+    "ref": "P C.3",
+    "input": "theta_2=asin(n_1*sin(theta_1)/n_2),n_1=1,n_2=1.5,theta_1=30°",
+    "kind": "value",
+    "expected": 0.3398369094541219,
+    "atol": 3.3983690945412195e-09
+  },
+  {
+    "ref": "P C.3",
+    "input": "s=lambda*D/d,lambda=5e-7,D=2,d=0.001",
+    "kind": "value",
+    "expected": 0.001,
+    "atol": 1.0000000000000001e-11
+  },
+  {
+    "ref": "P C.5",
+    "input": "f_s=f*v/(v-u_s),f=440,v=340,u_s=20",
+    "kind": "value",
+    "expected": 467.5,
+    "atol": 4.675e-06
+  },
+  {
+    "ref": "P C.5",
+    "input": "f_o=f*(v+u_o)/v,f=440,v=340,u_o=20",
+    "kind": "value",
+    "expected": 465.88235294117646,
+    "atol": 4.658823529411765e-06
+  },
+  {
+    "ref": "P D.1",
+    "input": "F=G*m_1*m_2/r^2,m_1=5,m_2=10,r=2",
+    "kind": "value",
+    "expected": 8.3375e-10,
+    "atol": 8.3375e-18
+  },
+  {
+    "ref": "P D.1",
+    "input": "v=sqrt(2*G*M/r),M=5.97e24,r=6.37e6",
+    "kind": "value",
+    "expected": 11181.37889121678,
+    "atol": 0.0001118137889121678
+  },
+  {
+    "ref": "P D.2",
+    "input": "F=k*q_1*q_2/r^2,k=8.99e9,q_1=1e-6,q_2=2e-6,r=0.1",
+    "kind": "value",
+    "expected": 1.798,
+    "atol": 1.798e-08
+  },
+  {
+    "ref": "P D.2",
+    "input": "E=V/d,V=12,d=0.003",
+    "kind": "value",
+    "expected": 4000,
+    "atol": 4e-05
+  },
+  {
+    "ref": "P D.3",
+    "input": "F=q*v*B*sin(theta),q=1.6e-19,v=1e6,B=0.1,theta=90°",
+    "kind": "value",
+    "expected": 1.6e-14,
+    "atol": 1.6000000000000002e-22
+  },
+  {
+    "ref": "P D.3",
+    "input": "F_L=mu_0*I_1*I_2/(2*pi*r),mu_0=4*pi*1e-7,I_1=2,I_2=3,r=0.1",
+    "kind": "value",
+    "expected": 1.2e-05,
+    "atol": 1.2e-13
+  },
+  {
+    "ref": "P D.4",
+    "input": "phi=B*A*cos(theta),B=0.2,A=0.01,theta=60°",
+    "kind": "value",
+    "expected": 0.001,
+    "atol": 1.0000000000000001e-11
+  },
+  {
+    "ref": "P D.4",
+    "input": "epsilon=-N*ΔΦ/Δt,N=100,ΔΦ=0.002,Δt=0.01",
+    "kind": "value",
+    "expected": -20,
+    "atol": 2e-07
+  },
+  {
+    "ref": "P E.1",
+    "input": "E=h*f,h=6.63e-34,f=5e14",
+    "kind": "value",
+    "expected": 3.315e-19,
+    "atol": 3.315e-27
+  },
+  {
+    "ref": "P E.1",
+    "input": "R=R_0*A^(1/3),R_0=1.2e-15,A=64",
+    "kind": "value",
+    "expected": 4.8e-15,
+    "atol": 4.8e-23
+  },
+  {
+    "ref": "P E.1",
+    "input": "E=-13.6/n^2,n=2",
+    "kind": "value",
+    "expected": -3.4,
+    "atol": 3.4e-08
+  },
+  {
+    "ref": "P E.1",
+    "input": "m*v*r=n*h/(2*pi),m=9.11e-31,r=5.29e-11,n=1,h=6.63e-34",
+    "kind": "value",
+    "expected": 2189573.917399534,
+    "atol": 0.02189573917399534
+  },
+  {
+    "ref": "P E.2",
+    "input": "lambda=h/p,h=6.63e-34,p=2e-24",
+    "kind": "value",
+    "expected": 3.315e-10,
+    "atol": 3.315e-18
+  },
+  {
+    "ref": "P E.2",
+    "input": "Δlambda=h/(m_e*c)*(1-cos(theta)),h=6.63e-34,m_e=9.11e-31,theta=90°",
+    "kind": "value",
+    "expected": 2.4259055982436884e-12,
+    "atol": 2.4259055982436884e-20
+  },
+  {
+    "ref": "P E.3",
+    "input": "E=m*c^2,m=0.002",
+    "kind": "value",
+    "expected": 180000000000000.0,
+    "atol": 1800000.0
+  },
+  {
+    "ref": "P E.3",
+    "input": "N=N_0*exp(-lambda*t),N_0=1000,lambda=ln(2)/5,t=10",
+    "kind": "value",
+    "expected": 250,
+    "atol": 2.5e-06
+  },
+  {
+    "ref": "P E.3",
+    "input": "T_h=ln(2)/lambda,lambda=0.1",
+    "kind": "value",
+    "expected": 6.931471805599452,
+    "atol": 6.931471805599452e-08
+  },
+  {
+    "ref": "P E.5",
+    "input": "d=1/p,p=0.1",
+    "kind": "value",
+    "expected": 10,
+    "atol": 1e-07
+  }
+]

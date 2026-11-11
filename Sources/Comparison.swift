@@ -12,6 +12,14 @@ struct Comparison {
     var left: Expr
     var right: Expr
     var relation: Relation
+    var complexValues: (Complex, Complex)? = nil
+
+    var isDefined: Bool {
+        guard let (a, b) = complexValues else { return true }
+        guard a.isFinite, b.isFinite else { return false }
+        if a.im == 0 && b.im == 0 { return true }
+        return [.equal, .identical, .notEqual, .approximately].contains(relation)
+    }
 
     // As they are typed, the longer first: ~= is ≈, != is ≠, >= is ≥ and <= is ≤.
     private static let spellings: [(String, Relation)] = [
@@ -25,10 +33,17 @@ struct Comparison {
     // the g that would have been the unknown the constant.
     // The one relation in the text, and where: nil for none, or for more than one.
     static func relation(in input: String) -> (range: Range<String.Index>, relation: Relation)? {
-        var found: (range: Range<String.Index>, relation: Relation)?
-        var i = input.startIndex
+        let all = relations(in: input)
+        return all.count == 1 ? all[0] : nil
+    }
+
+    // Every relation in the text, in order, outside brackets.
+    static func relations(in input: String) -> [(range: Range<String.Index>, relation: Relation)] {
+        var found: [(range: Range<String.Index>, relation: Relation)] = []
+        var i = input.startIndex, depth = 0
         while i < input.endIndex {
-            guard let (text, relation) = spellings.first(where: { input[i...].hasPrefix($0.0) }) else {
+            if input[i] == "(" || input[i] == "[" { depth += 1 } else if input[i] == ")" || input[i] == "]" { depth -= 1 }
+            guard depth == 0, let (text, relation) = spellings.first(where: { input[i...].hasPrefix($0.0) }) else {
                 i = input.index(after: i)
                 continue
             }
@@ -37,12 +52,28 @@ struct Comparison {
                 i = input.index(after: i)
                 continue
             }
-            guard found == nil else { return nil }
             let end = input.index(i, offsetBy: text.count)
-            found = (i..<end, relation)
+            found.append((i..<end, relation))
             i = end
         }
         return found
+    }
+
+    // A chain, 2 = 2 = 2 or 1 < 2 ≤ 3, as it is meant in mathematics: each relation between the
+    // sides either side of it, every one of which must hold, 1 > 1 > 1 being 1 > 1 and 1 > 1. Each
+    // side may be worked out first, 1+1 = 2 = 4/2. Nil for one relation, which is no chain.
+    static func chain(_ input: String) -> [Comparison]? {
+        let found = relations(in: input)
+        guard found.count >= 2 else { return nil }
+        var sides: [Substring] = [], start = input.startIndex
+        for f in found { sides.append(input[start..<f.range.lowerBound]); start = f.range.upperBound }
+        sides.append(input[start...])
+        var links: [Comparison] = []
+        for (n, f) in found.enumerated() {
+            guard let link = parse(String(sides[n]) + String(input[f.range]) + String(sides[n + 1])) else { return nil }
+            links.append(link)
+        }
+        return links
     }
 
     static func parse(_ input: String) -> Comparison? {
@@ -50,14 +81,34 @@ struct Comparison {
         // With =, an e is still the unknown it has always been: 2e − 3 = 1 is solved for e.
         let sides = [String(input[..<found.range.lowerBound]), String(input[found.range.upperBound...])]
         guard var l = try? Parser.tokenize(sides[0]), var r = try? Parser.tokenize(sides[1]) else { return nil }
+        let hasI = (l + r).contains(.letter("i"))
+        // i is the imaginary unit on either side of a comparison, including i alone. It must
+        // not become an unknown merely because an equals sign is present.
+        if hasI {
+            let letters = (l + r).compactMap { if case .letter(let n) = $0 { return n }; return nil }
+            guard letters.allSatisfy({ $0 == "i" || $0 == "e" }) else { return nil }
+            func expression(_ tokens: [Parser.Token]) -> Expr? {
+                let tokens = tokens.map { $0 == .letter("e") ? .constant(M_E) : $0 }
+                var state = Parser.State(tokens: tokens, unknown: "", bound: ["i"])
+                guard let e = try? state.expression(), state.at == tokens.count else { return nil }
+                return e
+            }
+            guard let left = expression(l), let right = expression(r) else { return nil }
+            let a = ComplexValue.evaluate(left) ?? Complex(.nan, .nan)
+            let b = ComplexValue.evaluate(right) ?? Complex(.nan, .nan)
+            return Comparison(left: left, right: right, relation: found.relation, complexValues: (a, b))
+        }
         if found.relation == .equal || found.relation == .identical, (l + r).contains(.letter("e")) { return nil }
         let ks = Parser.indices(l + r)
         (l, r) = (l.map { $0 == .letter("e") && !ks.contains("e") ? .constant(M_E) : $0 },
                   r.map { $0 == .letter("e") && !ks.contains("e") ? .constant(M_E) : $0 })
         guard let roles = Parser.roles(l + [.symbol("=")] + r), roles.unknown == nil,
               let left = try? Parser.expression(l, constants: roles.constants),
-              let right = try? Parser.expression(r, constants: roles.constants),
-              left.eval(0).isFinite, right.eval(0).isFinite else { return nil }
+              let right = try? Parser.expression(r, constants: roles.constants) else { return nil }
+        if !left.eval(0).isFinite || !right.eval(0).isFinite {
+            guard let a = ComplexValue.evaluate(left), let b = ComplexValue.evaluate(right), a.isFinite, b.isFinite else { return nil }
+            return Comparison(left: left, right: right, relation: found.relation, complexValues: (a, b))
+        }
         return Comparison(left: left, right: right, relation: found.relation)
     }
 
@@ -68,8 +119,13 @@ struct Comparison {
     // (numbers, + − × ÷, whole powers, factorials), and otherwise, an irrational side being only
     // ever a decimal, to within rounding.
     private var same: Bool {
+        if let (a, b) = complexValues {
+            // Scale the rounding allowance with the values, so tiny nonzero complex numbers
+            // are not silently equated to zero, while exp(iπ)'s round-off is tolerated.
+            return complexDistance(a, b) <= 32 * Double.ulpOfOne
+        }
         guard relation == .identical else { return Comparison.equal(left.eval(0), right.eval(0)) }
-        if let a = Exact(left), let b = Exact(right) { return a == b }
+        if let a = left.typedNumber?.rational, let b = right.typedNumber?.rational { return a == b }
         return Comparison.equal(left.eval(0), right.eval(0))
     }
 
@@ -81,6 +137,18 @@ struct Comparison {
     }
 
     var holds: Bool {
+        if let (a, b) = complexValues {
+            guard isDefined else { return false }
+            switch relation {
+            case .equal, .identical: return same
+            case .notEqual: return !same
+            case .approximately: return same || complexDistance(a, b) <= 0.001
+            case .less: return !same && a.re < b.re
+            case .greater: return !same && a.re > b.re
+            case .atMost: return same || a.re < b.re
+            case .atLeast: return same || a.re > b.re
+            }
+        }
         let (a, b) = (left.eval(0), right.eval(0))
         let equal = same
         switch relation {
@@ -97,6 +165,11 @@ struct Comparison {
     // How the two values stand, as found: "4 = 4", "0.333333 > 0.3333". Nil where they differ
     // by less than six figures show.
     private var found: String? {
+        if let (a, b) = complexValues {
+            let (l, r) = (complexText(a), complexText(b))
+            if !same && l == r { return nil }
+            return "\(l) \(same ? (a == b ? "=" : "≈") : "≠") \(r)"
+        }
         let (a, b) = (left.eval(0), right.eval(0))
         let equal = same
         if !equal, decimal(a) == decimal(b) { return nil }
@@ -105,6 +178,12 @@ struct Comparison {
 
     // The same in a sentence, with what ≈ allowed.
     private var verdict: String {
+        if let (a, b) = complexValues {
+            if !a.isFinite || !b.isFinite { return "A complex expression is undefined, unsupported, or beyond the numeric range." }
+            if !isDefined { return "Non-real complex numbers have no natural ordering; <, >, ≤ and ≥ do not apply." }
+            return same ? "The real parts are equal and the imaginary parts are equal, to numerical rounding."
+                : "The real parts or the imaginary parts differ."
+        }
         let (a, b) = (left.eval(0), right.eval(0))
         if same { return relation == .identical ? "The two sides are exactly equal." : "The two sides are equal." }
         let difference = decimal(abs(a - b))
@@ -123,6 +202,7 @@ struct Comparison {
     }
 
     var solution: Solution {
+        if !isDefined { return Solution(exact: "Undefined", approx: verdict) }
         let unequal = !same
         return Solution(exact: holds ? "True" : "False", approx: relation == .approximately && unequal ? verdict : found ?? verdict)
     }
@@ -131,6 +211,7 @@ struct Comparison {
 
     // Both sides worked out together, a round at a time, and then compared.
     var details: Details {
+        if complexValues != nil { return complexDetails }
         func line(_ l: Expr, _ r: Expr) -> Math { statement(l, r) }
         var d = Details(name: "", equation: line(left, right), steps: [], solutions: [t(holds ? "True" : "False")],
                         note: nil, f: { _ in .nan }, roots: [])
@@ -151,71 +232,43 @@ struct Comparison {
         d.steps.append(Step(label: "Comparing the two sides", math: found.map(t), note: verdict))
         return d
     }
-}
 
-// A number as a fraction, for === : worked out in whole numbers, so that nothing is lost to
-// rounding. Nil for anything that is not one, or too large to hold.
-struct Exact: Equatable {
-    var top: Int, bottom: Int
+    private func complexText(_ z: Complex) -> String { ComplexValue(value: z, expr: .num(0)).text }
 
-    init?(top: Int, bottom: Int) {
-        guard bottom != 0 else { return nil }
-        let g = gcd(top, bottom)
-        let sign = bottom < 0 ? -1 : 1
-        self.top = sign * top / g
-        self.bottom = sign * bottom / g
+    private func complexDistance(_ a: Complex, _ b: Complex) -> Double {
+        let scale = max(abs(a.re), abs(a.im), abs(b.re), abs(b.im))
+        if scale == 0 { return 0 }
+        let x = Complex(a.re / scale, a.im / scale), y = Complex(b.re / scale, b.im / scale)
+        return (x - y).modulus / max(x.modulus, y.modulus)
     }
 
-    // A decimal as it is written: 0.33 is 33 over 100.
-    init?(decimal v: Double) {
-        guard v.isFinite else { return nil }
-        let parts = String(format: "%.15g", v).split(separator: "e", omittingEmptySubsequences: false)
-        let mantissa = parts[0].split(separator: ".", omittingEmptySubsequences: false)
-        guard let whole = Int(mantissa[0] + (mantissa.count > 1 ? mantissa[1] : "")),
-              var power = parts.count > 1 ? Int(parts[1]) : 0 else { return nil }
-        power -= mantissa.count > 1 ? mantissa[1].count : 0
-        var top = whole, bottom = 1
-        for _ in 0..<abs(power) {
-            if power > 0 {
-                let (t, o) = top.multipliedReportingOverflow(by: 10); if o { return nil }; top = t
-            } else {
-                let (b, o) = bottom.multipliedReportingOverflow(by: 10); if o { return nil }; bottom = b
+    private var complexDetails: Details {
+        let (a, b) = complexValues!
+        var d = Details(name: "", equation: statement(left, right), steps: [], solutions: [t(solution.exact)], note: nil, f: { _ in .nan }, roots: [])
+        guard a.isFinite, b.isFinite else {
+            d.steps = [Step(label: "Why there is no comparison", math: nil, note: verdict)]
+            return d
+        }
+        var roots = Set<String>()
+        func explainRoots(_ e: Expr) {
+            switch e {
+            case .call("sqrt", let inside):
+                explainRoots(inside)
+                if let z = ComplexValue.evaluate(inside), z.im == 0, z.re < 0,
+                   roots.insert(typeset(e, "").plain).inserted {
+                    d.steps.append(Step(label: "Principal square root", math: row(typeset(e, ""), t(" = \(complexText(Complex.sqrt(z)))")),
+                                        note: "√z denotes the principal square root. For a negative real number it has positive imaginary part. Solving w² = z is a different question and gives both signs."))
+                }
+            case .neg(let x), .call(_, let x): explainRoots(x)
+            case .op(_, let x, let y): explainRoots(x); explainRoots(y)
+            default: break
             }
         }
-        self.init(top: top, bottom: bottom)
-    }
-
-    init?(_ e: Expr) {
-        func product(_ a: Exact, _ b: Exact) -> Exact? {
-            let (t, o1) = a.top.multipliedReportingOverflow(by: b.top), (d, o2) = a.bottom.multipliedReportingOverflow(by: b.bottom)
-            return o1 || o2 ? nil : Exact(top: t, bottom: d)
-        }
-        switch e {
-        case .num(let v): self.init(decimal: v)
-        case .neg(let a): guard let a = Exact(a) else { return nil }; self.init(top: -a.top, bottom: a.bottom)
-        case .op(let o, let l, let r):
-            guard let a = Exact(l), let b = Exact(r) else { return nil }
-            switch o {
-            case "*": guard let p = product(a, b) else { return nil }; self = p
-            case "/": guard b.top != 0, let p = product(a, Exact(top: b.bottom, bottom: b.top)!) else { return nil }; self = p
-            case "+", "-":
-                let sign = o == "+" ? 1 : -1
-                let (x, o1) = a.top.multipliedReportingOverflow(by: b.bottom), (y, o2) = b.top.multipliedReportingOverflow(by: a.bottom)
-                let (s, o3) = x.addingReportingOverflow(sign * y), (d, o4) = a.bottom.multipliedReportingOverflow(by: b.bottom)
-                guard !(o1 || o2 || o3 || o4) else { return nil }
-                self.init(top: s, bottom: d)
-            case "^":
-                guard b.bottom == 1, abs(b.top) <= 64, !(a.top == 0 && b.top < 0) else { return nil }
-                var result = Exact(top: 1, bottom: 1)!
-                for _ in 0..<abs(b.top) { guard let p = product(result, a) else { return nil }; result = p }
-                self = b.top < 0 ? Exact(top: result.bottom, bottom: result.top)! : result
-            default: return nil
-            }
-        case .call("fact", let a):
-            guard let a = Exact(a), a.bottom == 1, (0...20).contains(a.top) else { return nil }
-            self.init(top: (1...max(1, a.top)).reduce(1, *), bottom: 1)
-        default: return nil
-        }
+        explainRoots(left); explainRoots(right)
+        d.steps.append(Step(label: "Evaluating the left-hand side", math: row(typeset(left, ""), t(" = \(complexText(a))"))))
+        d.steps.append(Step(label: "Evaluating the right-hand side", math: row(typeset(right, ""), t(" = \(complexText(b))"))))
+        d.steps.append(Step(label: isDefined ? "Comparing real and imaginary parts" : "Why this comparison is undefined", math: isDefined ? found.map(t) : nil, note: verdict))
+        return d
     }
 }
 
@@ -224,6 +277,7 @@ struct Exact: Equatable {
 // both. Each statement is a comparison of its own.
 indirect enum Logic {
     case atom(Comparison)
+    case chain([Comparison])    // 2 = 2 = 2: each link a comparison, all of which must hold
     case value(Bool)            // a statement once it has been judged
     case not(Logic)
     case all([Logic])
@@ -240,7 +294,7 @@ indirect enum Logic {
         text = text.replacingOccurrences(of: "(?i)(?<=[\\s)])or(?=[\\s(!])", with: "||", options: .regularExpression)
         text = text.replacingOccurrences(of: "(?i)(?<![A-Za-z0-9_])not(?=[\\s(])", with: "¬", options: .regularExpression)
         text = text.replacingOccurrences(of: "(?<![0-9)A-Za-z])!(?=\\s*\\()", with: "¬", options: .regularExpression)
-        guard let tree = build(text), tree.isCompound else { return nil }
+        guard let tree = build(text), tree.isCompound, tree.atoms.allSatisfy(\.isDefined) else { return nil }
         return tree
     }
 
@@ -256,6 +310,7 @@ indirect enum Logic {
         }
         if t.first == negation { return build(String(t.dropFirst())).map { .not($0) } }
         if t.first == "(", t.last == ")", split(t, on: nil).count == 1, closes(t) { return build(String(t.dropFirst().dropLast())) }
+        if let links = Comparison.chain(t) { return .chain(links) }
         return Comparison.parse(t).map { .atom($0) }
     }
 
@@ -294,6 +349,7 @@ indirect enum Logic {
     var atoms: [Comparison] {
         switch self {
         case .atom(let c): [c]
+        case .chain(let links): links
         case .value: []
         case .not(let a): a.atoms
         case .all(let a), .any(let a): a.flatMap(\.atoms)
@@ -303,6 +359,7 @@ indirect enum Logic {
     var holds: Bool {
         switch self {
         case .atom(let c): c.holds
+        case .chain(let links): links.allSatisfy(\.holds)
         case .value(let v): v
         case .not(let a): !a.holds
         case .all(let a): a.allSatisfy(\.holds)
@@ -314,6 +371,10 @@ indirect enum Logic {
     func text(_ rank: Int = 0) -> String {
         switch self {
         case .atom(let c): return c.statement(c.left, c.right).plain
+        // As written, each side once: 2 = 2 = 2.
+        case .chain(let links):
+            let s = typeset(links[0].left, "").plain + links.map { " \($0.relation.rawValue) " + typeset($0.right, "").plain }.joined()
+            return rank > 2 ? "(" + s + ")" : s
         case .value(let v): return v ? "True" : "False"
         case .not(let a):
             if case .atom = a { return "!(" + a.text() + ")" }
@@ -332,6 +393,8 @@ indirect enum Logic {
     var judged: Logic {
         switch self {
         case .atom(let c): .value(c.holds)
+        // A chain is its links taken together: True && True.
+        case .chain(let links): .all(links.map { .value($0.holds) })
         case .value: self
         case .not(let a): .not(a.judged)
         case .all(let a): .all(a.map(\.judged))
@@ -344,7 +407,7 @@ indirect enum Logic {
     func reduced() -> (logic: Logic, done: [String]) {
         func isValue(_ l: Logic) -> Bool { if case .value = l { true } else { false } }
         switch self {
-        case .atom, .value: return (self, [])
+        case .atom, .chain, .value: return (self, [])
         case .not(let a):
             if case .value(let v) = a { return (.value(!v), ["!"]) }
             let (r, d) = a.reduced()
@@ -386,5 +449,56 @@ indirect enum Logic {
             d.steps.append(Step(label: "Evaluating \(name)", math: t(current.text())))
         }
         return d
+    }
+}
+
+// A statement in brackets used as a number, (0 = 0) = 0 or (2 < 3) + 5, is 1 where it is true and
+// 0 where it is false, as an Iverson bracket is: (0 = 0) = 0 is 1 = 0, and False. Only where the
+// brackets stand beside a relation or an operator of arithmetic: brackets round statements joined
+// by && or ||, or after ! or not, are those statements still, and 0 = 0 = 0, with none, is a chain.
+enum Iverson {
+    // The text with each such statement put as 1 or 0, innermost first, and what was taken for each.
+    static func substituted(_ input: String) -> (text: String, notes: [String]) {
+        var text = input, notes: [String] = []
+        while let (range, inner) = operand(in: text), let holds = judge(inner) {
+            notes.append("(\(shown(inner))) is \(holds ? "True" : "False"), taken as \(holds ? 1 : 0)")
+            text.replaceSubrange(range, with: holds ? "1" : "0")
+        }
+        return (text, notes)
+    }
+
+    // The innermost bracket holding a relation of its own and standing as a number.
+    private static func operand(in text: String) -> (Range<String.Index>, String)? {
+        let chars = Array(text)
+        var opens: [Int] = []
+        for (i, c) in chars.enumerated() {
+            if c == "(" { opens.append(i); continue }
+            guard c == ")", let start = opens.popLast() else { continue }
+            let inner = String(chars[(start + 1)..<i])
+            guard !inner.contains("("), !Comparison.relations(in: inner).isEmpty else { continue }
+            func neighbour(_ from: Int, _ step: Int) -> Character? {
+                var j = from + step
+                while j >= 0, j < chars.count, chars[j] == " " { j += step }
+                return j >= 0 && j < chars.count ? chars[j] : nil
+            }
+            let arithmetic = Set("=<>≈≠≤≥+-−*/^×÷·%")
+            let before = neighbour(start, -1), after = neighbour(i, 1)
+            guard before.map(arithmetic.contains) == true || after.map(arithmetic.contains) == true,
+                  before != "!", !(after == "&" || after == "|" || before == "&" || before == "|") else { continue }
+            return (text.index(text.startIndex, offsetBy: start)..<text.index(text.startIndex, offsetBy: i + 1), inner)
+        }
+        return nil
+    }
+
+    // True or False for a statement of numbers alone; nil for one with a letter in it, x = 2.
+    private static func judge(_ inner: String) -> Bool? {
+        if let logic = Logic.parse(inner) { return logic.holds }
+        if let links = Comparison.chain(inner) { return links.allSatisfy(\.holds) }
+        return Comparison.parse(inner)?.holds
+    }
+
+    private static func shown(_ inner: String) -> String {
+        if let c = Comparison.parse(inner) { return c.statement(c.left, c.right).plain }
+        return inner.trimmingCharacters(in: .whitespaces)
     }
 }

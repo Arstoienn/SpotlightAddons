@@ -39,11 +39,15 @@ enum Latex {
         "lfloor": "floor(", "rfloor": ")", "lceil": "ceil(", "rceil": ")",
         "top": "T", "intercal": "T", "operatorname_tr": "trace", "lvert": "|", "rvert": "|", "vert": "|", "mid": "|",
         "land": " && ", "wedge": " && ", "lor": " || ", "vee": " || ", "lnot": " not ", "neg": " not ",
-        "leqslant": "≤", "geqslant": "≥", "pm": "±", "cdots": " ", "ldots": " ", "dots": " ",
+        "leqslant": "≤", "geqslant": "≥", "pm": "±",
+        // An ellipsis is a run of terms, 1+2+\cdots+100 being 1+2+...+100: left out, it would change the sum.
+        "cdots": "...", "ldots": "...", "dots": "...", "dotsb": "...", "dotsc": "...",
         "displaystyle": "", "limits": "", "nolimits": "", "textstyle": "",
         "approx": "≈", "ne": "≠", "neq": "≠", "le": "≤", "leq": "≤", "ge": "≥", "geq": "≥",
         "theta": "θ", "omega": "ω", "lambda": "λ", "alpha": "α", "beta": "β", "phi": "φ", "varphi": "φ",
         "rho": "ρ", "tau": "τ", "mu": "μ", "epsilon": "ε", "varepsilon": "ε", "sigma": "σ",
+        "gamma": "γ", "delta": "δ", "zeta": "ζ", "eta": "η", "iota": "ι", "kappa": "κ", "nu": "ν", "xi": "ξ", "chi": "χ", "psi": "ψ",
+        "Gamma": "Γ", "Delta": "Δ", "Theta": "Θ", "Lambda": "Λ", "Xi": "Ξ", "Pi": "Π", "Sigma": "Σ", "Phi": "Φ", "Psi": "Ψ", "Omega": "Ω",
         // spacing
         "quad": " ", "qquad": " ", "enspace": " ", "thinspace": " ", "medspace": " ", "thickspace": " ",
     ]
@@ -167,13 +171,17 @@ enum Latex {
                         i = s.index(after: close)
                     }
                     guard let (a, after) = group(s, i), let inner = convert(a) else { return nil }
-                    out += index.map { "((\(inner))^(1/(\($0))))" } ?? "sqrt(\(inner))"
+                    // \sqrt[3]{-8} is the real cube root, −2, as root(−8, 3) is; not (−8)^(1/3),
+                    // whose principal value is complex.
+                    out += index.map { "root(\(inner),\($0))" } ?? "sqrt(\(inner))"
                     i = after
                 } else if name == "sum" || name == "prod" {
                     guard let (sum, after) = bigOperator(name, s, i) else { return nil }
                     out += sum
                     i = after
                 } else if let plain = names[name] {
+                    // a\sin x is a times sin x, kept apart: written together it would read asin, the arcsine.
+                    if plain.first?.isLetter == true, out.last?.isLetter == true { out += " " }
                     out += plain
                 } else {
                     return nil
@@ -273,15 +281,20 @@ struct Evaluation {
 
     static func parse(_ input: String, hadLatex: Bool) -> Evaluation? {
         let parts = input.split(separator: "=", omittingEmptySubsequences: false)
+        // P(X ≥ 8) = …, a probability with its name, is worked out under that name.
+        if parts.count == 2, case let label = parts[0].trimmingCharacters(in: .whitespaces),
+           label.range(of: "^P\\([^()]*\\)$", options: .regularExpression) != nil,
+           let expr = try? Parser.constant(String(parts[1])), isWork(expr) {
+            return Evaluation(name: label.replacingOccurrences(of: ">=", with: "≥").replacingOccurrences(of: "<=", with: "≤"), expr: expr)
+        }
         if parts.count == 2 {
             let name = parts[0].trimmingCharacters(in: .whitespaces)
             let reserved = Functions.names + ["pi", "e", "ans", "Ans", "clip"]
-            guard name.range(of: "^[A-Za-z][A-Za-z0-9]*(_([A-Za-z]+|[0-9]+))?$", options: .regularExpression) != nil,
+            guard name.range(of: Greek.identifierPattern, options: .regularExpression) != nil,
                   !reserved.contains(name),
                   let expr = try? Parser.constant(String(parts[1]), naming: name), isWork(expr) else { return nil }
             // theta and mu_k are shown as θ and μ_k.
-            let pieces = name.split(separator: "_", maxSplits: 1).map(String.init)
-            let shown = ([Greek.names[pieces[0]] ?? pieces[0]] + pieces.dropFirst()).joined(separator: "_")
+            let shown = Greek.identifier(name)
             return Evaluation(name: shown, expr: expr)
         }
         // Typed plainly, it must look like arithmetic, a digit or an operator in it, no letter
@@ -346,8 +359,13 @@ struct Evaluation {
 
     private func lead(_ name: String?) -> String { name.map { "\($0) " } ?? "" }
 
+    // A part beyond what can be held, 3⁷⁰⁰ in 1/3⁷⁰⁰, leaves the whole worked as 0 or as no number at
+    // all: neither is its value, to be shown, copied or kept as ans. (A whole too large is infinite.)
+    var isLost: Bool { (value == 0 || value.isNaN) && expr.lostPart != nil }
+
     var solution: Solution? {
         let v = value
+        if isLost, let lost = expr.lostPart { return Solution(exact: "Too \(v == 0 ? "small" : "large")", approx: lost.why("")) }
         // What no number is the answer to, said so and not left blank.
         if !v.isFinite {
             // The square root of a negative number is imaginary: √−4 is 2i.
@@ -360,6 +378,10 @@ struct Evaluation {
                     return Solution(exact: "\(lead(name))= \(exact)", approx: rest == 1 ? "An imaginary number" : "≈ \(decimal(im))i")
                 }
                 return Solution(exact: "\(lead(name))≈ \(decimal(im))i", approx: "An imaginary number")
+            }
+            // A sum to infinity whose terms do not get small fast enough to settle: Σ 1/n.
+            if case .sum(_, _, let to, _, false) = expr, to.eval(0) == .infinity {
+                return Solution(exact: "Does not converge", approx: "The terms do not get small fast enough for the sum to settle.")
             }
             if let why = expr.undefinedReason { return Solution(exact: "Undefined", approx: why) }
             // A root or a logarithm of a negative number, inside a larger sum: complex.
@@ -393,7 +415,16 @@ struct Evaluation {
             return Solution(exact: "\(lead)\(whole ? "=" : "≈") \(decimal(v))", approx: nil)
         }
         if isExact(v) { return Solution(exact: "\(lead)= \(decimal(v))", approx: nil) }
-        if let (p, q) = rational(v), p != 0 {
+        // Worked exactly where it can be: 1/1024 + 1 is 1025/1024, not a decimal rounded. A
+        // fraction above a thousandth whose decimal is the shorter is the decimal, 6.28318.
+        if case .exact(let r)? = expr.number, !r.isWhole, !r.prefersFraction, let full = r.terminatingDecimal {
+            let shown = decimal(v)
+            return Solution(exact: "\(lead)\(shown == full ? "=" : "≈") \(shown)", approx: nil)
+        }
+        // What is only known as a decimal, from a root or a sine, is recognised as the fraction it
+        // is to within rounding: sin(π/6) is 1/2.
+        let exactly = expr.number?.rational.flatMap { $0.isWhole ? nil : ($0.top, $0.bottom) }
+        if let (p, q) = exactly ?? rational(v), p != 0 {
             // A decimal first, and the fraction beneath it, unless the fraction is asked to come first.
             if Options.decimalFirst {
                 // = where the decimal is the whole of it, 2.5; ≈ where it is cut short, 0.333333.
@@ -414,6 +445,8 @@ struct Evaluation {
 enum Prose {
     static func reads(_ input: String) -> Bool {
         if input.contains("\\") { return false }
+        // x dy/dx + y = x³ is an equation with a derivative in it, not words.
+        if input.contains("="), Differential.mentionsDerivative(input) { return false }
         // 5 km to miles is a quantity and its unit, which are words with numbers.
         if Conversion.parse(input) != nil || Algebra.parse(input) != nil { return false }
         // A single $ is a price; a pair is LaTeX's brackets.

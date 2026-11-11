@@ -22,13 +22,13 @@ final class DetailPanel {
     // onCovered: the panel is on screen, drawn, over the card, which can now be put away. Until
     // then both are up, so there is never a frame with neither.
     // spotlightBottom is the bottom edge of Spotlight's panel, in screen coordinates, when it is known.
-    func show(_ answer: Solution, _ details: Details, from card: NSRect, spotlightBottom: CGFloat?, level: NSWindow.Level,
+    func show(_ answer: CardText, _ details: Details, from card: NSRect, spotlightBottom: CGFloat?, level: NSWindow.Level,
               onCovered: @escaping () -> Void, onCollapsed: @escaping () -> Void) {
         close(animated: false)
         self.onCollapsed = onCollapsed
 
         let width = card.width
-        let measure = NSHostingView(rootView: DetailContent(answer: answer, d: details).frame(width: width))
+        let measure = NSHostingView(rootView: DetailContent(answer: answer, d: details, expanded: true).frame(width: width))
         let screen = NSScreen.screens.first { $0.frame.intersects(card) } ?? NSScreen.main
         let room = card.maxY - (screen?.visibleFrame.minY ?? 0) - 24
         // At least down to Spotlight's bottom edge, so that none of its list shows from under the
@@ -41,8 +41,11 @@ final class DetailPanel {
         // shadow would fall on Spotlight's, darker where they meet and off at the corners.
         let onSpotlight = reach > fitting && reach <= room
         let target = NSRect(x: card.minX, y: card.maxY - height, width: width, height: height)
+        // Lying on Spotlight, the window has room round the glass for the shadow drawn by hand on
+        // the part above Spotlight, which Spotlight's own shadow does not reach.
+        let margin = onSpotlight ? Chrome.shadowRoom : Chrome.margin
 
-        let panel = NSPanel(contentRect: target.insetBy(dx: -Chrome.margin, dy: -Chrome.margin),
+        let panel = NSPanel(contentRect: target.insetBy(dx: -margin, dy: -margin),
                             styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
         panel.level = level
         panel.backgroundColor = .clear
@@ -54,14 +57,19 @@ final class DetailPanel {
         panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .ignoresCycle]
 
         let model = DetailModel(cardHeight: card.height)
-        let host = FirstMouseHostingView(rootView: ExpandingDetail(answer: answer, d: details, model: model).padding(Chrome.margin))
+        // Above Spotlight: the card, and the gap of 8 points between it and Spotlight's top edge.
+        let above: CGFloat? = onSpotlight ? card.height + 8 : nil
+        let host = FirstMouseHostingView(rootView: ZStack(alignment: .topLeading) {
+            if let above { TopShadow(above: above, margin: margin, model: model) }
+            ExpandingDetail(answer: answer, d: details, model: model).padding(margin)
+        })
         panel.contentView = host
 
         let tracker = ExitTracker { [weak self] in self?.collapse() }
         tracker.inside = { [weak panel] in
-            panel.map { $0.frame.insetBy(dx: Chrome.margin, dy: Chrome.margin).contains(NSEvent.mouseLocation) } ?? false
+            panel.map { $0.frame.insetBy(dx: margin, dy: margin).contains(NSEvent.mouseLocation) } ?? false
         }
-        host.addTrackingArea(NSTrackingArea(rect: host.bounds.insetBy(dx: Chrome.margin, dy: Chrome.margin),
+        host.addTrackingArea(NSTrackingArea(rect: host.bounds.insetBy(dx: margin, dy: margin),
                                             options: [.mouseEnteredAndExited, .activeAlways], owner: tracker, userInfo: nil))
         self.tracker = tracker
         self.model = model
@@ -136,6 +144,49 @@ enum Chrome {
     // behind it, light mode or not, where Spotlight's own glass keeps to the system's appearance.
     // A point or two more and the card keeps to it too.
     static let cardHeight: CGFloat = 66
+    // Room round the glass for a shadow drawn by hand.
+    static let shadowRoom: CGFloat = 40
+}
+
+// The shadow of the part of the panel above Spotlight, where the panel lies on Spotlight and the
+// system's shadow is off so as not to fall on Spotlight's: drawn round the glass of that part only,
+// none of it inside the glass, and fading out at Spotlight's top edge, where Spotlight's own shadow
+// carries on. Closed, the glass is the card's, and its shadow goes all round it.
+struct TopShadow: View {
+    let above: CGFloat       // from the top of the glass to Spotlight's top edge
+    let margin: CGFloat
+    let model: DetailModel
+
+    var body: some View {
+        Canvas { context, size in
+            let width = size.width - 2 * margin
+            let glass = model.expanded ? above + 2 * Chrome.radius : model.cardHeight
+            let shape = Path(roundedRect: CGRect(x: margin, y: margin, width: width, height: glass),
+                             cornerRadius: Chrome.radius, style: .continuous)
+            var shadow = context
+            // As the system draws a window's: a fine dark edge, and a soft fall below and round it.
+            shadow.addFilter(.shadow(color: .black.opacity(0.18), radius: 0.8))
+            shadow.addFilter(.shadow(color: .black.opacity(0.22), radius: 18, x: 0, y: 8))
+            shadow.fill(shape, with: .color(.black))
+            context.blendMode = .destinationOut
+            context.fill(shape, with: .color(.black))
+        }
+        // Open, it ends at Spotlight's top edge, fading over a few points rather than stopping short.
+        .mask {
+            GeometryReader { geometry in
+                let h = max(geometry.size.height, 1), edge = margin + above
+                if model.expanded {
+                    LinearGradient(stops: [.init(color: .black, location: 0),
+                                           .init(color: .black, location: max(0, (edge - 10) / h)),
+                                           .init(color: .clear, location: min(1, (edge + 14) / h))],
+                                   startPoint: .top, endPoint: .bottom)
+                } else {
+                    Color.black
+                }
+            }
+        }
+        .allowsHitTesting(false)
+    }
 }
 
 extension View {
@@ -155,7 +206,7 @@ extension View {
 // The working at its full size, behind glass that is the card's height when closed and the
 // panel's when open; everything outside the glass is clipped away.
 struct ExpandingDetail: View {
-    let answer: Solution
+    let answer: CardText
     let d: Details
     let model: DetailModel
 
@@ -245,7 +296,8 @@ private final class GraphInputView: NSView {
     override func scrollWheel(with event: NSEvent) {
         let dy = event.hasPreciseScrollingDeltas ? event.scrollingDeltaY : event.scrollingDeltaY * 8
         guard dy != 0 else { return }
-        input?.onZoom(exp(-Double(dy) * 0.01), point(event))
+        // Gently, and never by much at once: a quick flick of the trackpad is not a leap.
+        input?.onZoom(min(max(exp(-Double(dy) * 0.004), 0.85), 1.18), point(event))
     }
 
     override func magnify(with event: NSEvent) {
@@ -258,38 +310,51 @@ private final class GraphInputView: NSView {
 // Until the panel has finished opening it is shorter than what is in it only because it is still
 // growing, and a scroller would come and go for nothing.
 struct DetailView: View {
-    let answer: Solution
+    let answer: CardText
     let d: Details
     let model: DetailModel
     let fill: CGFloat   // the panel's height, which the working is stretched to where it is shorter
 
     var body: some View {
-        ScrollView { DetailContent(answer: answer, d: d).frame(minHeight: fill, alignment: .top) }
+        ScrollView { DetailContent(answer: answer, d: d, expanded: model.expanded).frame(minHeight: fill, alignment: .top) }
             .scrollIndicators(model.settled ? .automatic : .hidden)
             .scrollDisabled(!model.settled)
     }
 }
 
 // The top is the card exactly as it was, f(x) and answer in the same places, so the panel reads
-// as the card growing rather than something new arriving. Under it, the working, the solutions
+// as the card growing rather than something new arriving; its input line then shrinks away. Under it, the working, the solutions
 // and the graph sit on rounded platters inside the glass, and rise into place one after another.
 struct DetailContent: View {
-    let answer: Solution
+    let answer: CardText
     let d: Details
-    @State private var shown = false
+    var expanded = true
+    @State private var shown = DetailContent.still
+    // Set by the preview tool, which draws the panel once into a picture: everything in place
+    // from the start, with nothing left to rise in.
+    static var still = false
 
     var body: some View {
+        let working = d.presentation
         VStack(alignment: .leading, spacing: 0) {
-            CardFace(answer: answer)
+            // The card as it was, its input shrinking away as the panel opens: the working begins
+            // with the input, and everything under the answer comes down with the glass.
+            CardFace(answer: answer, showInput: !expanded)
 
             VStack(alignment: .leading, spacing: 14) {
                 section("Working", index: 0) {
                     CopyRow(copy: LineCopy(d.equation)) {
-                        labelled("Equation") { MathText(math: d.equation, size: 19) }
+                        labelled("Input") {
+                            MathText(math: d.equation, size: 19)
+                            ForEach(answer.notes, id: \.self) { note in
+                                Text(note).font(.system(size: 13)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                            }
+                        }
                     }
-                    ForEach(Array(d.steps.enumerated()), id: \.offset) { _, step in
+                    // Each step numbered, so that one can be pointed to: 1. Factorising.
+                    ForEach(Array(working.steps.enumerated()), id: \.offset) { i, step in
                         CopyRow(copy: step.math.map { LineCopy($0) }) {
-                            labelled(step.label) {
+                            labelled("\(i + 1). \(step.label)") {
                                 if let math = step.math { MathText(math: math, size: 19) }
                                 if let note = step.note {
                                     Text(subscripted(note, size: 13)).font(.system(size: 13)).foregroundStyle(.secondary)
@@ -300,7 +365,7 @@ struct DetailContent: View {
                     }
                 }
 
-                section("Solutions", index: 1) {
+                section(working.solutionTitle, index: 1) {
                     // A periodic function's dozen go in columns, so the graph stays in view.
                     if d.solutions.count > 3, d.whole == nil {
                         // Wide enough for the longest, an angle with its degrees after it.
@@ -315,8 +380,17 @@ struct DetailContent: View {
                         // One value over several lines is set smaller, so that its lines are all of a
                         // size, and each of them copies the whole.
                         ForEach(Array(d.solutions.enumerated()), id: \.offset) { _, solution in
-                            CopyRow(copy: LineCopy(solution, whole: d.whole)) { MathText(math: solution, size: d.whole == nil ? 26 : 15) }
+                            // The answer larger than the working, unless it is a long one, which at that size
+                            // would be a term to a line: then the size of the working.
+                            let long = Typesetter.box(solution, 26).width > 900
+                            CopyRow(copy: LineCopy(solution, whole: d.whole)) { MathText(math: solution, size: d.whole != nil ? 15 : long ? 19 : 26) }
                         }
+                    }
+                    if let note = working.solutionNote {
+                        Text(subscripted(note, size: 13)).font(.system(size: 13)).foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .padding(.horizontal, 16)
+                            .padding(.top, 2)
                     }
                     if let note = d.note {
                         Text(note).font(.system(size: 13)).foregroundStyle(.secondary)
@@ -326,6 +400,14 @@ struct DetailContent: View {
                     }
                 }
 
+                if let chromaticity = d.chromaticity {
+                    section("CIE 1931 chromaticity", index: 2) {
+                        ChromaticityDiagram(diagram: chromaticity)
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 14)
+                            .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(.quaternary.opacity(0.5)))
+                    }
+                }
                 if let graph = d.graph {
                     section("Graph", index: 2) {
                         Plot(graph: graph)
@@ -502,6 +584,8 @@ private struct Plot: View {
 
     @State private var view: (x: ClosedRange<Double>, y: ClosedRange<Double>)?
     @State private var gestureStart: (x: ClosedRange<Double>, y: ClosedRange<Double>)?
+    // The plot's height over its width, as drawn, so that a unit across and a unit up are the same.
+    @State private var aspect: Double = 0.5
 
     struct Point: Identifiable {
         let id: String
@@ -583,14 +667,29 @@ private struct Plot: View {
                             view = (scale(cx, factor, about: x), scale(cy, factor, about: y))
                         },
                         onReset: { withAnimation(.smooth(duration: 0.3)) { view = nil } })
+                    // Buttons to zoom about the middle, and to go back to the first view.
+                    VStack(spacing: 0) {
+                        zoomButton("plus", "Zoom in") { zoom(0.6) }
+                        Divider().frame(width: 22)
+                        zoomButton("minus", "Zoom out") { zoom(1 / 0.6) }
+                        Divider().frame(width: 22)
+                        zoomButton("arrow.counterclockwise", "Back to the first view") { withAnimation(.smooth(duration: 0.3)) { view = nil } }
+                    }
+                    .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(.regularMaterial))
+                    .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).strokeBorder(Color.primary.opacity(0.12), lineWidth: 0.5))
+                    .position(x: plot.maxX - 20, y: plot.minY + 50)
+                    Color.clear
+                        .onAppear { if plot.width > 0 { aspect = Double(plot.height / plot.width) } }
+                        .onChange(of: plot.size) { _, size in if size.width > 0 { aspect = Double(size.height / size.width) } }
+                        .allowsHitTesting(false)
                 }
             }
-            .frame(height: 210)
+            .frame(height: 320)
 
             HStack(spacing: 16) {
                 ForEach(Array(graph.curves.enumerated()), id: \.offset) { i, curve in legend(i, curve.label) }
                 Spacer()
-                Text("Drag to move · scroll or pinch to zoom · double-click to reset")
+                Text("Drag to move · + and −, pinch or scroll to zoom")
                     .font(.system(size: 11))
                     .foregroundStyle(.tertiary)
             }
@@ -659,6 +758,23 @@ private struct Plot: View {
         }
     }
 
+    private func zoomButton(_ symbol: String, _ help: String, _ action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: symbol).font(.system(size: 12, weight: .semibold)).frame(width: 28, height: 26).contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .foregroundStyle(.secondary)
+        .help(help)
+    }
+
+    // About the middle of what is in view, both ways alike, so the scale across and up is kept.
+    private func zoom(_ factor: Double) {
+        let (xs, ys) = view ?? initial()
+        withAnimation(.smooth(duration: 0.2)) {
+            view = (scale(xs, factor, about: (xs.lowerBound + xs.upperBound) / 2), scale(ys, factor, about: (ys.lowerBound + ys.upperBound) / 2))
+        }
+    }
+
     private func span(_ r: ClosedRange<Double>) -> Double { r.upperBound - r.lowerBound }
     private func shift(_ r: ClosedRange<Double>, _ by: Double) -> ClosedRange<Double> { (r.lowerBound + by)...(r.upperBound + by) }
     private func scale(_ r: ClosedRange<Double>, _ k: Double, about c: Double) -> ClosedRange<Double> {
@@ -700,12 +816,22 @@ private struct Plot: View {
         for y in py { bottom = min(bottom, y); top = max(top, y) }
         if top - bottom < 1e-9 { bottom -= 1; top += 1 }
         let margin = (top - bottom) * 0.18
-        return (lo...hi, (bottom - margin)...(top + margin))
+        bottom -= margin
+        top += margin
+        // The same scale across as up, as in Desmos, so that a slope of 1 is at 45° and a circle is
+        // round: made wider for it where the curves need not much more height than that, and
+        // left to fit them where they would need far more, as y = 100x does.
+        let needed = top - bottom, equal = (hi - lo) * aspect, middle = (bottom + top) / 2
+        if needed <= equal { return (lo...hi, (middle - equal / 2)...(middle + equal / 2)) }
+        if needed <= equal * 2.5 {
+            let width = needed / aspect, centre = (lo + hi) / 2
+            return ((centre - width / 2)...(centre + width / 2), bottom...top)
+        }
+        return (lo...hi, bottom...top)
     }
 
     // For curves given as g(x, y) = 0: the whole of any closed one (a circle, an ellipse) and
-    // every marked point, at the same scale across as up, so a circle looks round. The plot is
-    // about two and a half times as wide as it is tall.
+    // every marked point, at the same scale across as up, so a circle looks round.
     private func framedCurves() -> (ClosedRange<Double>, ClosedRange<Double>) {
         var box = CGRect.null
         for p in graph.points { box = box.union(CGRect(origin: p, size: .zero)) }
@@ -718,7 +844,6 @@ private struct Plot: View {
         if box.isNull { box = CGRect(x: -5, y: -5, width: 10, height: 10) }
         let pad = max(1, max(box.width, box.height) * 0.15)
         box = box.insetBy(dx: -pad, dy: -pad)
-        let aspect = 0.38
         let width = max(Double(box.width), Double(box.height) / aspect), height = width * aspect
         return ((Double(box.midX) - width / 2)...(Double(box.midX) + width / 2),
                 (Double(box.midY) - height / 2)...(Double(box.midY) + height / 2))

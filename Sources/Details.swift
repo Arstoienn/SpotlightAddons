@@ -19,6 +19,32 @@ struct Details {
     var roots: [Double]         // the solutions listed, to mark on the plot
     var graph: Graph? = nil      // none for a value worked out, which has nothing to plot
     var whole: String? = nil     // what copying any line of the solutions gives, where they are one value over several lines
+    var chromaticity: Chromaticity? = nil   // a colour's place on the CIE 1931 diagram, drawn in place of the graph
+
+    struct Presentation {
+        var steps: [Step]
+        var solutionTitle: String
+        var solutionNote: String?
+    }
+
+    // An operation that reaches the answer belongs to the answer row. Keep its explanation,
+    // without drawing the same long expression once under Working and again under Solution.
+    var presentation: Presentation {
+        var visible = steps
+        var title = solutions.count == 1 ? "Solution" : "Solutions"
+        var note: String?
+        let alternativeForms = solutions.count == 2 && roots.count <= 1 &&
+            solutions.last.map { $0.plain.hasPrefix("= ") || $0.plain.hasPrefix("≈ ") } == true
+        if solutions.count == 1 || alternativeForms {
+            if let last = visible.last, let math = last.math,
+               solutions.contains(where: { $0.plain == math.plain }) {
+                visible.removeLast()
+                title = last.label == "Hence" ? "Solution" : "Solution (\(last.label))"
+                note = last.note
+            }
+        }
+        return Presentation(steps: visible, solutionTitle: title, solutionNote: note)
+    }
 }
 
 // Lines and curves in the plane, and the points where they cross. One equation is drawn as its
@@ -51,52 +77,19 @@ extension Expr {
 }
 
 extension Solver {
-    // The working is never left empty where there is an answer: a number written in scientific
-    // notation is written out, and the rest have a step of their own, below. An answer that is
-    // only a name given to a number (x = 5) has nothing to work, and none is made up.
+    // Drop a bare "Hence" that repeats the answer, while keeping the operation that obtained it.
     static func details(_ typed: String) -> Details? {
-        guard var d = workings(typed) else { return nil }
-        if d.steps.isEmpty, typed.trimmingCharacters(in: .whitespaces).range(of: "^[+-]?[0-9.]+[eE][+-]?[0-9]+$", options: .regularExpression) != nil,
-           let line = solve(typed) {
-            d.steps.append(Step(label: "Writing out the power of ten", math: t(line.exact)))
+        guard let found = answer(typed), var d = found.details else { return nil }
+        // Keep a step that explains an operation, even if it reaches the final answer. Removing
+        // it used to hide an entire one-step integral, or the division that solves an equation.
+        if let last = d.steps.last, last.label == "Hence", last.math?.plain == d.solutions.first?.plain { d.steps.removeLast() }
+        if d.steps.count > 1, let last = d.steps.last?.math?.plain, last == d.steps[d.steps.count - 2].math?.plain { d.steps.removeLast() }
+        // (0 = 0) = 0 was read as 1 = 0: the working says so first.
+        if !found.judged.isEmpty {
+            d.steps.insert(Step(label: found.judged.count == 1 ? "Taking the statement in brackets as a number" : "Taking each statement in brackets as a number",
+                                math: nil, note: found.judged.joined(separator: "; ") + ". A true statement counts as 1, and a false one as 0."), at: 0)
         }
         return d
-    }
-
-    private static func workings(_ typed: String) -> Details? {
-        if let money = Currency.conversion(typed) { return money.details }
-        if let hash = Hash.parse(typed) { return hash.details }
-        let asTyped = typed   // before it is tidied: lcm(4,6) is not bracketed as it was written
-        guard let typed = Hash.numbers(in: typed).map(Prose.tidy), !Prose.reads(typed) else { return nil }
-        if let sequence = Sequence.parse(Latex.plain(typed)) { return sequence.details }
-        let asked = Rearrangement.asked(Latex.plain(typed))
-        let input = asked?.equation ?? Latex.plain(typed)
-        if let matrix = MatrixValue.parse(input) { return matrix.details }
-        if let algebra = Algebra.parse(input) { return algebra.details }
-        if let domain = Domain.parse(input) { return domain.details }
-        if LinearSystem.parts(input).count >= 2 {
-            return Given.parse(input)?.details ?? LinearSystem.parse(input)?.details ?? NonlinearSystem.parse(input)?.details
-        }
-        if let conversion = Conversion.parse(input) { return conversion.details }
-        if let complex = ComplexValue.parse(input) { return complex.details }
-        if Options.numberFacts, let number = NumberFacts.parse(input) { return number.details }
-        if let logic = Logic.parse(input) { return logic.details }
-        if let comparison = Comparison.parse(input) { return comparison.details }
-        if let inequality = Inequality.parse(input) { return inequality.details }
-        if let inequalities = InequalitySet.parse(input) { return inequalities.details }
-        if let evaluation = Evaluation.parse(input, hadLatex: typed.contains("\\")) {
-            var d = evaluationDetails(evaluation)
-            // (20/3) as it was written: the brackets are kept, as they were typed.
-            if evaluation.name == nil, wholly(bracketed: asTyped.replacingOccurrences(of: "\\left(", with: "(").replacingOccurrences(of: "\\right)", with: ")")) { d.equation = .group(d.equation) }
-            return d
-        }
-        if Evaluation.namesNumber(input) { return nil }
-        if let simplification = Simplification.parse(input) { return simplification.details }
-        if let trig = TrigSimplification.parse(input) { return trig.details }
-        guard let eq = try? Parser.parse(input) else {
-            return Rearrangement.parse(input, for: asked?.letter)?.details ?? Grouped.parse(input)?.details
-        }
-        return details(of: eq)
     }
 
     static func details(of eq: Equation) -> Details {
@@ -110,8 +103,13 @@ extension Solver {
         let worked = Equation(left: eq.left.withValues, right: eq.right.withValues, unknown: n)
         let written = constants.isEmpty ? header : row(typeset(worked.left, n), t(" = "), typeset(worked.right, n))
         var d: Details
-        if let l = poly(worked.left), let r = poly(worked.right) {
-            d = polynomialDetails(trim(sub(l, r)), n, written, f, exact: constants.isEmpty && Options.exact)
+        if let lost = eq.left.lostPart ?? eq.right.lostPart {
+            let unsolved = lost.unsolved(n)
+            return Details(name: n, equation: header, steps: [Step(label: "Why it is not solved", math: nil, note: unsolved.approx)],
+                           solutions: [t(unsolved.exact)], note: nil, f: f, roots: [])
+        } else if let l = poly(worked.left), let r = poly(worked.right) {
+            d = polynomialDetails(trim(sub(l, r)), n, written, f, exact: constants.isEmpty && Options.exact, original: constants.isEmpty ? worked : nil)
+            if constants.isEmpty, let steps = Working.linear(worked) { d.steps = steps }
         } else if let rational = RationalEquation.parse(worked), rational.solution != nil {
             d = rational.details(written, f: f)
         } else {
@@ -190,21 +188,37 @@ func evaluationDetails(_ ev: Evaluation) -> Details {
         e = e.withValues
         d.steps.append(Step(label: "Substituting " + Constants.values(constants), math: row(t(lead), typeset(e, ""))))
     }
+    if let steps = choiceSteps(e, lead: lead, solution: ev.solution) {
+        d.steps += steps
+        d.solutions = evaluationSolutions(ev)
+        return d
+    }
+    if constants.isEmpty, !ev.isLost, let steps = Working.arithmetic(e, lead: lead) {
+        d.steps += steps
+        d.solutions = evaluationSolutions(ev)
+        return d
+    }
     var folds = 0
-    while true {
+    // With a part beyond what can be held, 10⁻⁴⁰⁰, the working would end in a 0 that is not its value.
+    while !ev.isLost {
+        // Forty rounds are as many as anyone reads; a sum of hundreds of terms is finished at once,
+        // rather than taking seconds a round at a time.
+        if d.steps.count >= 40 {
+            d.steps.append(Step(label: "Working out the rest", math: nil, note: "What is left is worked in the same way, a round at a time."))
+            break
+        }
         let factorials = readyFactorials(e)
-        let before = String(describing: e)
         let (next, done) = reduceOnce(e)
-        e = next
         // A minus on a number is folded in without a step of its own, and the round after it may
         // have an operation to do: -11-50 is -11 less 50, not a sum with nothing in it to do.
-        if done.isEmpty, folds < 8, String(describing: e) != before { folds += 1; continue }
+        if done.isEmpty, folds < 8, String(describing: next) != String(describing: e) { e = next; folds += 1; continue }
+        e = next
         guard !done.isEmpty, !e.hasNonFinite else { break }
         d.steps.append(Step(label: reductionLabel(done, factorials: factorials), math: row(t(lead), typeset(e, ""))))
     }
     // Where nothing was left to do on paper, what the value is, or why there is none.
     if d.steps.isEmpty, let line = ev.solution {
-        if line.exact == "Undefined" || line.exact == "Too large" {
+        if ["Undefined", "Too large", "Too small"].contains(line.exact) {
             d.steps.append(Step(label: line.exact == "Undefined" ? "Why there is no value" : "Why it is not shown", math: nil, note: line.approx))
         } else if !ev.value.isFinite {
             d.steps.append(Step(label: "Using i² = −1", math: t(line.exact), note: line.approx))
@@ -220,8 +234,100 @@ func evaluationDetails(_ ev: Evaluation) -> Details {
 // working, not among the answers.
 private func evaluationSolutions(_ ev: Evaluation) -> [Math] {
     guard let solution = ev.solution else { return [] }
-    guard let approx = solution.approx, ev.expr.constants.isEmpty else { return [t(solution.exact)] }
-    return [t(solution.exact), t(approx)]
+    guard solution.approx != nil, ev.expr.constants.isEmpty else { return [t(solution.exact)] }
+    return answerLines(solution)
+}
+
+// The answer's lines in the panel: the answer, and beneath it its other form where it has one, 5/2
+// under 2.5 or FF under 255. Not a sentence saying why there is no answer, or how it was found, It
+// has no real value.: that is no second result, and the card and the working say it already.
+func answerLines(_ s: Solution) -> [Math] {
+    guard let other = s.approx, !other.hasSuffix(".") else { return [t(s.exact)] }
+    return [t(s.exact), t(other)]
+}
+
+// C(5, 2) and P(5, 2) worked out by the formula, as on paper: the larger factorial below the line
+// cancels into the one above, and what is left is multiplied out and divided.
+private func choiceSteps(_ e: Expr, lead: String, solution: Solution?) -> [Step]? {
+    // Its two numbers as they work out exactly, C(1/2, 3) as well as C(5, 2).
+    guard case .op(let o, let ea, let eb) = e, o == "⒞" || o == "⒫", let solution,
+          case .exact(let ra)? = ea.number, case .exact(let rb)? = eb.number else { return nil }
+    let (a, b) = (ra.double, rb.double)
+    guard rb.isWhole, b >= 0, b <= 1000 else { return nil }
+    let combination = o == "⒞"
+    // n not a whole number, or below r: the factorials do not apply, and the r factors of
+    // n(n − 1)⋯(n − r + 1) are multiplied out instead, C(1/2, 3) being (1/2·(−1/2)·(−3/2))/3!.
+    guard ra.isWhole, a >= b, a <= 1000 else { return fallingSteps(ra, Int(b), combination: combination, lead: lead, solution: solution) }
+    let (n, r) = (Int(a), Int(b))
+    func fact(_ k: Int) -> Math { t("\(k)!") }
+    // 5·4, and 100·99·…·51 where it would be long.
+    func product(_ factors: [Int]) -> Math {
+        let shown = factors.count <= 6 ? factors.map(String.init) : factors.prefix(2).map(String.init) + ["…", String(factors.last!)]
+        return t(shown.joined(separator: "·"))
+    }
+    let general: Math = combination ? .fraction(t("n!"), row(t("r!"), .group(t("n − r")), t("!"))) : .fraction(t("n!"), row(.group(t("n − r")), t("!")))
+    let applied: Math = combination ? .fraction(fact(n), row(fact(r), t("·"), fact(n - r))) : .fraction(fact(n), fact(n - r))
+    var steps = [Step(label: "Applying the formula", math: row(t(combination ? "C(n, r) = " : "P(n, r) = "), general, t(" = "), applied))]
+    let answer = t(solution.exact)
+    // What is left above the line once the larger factorial below it has cancelled: n down to
+    // one more than it; and below the line, for C, the smaller factorial.
+    let big = combination ? max(r, n - r) : n - r
+    let k = n - big
+    let above = Array(stride(from: n, to: big, by: -1))
+    if k == 0 {
+        steps.append(Step(label: big == 0 ? "Using 0! = 1" : "Cancelling \(big)!" + (combination ? ", as 0! = 1" : ""), math: answer))
+        return steps
+    }
+    if big == 0, !combination {
+        steps.append(Step(label: "Using 0! = 1", math: row(t(lead), fact(n))))
+        steps.append(Step(label: "Evaluating the factorial", math: answer))
+        return steps
+    }
+    let below = combination ? Array(stride(from: k, through: 1, by: -1)) : []
+    if k == 1 {
+        steps.append(Step(label: "Cancelling \(big)!", math: answer))
+        return steps
+    }
+    let left: Math = below.isEmpty ? product(above) : .fraction(product(above), k > 6 ? fact(k) : product(below))
+    steps.append(Step(label: "Cancelling \(big)!", math: row(t(lead), left)))
+    // Multiplied out where the numbers stay short; the value straight away where they would not.
+    guard k <= 6 else { steps.append(Step(label: "Hence", math: answer)); return steps }
+    let top = above.reduce(1, *), bottom = below.reduce(1, *)
+    if below.isEmpty {
+        steps.append(Step(label: "Multiplying", math: answer))
+    } else {
+        steps.append(Step(label: "Multiplying", math: row(t(lead), .fraction(t("\(top)"), t("\(bottom)")))))
+        steps.append(Step(label: "Dividing", math: answer))
+    }
+    return steps
+}
+
+// C(n, r) and P(n, r) for an n that is not a whole number, or is less than r: the r factors
+// n, n − 1, … written out, multiplied, and for C divided by r!.
+private func fallingSteps(_ n: Rational, _ r: Int, combination: Bool, lead: String, solution: Solution) -> [Step]? {
+    guard r <= 12 else { return nil }
+    let name = combination ? "C" : "P"
+    let answer = t(solution.exact)
+    guard r > 0 else { return [Step(label: "Using \(name)(n, 0) = 1", math: answer)] }
+    // −1/2 in brackets where it is one of several factors.
+    func factor(_ x: Rational) -> Math {
+        let m = x.isWhole ? t(minus(x.top)) : fractionMath(x.top, x.bottom)
+        return x.isNegative ? .group(m) : m
+    }
+    let factors = (0..<r).compactMap { n - Rational($0)! }
+    guard factors.count == r, case .exact(let product) = Number.falling(.exact(n), r) else { return nil }
+    let written = Math.row(factors.enumerated().flatMap { i, x in (i == 0 ? [] : [t("·")]) + [factor(x)] })
+    let general: Math = combination ? .fraction(t("n(n − 1)⋯(n − r + 1)"), t("r!")) : t("n(n − 1)⋯(n − r + 1)")
+    let applied: Math = combination ? .fraction(written, t("\(r)!")) : written
+    var steps = [Step(label: "Applying the formula", math: row(t("\(name)(n, r) = "), general, t(" = "), applied))]
+    let value: Math = product.isWhole ? t(minus(product.top)) : fractionMath(product.top, product.bottom)
+    if combination, r > 1 {
+        steps.append(Step(label: "Multiplying", math: row(t(lead), .fraction(value, t("\(Int(factorial(Double(r))))")))))
+        steps.append(Step(label: "Dividing", math: answer))
+    } else {
+        steps.append(Step(label: "Multiplying", math: answer))
+    }
+    return steps
 }
 
 // What a round of reduceOnce did, as the title of its step: "Multiplying", or "Simplifying" where
@@ -231,6 +337,8 @@ func reductionLabel(_ done: Set<Character>, factorials: Int) -> String {
                                       "f": "Evaluating the function", "!": "Evaluating the factorial", "s": "Evaluating the sum",
                                       "°": "Converting to radians", "%": "Taking the remainder"]
     if done == ["!"], factorials > 1 { return "Evaluating the factorials" }
+    if done == ["⒞"] { return "Evaluating the combination" }
+    if done == ["⒫"] { return "Evaluating the permutation" }
     if done.count == 1, let one = done.first, Binary.table[one] != nil, one != "%" { return "Evaluating the function" }
     return done.count == 1 ? names[done.first!] ?? "Simplifying" : "Simplifying"
 }
@@ -281,7 +389,7 @@ private let negativeDiscriminant = "The discriminant is negative; the equation t
 
 // exact: whole-number coefficients are worked in fractions and surds. Without it, as when a
 // physical constant has gone in, everything is in decimals.
-func polynomialDetails(_ p: Poly, _ n: String, _ header: Math, _ f: @escaping (Double) -> Double, exact: Bool = true) -> Details {
+func polynomialDetails(_ p: Poly, _ n: String, _ header: Math, _ f: @escaping (Double) -> Double, exact: Bool = true, original: Equation? = nil) -> Details {
     var d = Details(name: n, equation: header, steps: [], solutions: [], note: nil, f: f, roots: [])
     switch p.count {
     case 0:
@@ -300,7 +408,10 @@ func polynomialDetails(_ p: Poly, _ n: String, _ header: Math, _ f: @escaping (D
         let p = p.last! < 0 ? p.map { -$0 } : p
         let roots = realRoots(p).sorted()
         let standard = row(polyMath(p, n), t(" = 0"))
-        if standard.plain != header.plain { d.steps.append(Step(label: "Writing in standard form", math: standard)) }
+        // A linear equation is rearranged straight away, as on paper: 3.4641v = 10.2.
+        if standard.plain != header.plain, p.count > 2 {
+            d.steps += original.map { Working.standardForm($0, target: p) } ?? [Step(label: "Writing in standard form", math: standard)]
+        }
         if p.count <= 3 {
             d.steps += decimalSteps(p, n)
         } else if let factored = rationalFactors(p, roots, n) {
@@ -314,8 +425,23 @@ func polynomialDetails(_ p: Poly, _ n: String, _ header: Math, _ f: @escaping (D
         return d
     }
     if c.last! < 0 { c = c.map { -$0 } }
+    // A linear equation whose numbers are short decimals is rearranged as it stands, 4x = 10.2, and
+    // not first multiplied up to whole numbers, 20x − 51 = 0.
+    let oriented = p.last! < 0 ? p.map { -$0 } : p
+    if c.count == 2, oriented.allSatisfy({ abs((Double(decimal($0).replacingOccurrences(of: "−", with: "-")) ?? .nan) - $0) <= 1e-12 * max(1, abs($0)) }), oriented.contains(where: { $0 != $0.rounded() }) {
+        let (b, a) = (oriented[0], oriented[1])
+        let root = fractionMath(-c[0], c[1])
+        let term = a == 1 ? n : "\(decimal(a))\(n)"
+        d.steps.append(Step(label: "Rearranging", math: t("\(term) = \(decimal(-b))")))
+        if a != 1 { d.steps.append(Step(label: "Dividing by \(decimal(a))", math: row(t("\(n) = "), root))) }
+        d.roots = [-b / a]
+        d.solutions = [exactLine(n, root, d.roots[0])]
+        return d
+    }
     let standard = row(polyMath(c.map(Double.init), n), t(" = 0"))
-    if standard.plain != header.plain { d.steps.append(Step(label: "Writing in standard form", math: standard)) }
+    if standard.plain != header.plain {
+        d.steps += original.map { Working.standardForm($0, target: c.map(Double.init)) } ?? [Step(label: "Writing in standard form", math: standard)]
+    }
 
     if c.count == 2 {
         let (b, a) = (c[0], c[1])
@@ -338,15 +464,27 @@ func polynomialDetails(_ p: Poly, _ n: String, _ header: Math, _ f: @escaping (D
     if disc >= 0, m == 1 {
         // Rational roots p/q: the polynomial is (q₁x − p₁)(q₂x − p₂).
         let r1 = reduced(-b - k, 2 * a), r2 = reduced(-b + k, 2 * a)
+        if cc != 0 {
+            let (working, _) = Algebra.acSteps(c, [r1, r2], n)
+            d.steps += working.enumerated().map { i, step in
+                var step = step
+                if i > 0, let math = step.math { step.math = row(math, t(" = 0")) }
+                return step
+            }
+        }
         let factored: Math = disc == 0 ? .power(t(linearFactor(r1, n)), t("2")) : t(linearFactor(r1, n) + linearFactor(r2, n))
         d.steps.append(Step(label: "Factorising", math: row(factored, t(" = 0"))))
+        let factors = disc == 0 ? [r1] : [r1, r2]
+        d.steps.append(Step(label: "Zero-product property", math: .row(factors.enumerated().flatMap { i, r in
+            [t(i == 0 ? "" : " or "), polyMath([-Double(r.0), Double(r.1)], n), t(" = 0")]
+        }), note: "A product is zero if and only if at least one factor is zero."))
         func value(_ r: (Int, Int)) -> Double { Double(r.0) / Double(r.1) }
         let values: [(Int, Int)] = disc == 0 ? [r1] : (value(r1) < value(r2) ? [r1, r2] : [r2, r1])
         var answer: [Math] = []
         for (i, v) in values.enumerated() {
             answer += [t((i == 0 ? "" : " or ") + "\(n) = "), fractionMath(v.0, v.1)]
         }
-        d.steps.append(Step(label: "Hence", math: .row(answer)))
+        d.steps.append(Step(label: "Solving each linear factor", math: .row(answer)))
         d.roots = values.map(value)
         d.solutions = zip(values, d.roots).map { exactLine(n, fractionMath($0.0, $0.1), $1) }
         return d
@@ -371,6 +509,7 @@ func polynomialDetails(_ p: Poly, _ n: String, _ header: Math, _ f: @escaping (D
         return d
     }
 
+    d.steps.append(Step(label: "Identifying the quadratic coefficients", math: t("a = \(minus(a)),  b = \(minus(b)),  c = \(minus(cc))")))
     d.steps.append(Step(label: "Evaluating the discriminant",
                         math: row(squared("b"), t(" − 4ac = "), .power(t(paren(b)), t("2")),
                                   t(" − 4·\(paren(a))·\(paren(cc)) = \(minus(disc))"))))
@@ -388,7 +527,12 @@ func polynomialDetails(_ p: Poly, _ n: String, _ header: Math, _ f: @escaping (D
         return den == 1 ? top : .fraction(top, t("\(den)"))
     }
     let formula = Math.fraction(row(t("−b ± "), .root(row(squared("b"), t(" − 4ac")))), t("2a"))
-    d.steps.append(Step(label: "Applying the quadratic formula", math: row(t("\(n) = "), formula, t(" = "), over("±"))))
+    d.steps.append(Step(label: "Quadratic formula", math: row(t("\(n) = "), formula)))
+    let substituted = Math.fraction(row(t("\(minus(-b)) ± "), .root(t(minus(disc)))), t("\(2 * a)"))
+    d.steps.append(Step(label: "Substituting the coefficients and discriminant", math: row(t("\(n) = "), substituted)))
+    if substituted.plain != over("±").plain {
+        d.steps.append(Step(label: "Simplifying the radical and fraction", math: row(t("\(n) = "), over("±"))))
+    }
     let s = Double(disc).squareRoot()
     let values = [(-Double(b) - s) / Double(2 * a), (-Double(b) + s) / Double(2 * a)]
     d.roots = values.sorted()
@@ -494,6 +638,14 @@ func solutionLine(_ n: String, _ x: Double) -> Math {
 
 func numericDetails(_ eq: Equation, _ n: String, _ header: Math, _ f: @escaping (Double) -> Double) -> Details {
     var d = Details(name: n, equation: header, steps: [], solutions: [], note: nil, f: f, roots: [])
+    // The two sides equal at every value tried: so for every value, or every one where it is defined.
+    if closedRoot(eq) == nil, let every = identity(eq, n) {
+        // Proved step by step where it is an identity in sines and cosines; otherwise, as found by trying values.
+        d.steps = TrigProof.prove(eq)?.steps(n) ?? [Step(label: "Numerical check of the two sides", math: nil,
+                        note: "The two sides agree at the sampled values where both are defined. This is numerical evidence, not a symbolic proof of an identity.")]
+        d.solutions = [t(every.exact)]
+        return d
+    }
     d.steps += closedForm(eq, n)
     if let trig = trigEquation(eq) { d.steps += trigSteps(trig, n, header) }
     if d.steps.isEmpty {
@@ -574,67 +726,24 @@ func closedRoot(_ eq: Equation) -> (value: Double, power: Math?)? {
 // digest of a hash. Nothing for a number typed by itself, which has no answer but itself.
 extension Solver {
     static func copy(_ typed: String) -> String? {
-        func number(_ x: Double) -> String { x == 0 ? "0" : String(format: "%.12g", x) }
-        func plain(_ s: String) -> String { s.replacingOccurrences(of: "−", with: "-") }
-        if let money = Currency.conversion(typed) { return money.copyText }
-        if let hash = Hash.parse(typed) { return hash.written }
+        guard let answer = answer(typed) else { return nil }
         // As shown, where that is asked for: the card's own line, without the "x = " before a
-        // single answer.
-        if Options.copyAsShown {
-            guard let shown = solve(typed)?.exact else { return nil }
+        // single answer. Money and digests are copied as they are either way.
+        if Options.copyAsShown, Currency.conversion(typed) == nil, Hash.parse(typed) == nil {
+            let shown = answer.solution.exact
             if let sign = shown.range(of: "= ") ?? shown.range(of: "≈ "), !shown[sign.upperBound...].contains("=") {
-                return plain(String(shown[sign.upperBound...]))
+                return String(shown[sign.upperBound...]).replacingOccurrences(of: "−", with: "-")
             }
-            return plain(shown)
+            return shown.replacingOccurrences(of: "−", with: "-")
         }
-        guard let numbered = Hash.numbers(in: typed).map(Prose.tidy), !Prose.reads(numbered) else { return nil }
-        let input = Latex.plain(numbered)
-        if let matrix = MatrixValue.parse(input) { return matrix.copyText }
-        if let algebra = Algebra.parse(input) { return algebra.copyText }
-        if let domain = Domain.parse(input) { return domain.copyText }
-        if LinearSystem.parts(input).count < 2 {
-            if let conversion = Conversion.parse(input) { return conversion.copyText }
-            if let complex = ComplexValue.parse(input) { return complex.copyText }
-            if NumberFacts.parse(input) != nil { return nil }
-            if let logic = Logic.parse(input) { return logic.holds ? "True" : "False" }
-            if let comparison = Comparison.parse(input) { return comparison.holds ? "True" : "False" }
-            if let inequality = Inequality.parse(input) { return plain(inequality.solution.exact) }
-            if let inequalities = InequalitySet.parse(input) { return plain(inequalities.solution.exact) }
-            if let evaluation = Evaluation.parse(input, hadLatex: numbered.contains("\\")) {
-                if abs(evaluation.value) >= 1e15, evaluation.expr.constants.isEmpty, let big = evaluation.expr.exactInteger, big.digitCount <= 60 { return plain(big.description) }
-                return evaluation.value.isFinite ? number(evaluation.value) : nil
-            }
-        }
-        if let simplification = Simplification.parse(input) { return plain(simplification.result.plain) }
-        if let trig = TrigSimplification.parse(input) { return trig.copyText }
-        if LinearSystem.parts(input).count >= 2, let sequence = Sequence.parse(input) { return sequence.copyText }
-        if LinearSystem.parts(input).count >= 2, let given = Given.parse(input) { return given.copyText }
-        guard let answer = solve(typed), let d = details(typed) else { return nil }
-        return d.roots.isEmpty ? plain(answer.exact) : d.roots.map(number).joined(separator: ", ")
+        return answer.copy
     }
 }
 
 // The numbers an answer is, for ans to be next time: what was worked out, or the roots of an
 // equation, as many as it has and in the order they are given. None for anything else.
 extension Solver {
-    static func values(_ typed: String) -> [Double] {
-        if let money = Currency.conversion(typed) { return money.value.isFinite ? [money.value] : [] }
-        guard Hash.parse(typed) == nil, let numbered = Hash.numbers(in: typed).map(Prose.tidy), !Prose.reads(numbered) else { return [] }
-        let input = Latex.plain(numbered)
-        if let matrix = MatrixValue.parse(input) { return matrix.values }
-        if let conversion = Conversion.parse(input) { return [conversion.value] }
-        if let algebra = Algebra.parse(input) { return algebra.values }
-        if let domain = Domain.parse(input) { return domain.roots }
-        if let complex = ComplexValue.parse(input) { return complex.values }
-        if LinearSystem.parts(input).count >= 2, let sequence = Sequence.parse(input) { return sequence.values }
-        if LinearSystem.parts(input).count >= 2, let given = Given.parse(input) { return given.values }
-        guard LinearSystem.parts(input).count < 2, NumberFacts.parse(input) == nil, Comparison.parse(input) == nil, Logic.parse(input) == nil, Inequality.parse(input) == nil, InequalitySet.parse(input) == nil,
-              Simplification.parse(input) == nil, TrigSimplification.parse(input) == nil else { return [] }
-        if let evaluation = Evaluation.parse(input, hadLatex: numbered.contains("\\")) {
-            return evaluation.value.isFinite ? [evaluation.value] : []
-        }
-        return details(typed)?.roots ?? []
-    }
+    static func values(_ typed: String) -> [Double] { answer(typed)?.values ?? [] }
 }
 
 // The working for b^x = c, ln x = c, log x = c and √x = c, as it would be written out: the
@@ -939,8 +1048,8 @@ func generalSolution(_ fn: String, _ c: Double, of angle: Math, named name: Stri
 func periodMath(_ period: Double) -> Math {
     for q in 1...12 {
         let p = (period / .pi * Double(q)).rounded()
-        guard p > 0, abs(p / Double(q) * .pi - period) < 1e-12 else { continue }
-        let (num, den) = reduced(Int(p), q)
+        guard p > 0, let whole = Int(fitting: p), abs(p / Double(q) * .pi - period) < 1e-12 else { continue }
+        let (num, den) = reduced(whole, q)
         let top = t(num == 1 ? "kπ" : "\(num)kπ")
         return den == 1 ? top : .fraction(top, t("\(den)"))
     }
@@ -951,8 +1060,8 @@ func periodMath(_ period: Double) -> Math {
 func piMath(_ x: Double, within tolerance: Double = 1e-12) -> Math {
     for q in 1...12 {
         let p = (x / .pi * Double(q)).rounded()
-        guard abs(p / Double(q) * .pi - x) < tolerance else { continue }
-        return piMultiple(Int(p), q)
+        guard let whole = Int(fitting: p), abs(p / Double(q) * .pi - x) < tolerance else { continue }
+        return piMultiple(whole, q)
     }
     return t(decimal(x))
 }
@@ -987,6 +1096,12 @@ func polyMath(_ p: Poly, _ n: String) -> Math {
 func typeset(_ e: Expr, _ n: String) -> Math { render(e, n).math }
 
 // One term of a sum written out: bracketed when it is itself a sum, so 1 + (0 + 1) stays clear.
+// The same in the unknown n: a sum bracketed, as an integrand is before its dx, ∫ (x² + 1) dx.
+func termMath(_ e: Expr, _ n: String) -> Math {
+    let r = render(e, n)
+    return r.level < 2 ? .group(r.math) : r.math
+}
+
 func termMath(_ e: Expr) -> Math {
     let r = render(e, "")
     return r.level < 2 ? .group(r.math) : r.math
@@ -1013,6 +1128,9 @@ private func render(_ e: Expr, _ n: String) -> (math: Math, level: Int) {
     case .sum(let k, let from, let to, let body, let product):
         let sign = Math.bigOperator(product ? "∏" : "∑", lower: row(t("\(k) = "), render(from, n).math), upper: render(to, n).math)
         return (row(sign, wrap(render(body, n), 2)), 2)
+    // root(−8, 3) written as it is printed, ∛−8, the bar over it grouping it as brackets would.
+    case .apply("root", let args) where args.count == 2:
+        return (.radical(render(args[0], n).math, index: render(args[1], n).math), 4)
     case .apply(let f, let args):
         var parts: [Math] = [t(f + "(")]
         for (i, a) in args.enumerated() { parts += (i > 0 ? [t(", ")] : []) + [render(a, n).math] }
@@ -1050,6 +1168,10 @@ private func render(_ e: Expr, _ n: String) -> (math: Math, level: Int) {
         return (row(wrap(render(a, n), 2), t(" mod "), wrap(render(b, n), 2)), 1)
     case .op(let o, let a, let b) where Binary.table[o] != nil:
         return (row(t("\(Binary.table[o]!.name)("), render(a, n).math, t(", "), render(b, n).math, t(")")), 4)
+    // x^(1/3) written as the root it is, ∛x, however it came: root(x, 3), \sqrt[3]{x} or x^(1/3).
+    case .op("^", let a, .op("/", .num(1), .num(let k))) where k == k.rounded() && k >= 2 && k <= 99:
+        let radicand = render(a, n).math
+        return (k == 2 ? .root(radicand) : .radical(radicand, index: t(decimal(k))), 4)
     case .op(_, let a, let b):
         return (.power(wrap(render(a, n), 4), render(b, n).math), 3)
     case .call(let f, let a):

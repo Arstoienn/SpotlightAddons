@@ -89,6 +89,15 @@ final class SpotlightWatcher {
     // What is in the search field at this moment.
     func current() -> String? { field.flatMap { string($0, kAXValueAttribute) } }
 
+    // The search field emptied, through Accessibility and not by keys: done once a line typed after
+    // > has gone to Terminal, so that Spotlight opens on nothing next time rather than on it. The
+    // only change ever made to what is in Spotlight.
+    func clear() {
+        guard let field else { return Log.note("the search field could not be emptied: none followed") }
+        let error = AXUIElementSetAttributeValue(field, kAXValueAttribute as CFString, "" as CFString)
+        if error != .success { Log.note("the search field could not be emptied (\(error.rawValue))") }
+    }
+
     private func element(_ e: AXUIElement, _ attribute: String) -> AXUIElement? {
         guard let v = value(e, attribute), CFGetTypeID(v) == AXUIElementGetTypeID() else { return nil }
         return (v as! AXUIElement)
@@ -178,7 +187,7 @@ private func frame(_ e: AXUIElement) -> CGRect {
 // What the card did and why, for finding out when it goes missing: ~/Library/Logs/SpotlightAddons.log.
 // Never what was typed, only how long it was.
 enum Log {
-    private static let url = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Library/Logs/SpotlightAddons.log")
+    static let url = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Library/Logs/SpotlightAddons.log")
     private static let stamp: DateFormatter = {
         let f = DateFormatter()
         f.dateFormat = "HH:mm:ss.SSS"
@@ -187,7 +196,19 @@ enum Log {
 
     static func note(_ message: String) {
         guard Prefs.log else { return }
-        let line = Data("\(stamp.string(from: Date())) \(message)\n".utf8)
+        write("\(stamp.string(from: Date())) \(message)")
+    }
+
+    // A crash, written whether or not the log is kept, and with the day, as it is read some time later.
+    static func always(_ message: String) {
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "en_GB")
+        f.dateFormat = "d MMM yyyy, HH:mm:ss"
+        write("\(f.string(from: Date())) \(message)")
+    }
+
+    private static func write(_ text: String) {
+        let line = Data("\(text)\n".utf8)
         // Started afresh once it has grown, so that it never amounts to much.
         if let size = try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize, size < 200_000,
            let handle = try? FileHandle(forWritingTo: url) {
