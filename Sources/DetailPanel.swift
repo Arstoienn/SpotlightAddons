@@ -17,6 +17,7 @@ final class DetailPanel {
     private var model: DetailModel?
     private var onCollapsed: () -> Void = {}
     private var shadowTimer: Timer?
+    private var pinches: PinchForwarder?
     var isOpen: Bool { panel != nil }
 
     // onCovered: the panel is on screen, drawn, over the card, which can now be put away. Until
@@ -31,15 +32,17 @@ final class DetailPanel {
         let measure = NSHostingView(rootView: DetailContent(answer: answer, d: details, expanded: true).frame(width: width))
         let screen = NSScreen.screens.first { $0.frame.intersects(card) } ?? NSScreen.main
         let room = card.maxY - (screen?.visibleFrame.minY ?? 0) - 24
-        // At least down to Spotlight's bottom edge, so that none of its list shows from under the
-        // panel; a longer working goes on past it, as far as the screen allows. With the card
-        // below Spotlight there is nothing under the panel to cover.
+        // Down to Spotlight's bottom edge, whatever the working: none of Spotlight's list shows from
+        // under the panel, and none of the panel hangs below Spotlight; a longer working scrolls
+        // within it. Only where Spotlight is hardly taller than its field, which would leave the
+        // working a slit, does the panel go on past it, as far as the working or the screen allows.
+        // With the card below Spotlight there is nothing under the panel to cover.
         let reach = spotlightBottom.map { card.maxY - $0 } ?? 0
         let fitting = measure.fittingSize.height
-        let height = min(max(fitting, reach), room)
-        // Stretched to Spotlight's bottom edge, the panel lies on Spotlight edge for edge, and its
-        // shadow would fall on Spotlight's, darker where they meet and off at the corners.
-        let onSpotlight = reach > fitting && reach <= room
+        let height = spotlightBottom == nil ? min(fitting, room) : min(max(reach, min(fitting, 360)), room)
+        // On Spotlight's bottom edge, the panel lies on Spotlight edge for edge, and its shadow
+        // would fall on Spotlight's, darker where they meet and off at the corners.
+        let onSpotlight = height == reach
         let target = NSRect(x: card.minX, y: card.maxY - height, width: width, height: height)
         // Lying on Spotlight, the window has room round the glass for the shadow drawn by hand on
         // the part above Spotlight, which Spotlight's own shadow does not reach.
@@ -74,6 +77,7 @@ final class DetailPanel {
         self.tracker = tracker
         self.model = model
         self.panel = panel
+        pinches = PinchForwarder(panel)
         host.layoutSubtreeIfNeeded()
         panel.displayIfNeeded()
         panel.orderFrontRegardless()
@@ -107,6 +111,7 @@ final class DetailPanel {
         self.panel = nil
         self.model = nil
         tracker = nil
+        pinches = nil
         model.settled = false
         let done = onCollapsed
         let timer = Timer(timeInterval: 1.0 / 120, repeats: true) { _ in panel.invalidateShadow() }
@@ -127,6 +132,7 @@ final class DetailPanel {
         self.panel = nil
         model = nil
         tracker = nil
+        pinches = nil
         guard animated else { return panel.orderOut(nil) }
         NSAnimationContext.runAnimationGroup({ context in
             context.duration = 0.15
@@ -253,9 +259,9 @@ private final class ExitTracker: NSResponder {
 }
 
 // The graph's mouse and trackpad, taken in AppKit, where they arrive even though the panel is
-// never the key window: drag, scroll wheel or two-finger scroll, pinch, double-click. Scrolling
-// over the graph zooms it rather than scrolling the panel.
-private struct GraphInput: NSViewRepresentable {
+// never the key window: drag, pinch, double-click. Only a pinch zooms: the wheel and two-finger
+// scrolling go on to the panel, which scrolls past the graph as it does past everything else.
+struct GraphInput: NSViewRepresentable {
     var onDrag: (CGSize) -> Void
     var onDragEnd: () -> Void
     var onZoom: (Double, CGPoint) -> Void   // factor (under 1 zooms in) and where, from the top left
@@ -265,7 +271,7 @@ private struct GraphInput: NSViewRepresentable {
     func updateNSView(_ view: GraphInputView, context: Context) { view.input = self }
 }
 
-private final class GraphInputView: NSView {
+final class GraphInputView: NSView {
     var input: GraphInput?
     private var start: NSPoint?
 
@@ -293,15 +299,70 @@ private final class GraphInputView: NSView {
         input?.onDragEnd()
     }
 
-    override func scrollWheel(with event: NSEvent) {
-        let dy = event.hasPreciseScrollingDeltas ? event.scrollingDeltaY : event.scrollingDeltaY * 8
-        guard dy != 0 else { return }
-        // Gently, and never by much at once: a quick flick of the trackpad is not a leap.
-        input?.onZoom(min(max(exp(-Double(dy) * 0.004), 0.85), 1.18), point(event))
+    override func magnify(with event: NSEvent) { pinch(event.magnification, at: event.locationInWindow) }
+}
+
+extension GraphInputView: Pinchable {
+    func pinch(_ magnification: CGFloat, at windowPoint: NSPoint) {
+        input?.onZoom(1 / (1 + Double(magnification)), convert(windowPoint, from: nil))
+    }
+}
+
+// A view that zooms when pinched. A pinch on the trackpad goes only to the app in front, which while
+// the panel is open is Spotlight, not this one; so the panel watches for pinches everywhere and hands
+// each one over the panel to the view under the pointer (PinchForwarder). One made over the panel
+// while this app is in front reaches the view itself, through magnify(with:).
+protocol Pinchable: NSView {
+    func pinch(_ magnification: CGFloat, at windowPoint: NSPoint)
+}
+
+// While the panel is open: each pinch made with the pointer over it, though sent to Spotlight, zooms
+// whatever graph or diagram is under the pointer, as a pinch over Spotlight's own window would. The
+// pinches are read from a listening event tap, which only looks: Spotlight still gets each one. (A
+// global NSEvent monitor does not see them.) While this app is in front its own windows get them.
+final class PinchForwarder {
+    private weak var panel: NSPanel?
+    private var tap: CFMachPort?
+    private var source: CFRunLoopSource?
+
+    init(_ panel: NSPanel) {
+        self.panel = panel
+        let mask = CGEventMask(1) << 29   // gestures, of which a pinch is one
+        let callback: CGEventTapCallBack = { _, type, event, refcon in
+            guard let refcon else { return Unmanaged.passUnretained(event) }
+            let me = Unmanaged<PinchForwarder>.fromOpaque(refcon).takeUnretainedValue()
+            if type == .tapDisabledByTimeout || type == .tapDisabledByUserInput {
+                if let tap = me.tap { CGEvent.tapEnable(tap: tap, enable: true) }
+            } else if let pinch = NSEvent(cgEvent: event), pinch.type == .magnify {
+                me.hand(pinch.magnification)
+            }
+            return Unmanaged.passUnretained(event)
+        }
+        guard let tap = CGEvent.tapCreate(tap: .cgSessionEventTap, place: .tailAppendEventTap, options: .listenOnly,
+                                          eventsOfInterest: mask, callback: callback, userInfo: Unmanaged.passUnretained(self).toOpaque()) else {
+            Log.note("no event tap for pinches: Accessibility is not granted")
+            return
+        }
+        self.tap = tap
+        source = CFMachPortCreateRunLoopSource(nil, tap, 0)
+        CFRunLoopAddSource(CFRunLoopGetMain(), source, .commonModes)
+        CGEvent.tapEnable(tap: tap, enable: true)
     }
 
-    override func magnify(with event: NSEvent) {
-        input?.onZoom(1 / (1 + Double(event.magnification)), point(event))
+    private func hand(_ magnification: CGFloat) {
+        guard !NSRunningApplication.current.isActive, magnification != 0, let panel, panel.isVisible, let content = panel.contentView else { return }
+        let screen = NSEvent.mouseLocation
+        guard panel.frame.contains(screen) else { return }
+        let point = panel.convertPoint(fromScreen: screen)
+        var view = content.hitTest(content.convert(point, from: nil))
+        while let v = view, !(v is Pinchable) { view = v.superview }
+        guard let target = view as? Pinchable else { return }
+        target.pinch(magnification, at: point)
+    }
+
+    deinit {
+        if let tap { CGEvent.tapEnable(tap: tap, enable: false); CFMachPortInvalidate(tap) }
+        if let source { CFRunLoopRemoveSource(CFRunLoopGetMain(), source, .commonModes) }
     }
 }
 
@@ -322,9 +383,8 @@ struct DetailView: View {
     }
 }
 
-// The top is the card exactly as it was, f(x) and answer in the same places, so the panel reads
-// as the card growing rather than something new arriving; its input line then shrinks away. Under it, the working, the solutions
-// and the graph sit on rounded platters inside the glass, and rise into place one after another.
+// The compact card starts the opening animation. Astronomy expands into a result and its
+// supporting data. The standard working keeps the card above its steps, solutions and graph.
 struct DetailContent: View {
     let answer: CardText
     let d: Details
@@ -333,105 +393,18 @@ struct DetailContent: View {
     // Set by the preview tool, which draws the panel once into a picture: everything in place
     // from the start, with nothing left to rise in.
     static var still = false
+    // The page of Astronomy's working it opens on, for the preview tool to draw each; the first otherwise.
+    static var astronomyPage = 0
 
     var body: some View {
-        let working = d.presentation
         VStack(alignment: .leading, spacing: 0) {
-            // The card as it was, its input shrinking away as the panel opens: the working begins
-            // with the input, and everything under the answer comes down with the glass.
             CardFace(answer: answer, showInput: !expanded)
-
-            VStack(alignment: .leading, spacing: 14) {
-                section("Working", index: 0) {
-                    CopyRow(copy: LineCopy(d.equation)) {
-                        labelled("Input") {
-                            workingText(d.equation, size: 19)
-                            ForEach(answer.notes, id: \.self) { note in
-                                Text(note).font(.system(size: 13)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
-                            }
-                        }
-                    }
-                    // Each step numbered, so that one can be pointed to: 1. Factorising.
-                    ForEach(Array(working.steps.enumerated()), id: \.offset) { i, step in
-                        CopyRow(copy: step.math.map { LineCopy($0) }) {
-                            labelled("\(i + 1). \(step.label)") {
-                                if let math = step.math { workingText(math, size: 19) }
-                                if let note = step.note {
-                                    Text(subscripted(note, size: 13)).font(.system(size: 13)).foregroundStyle(.secondary)
-                                        .fixedSize(horizontal: false, vertical: true)
-                                }
-                            }
-                        }
-                    }
-                }
-
-                section(working.solutionTitle, index: 1) {
-                    // A periodic function's dozen go in columns, so the graph stays in view.
-                    if d.solutions.count > 3, d.whole == nil {
-                        // Wide enough for the longest, an angle with its degrees after it.
-                        let widest = CGFloat(d.solutions.map(\.plain.count).max() ?? 0) * 11.5
-                        LazyVGrid(columns: [GridItem(.adaptive(minimum: max(180, widest)), alignment: .leading)], alignment: .leading, spacing: 0) {
-                            ForEach(Array(d.solutions.enumerated()), id: \.offset) { _, solution in
-                                CopyRow(copy: LineCopy(solution)) { MathText(math: solution, size: 20) }
-                            }
-                        }
-                    } else {
-                        // The answer is what the panel is for: larger than the working above it.
-                        // One value over several lines is set smaller, so that its lines are all of a
-                        // size, and each of them copies the whole.
-                        ForEach(Array(d.solutions.enumerated()), id: \.offset) { _, solution in
-                            // The answer larger than the working, unless it is a long one, which at that size
-                            // would be a term to a line: then the size of the working.
-                            let long = Typesetter.box(solution, 26).width > 900
-                            let size: CGFloat = isAstronomy ? 19 : d.whole != nil ? 15 : long ? 19 : 26
-                            CopyRow(copy: LineCopy(solution, whole: d.whole)) {
-                                workingText(solution, size: size)
-                            }
-                        }
-                    }
-                    if let note = working.solutionNote {
-                        Text(subscripted(note, size: 13)).font(.system(size: 13)).foregroundStyle(.secondary)
-                            .fixedSize(horizontal: false, vertical: true)
-                            .padding(.horizontal, 16)
-                            .padding(.top, 2)
-                    }
-                    if let note = d.note {
-                        Text(note).font(.system(size: 13)).foregroundStyle(.secondary)
-                            .fixedSize(horizontal: false, vertical: true)
-                            .padding(.horizontal, 16)
-                            .padding(.top, 2)
-                    }
-                }
-
-                if let chromaticity = d.chromaticity {
-                    section("CIE 1931 chromaticity", index: 2) {
-                        ChromaticityDiagram(diagram: chromaticity)
-                            .padding(.horizontal, 14)
-                            .padding(.vertical, 14)
-                            .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(.quaternary.opacity(0.5)))
-                    }
-                }
-                if let diagram = d.diagram {
-                    section(diagram.title, index: 2) {
-                        AstroDiagramView(diagram: diagram)
-                            .padding(.horizontal, 14)
-                            .padding(.vertical, 14)
-                            .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(.quaternary.opacity(0.5)))
-                    }
-                }
-                if let graph = d.graph {
-                    section("Graph", index: 3) {
-                        Plot(graph: graph)
-                            .padding(.horizontal, 14)
-                            .padding(.vertical, 14)
-                            .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(.quaternary.opacity(0.5)))
-                    }
-                }
+            if answer.isAstronomy {
+                if expanded { AstronomyWorkingView(answer: answer, details: d, shown: shown) }
+            } else {
+                standardWorking
             }
-            .padding(.horizontal, 12)
 
-            // Where the panel reaches past the working, down to Spotlight's bottom edge, the room is
-            // left above Preferences, which stays at the foot.
             Spacer(minLength: 14)
             HStack {
                 Spacer()
@@ -444,41 +417,396 @@ struct DetailContent: View {
         .onAppear { shown = true }
     }
 
-    // A titled section, its rows straight on the glass as Spotlight's results are; each one rises
-    // a moment after the one above it.
+    private var standardWorking: some View {
+        let working = d.presentation
+        return VStack(alignment: .leading, spacing: 14) {
+            section("Working", index: 0) {
+                CopyRow(copy: LineCopy(d.equation)) {
+                    labelled("Input") {
+                        MathText(math: d.equation, size: 19)
+                        ForEach(answer.notes, id: \.self) { note in
+                            Text(note).font(.system(size: 13)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                        }
+                    }
+                }
+                // Each step numbered, so that one can be pointed to: 1. Factorising.
+                ForEach(Array(working.steps.enumerated()), id: \.offset) { i, step in
+                    CopyRow(copy: step.math.map { LineCopy($0) }) {
+                        labelled("\(i + 1). \(step.label)") {
+                            if let math = step.math { MathText(math: math, size: 19) }
+                            if let note = step.note {
+                                Text(subscripted(note, size: 13)).font(.system(size: 13)).foregroundStyle(.secondary)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
+                        }
+                    }
+                }
+            }
+
+            section(working.solutionTitle, index: 1) {
+                // A periodic function's dozen go in columns, so the graph stays in view.
+                if d.solutions.count > 3, d.whole == nil {
+                    // Wide enough for the longest, an angle with its degrees after it.
+                    let widest = CGFloat(d.solutions.map(\.plain.count).max() ?? 0) * 11.5
+                    LazyVGrid(columns: [GridItem(.adaptive(minimum: max(180, widest)), alignment: .leading)], alignment: .leading, spacing: 0) {
+                        ForEach(Array(d.solutions.enumerated()), id: \.offset) { _, solution in
+                            CopyRow(copy: LineCopy(solution)) { MathText(math: solution, size: 20) }
+                        }
+                    }
+                } else {
+                    // The answer is what the panel is for: larger than the working above it.
+                    // One value over several lines is set smaller, so that its lines are all of a
+                    // size, and each of them copies the whole.
+                    ForEach(Array(d.solutions.enumerated()), id: \.offset) { _, solution in
+                        // The answer larger than the working, unless it is a long one, which at that size
+                        // would be a term to a line: then the size of the working.
+                        let long = Typesetter.box(solution, 26).width > 900
+                        let size: CGFloat = d.whole != nil ? 15 : long ? 19 : 26
+                        CopyRow(copy: LineCopy(solution, whole: d.whole)) {
+                            MathText(math: solution, size: size)
+                        }
+                    }
+                }
+                if let note = working.solutionNote {
+                    Text(subscripted(note, size: 13)).font(.system(size: 13)).foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .padding(.horizontal, 16)
+                        .padding(.top, 2)
+                }
+                if let note = d.note {
+                    Text(note).font(.system(size: 13)).foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .padding(.horizontal, 16)
+                        .padding(.top, 2)
+                }
+            }
+
+            if let table = d.truthTable {
+                section("Truth table", index: 2) {
+                    TruthTableView(table: table, probe: d.probe)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 12)
+                        .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(.quaternary.opacity(0.5)))
+                }
+            }
+            if let circuit = d.circuit {
+                section("Circuit", index: 3) {
+                    CircuitDiagram(layout: circuit, probe: d.probe)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 14)
+                        .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(.quaternary.opacity(0.5)))
+                }
+            }
+            if let chromaticity = d.chromaticity {
+                section("CIE 1931 chromaticity", index: 2) {
+                    ChromaticityDiagram(diagram: chromaticity)
+                }
+            }
+            if let graph = d.graph {
+                section("Graph", index: 3) {
+                    Plot(graph: graph)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 14)
+                        .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(.quaternary.opacity(0.5)))
+                }
+            }
+        }
+        .padding(.horizontal, 12)
+    }
+
     private func section<Content: View>(_ title: String, index: Int, @ViewBuilder content: () -> Content) -> some View {
+        WorkingSection(title: title, index: index, shown: shown, content: content)
+    }
+
+    private func labelled<Content: View>(_ label: String, @ViewBuilder content: () -> Content) -> some View {
+        Labelled(label, content: content)
+    }
+}
+
+// A titled section of the working, its rows straight on the glass as Spotlight's results are; each
+// one rises a moment after the one above it. Every kind of working is laid out in these.
+private struct WorkingSection<Content: View>: View {
+    var title: String?
+    var index = 0
+    let shown: Bool
+    @ViewBuilder let content: Content
+
+    var body: some View {
         VStack(alignment: .leading, spacing: 2) {
-            Text(title)
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(.secondary)
-                .padding(.leading, 16)
-            VStack(alignment: .leading, spacing: 0, content: content)
+            if let title {
+                Text(title)
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(.secondary)
+                    .padding(.leading, 16)
+            }
+            VStack(alignment: .leading, spacing: 0) { content }
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
         .opacity(shown ? 1 : 0)
         .offset(y: shown ? 0 : 12)
         .animation(.spring(response: 0.45, dampingFraction: 0.86).delay(0.06 + 0.05 * Double(index)), value: shown)
     }
+}
 
-    private var isAstronomy: Bool { answer.symbol == "moon.stars" }
+// A line of the working under its small grey name: "2. Splitting the middle term", "Best period".
+private struct Labelled<Content: View>: View {
+    let label: String
+    @ViewBuilder let content: Content
 
-    // Astronomy's scientific engine returns prose and inline formulas in a single text node.
-    // Give that text room to wrap without shrinking the entire calculation into one line.
-    @ViewBuilder private func workingText(_ math: Math, size: CGFloat) -> some View {
-        if isAstronomy, case .text(let text) = math {
-            Text(subscripted(text, size: size))
-                .font(.system(size: size))
-                .lineLimit(nil)
-                .fixedSize(horizontal: false, vertical: true)
-        } else {
-            MathText(math: math, size: size)
+    init(_ label: String, @ViewBuilder content: () -> Content) {
+        self.label = label
+        self.content = content()
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(subscripted(label, size: 12)).font(.system(size: 12)).foregroundStyle(.secondary)
+            content
+        }
+    }
+}
+
+// The card's grey choice of pages, as Spotlight's own pills: the page shown filled in, the others
+// plain; grey, as what the pointer chooses is, where what the keyboard chooses is blue. Clicked in
+// AppKit, as the panel is never key.
+//
+// The rule for pages: a working whose parts are different kinds of thing to look at (a result, a
+// picture, how it was worked out, where its data come from) has pages, as Astronomy's does; a working
+// that reads as one argument from the top down (an equation: its steps, its solutions, its graph) is one
+// page.
+private struct PageBar<Page: Hashable>: View {
+    struct Item: Identifiable {
+        let page: Page
+        let title: String
+        var id: String { title }
+    }
+    let items: [Item]
+    @Binding var selection: Page
+
+    var body: some View {
+        HStack(spacing: 2) {
+            ForEach(items) { item in
+                let on = item.page == selection
+                Text(item.title)
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(on ? .primary : .secondary)
+                    .lineLimit(1)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 5)
+                    .background { Capsule().fill(.quaternary).opacity(on ? 1 : 0) }
+                    .contentShape(Capsule())
+                    .overlay(ClickTarget { selection = item.page })
+                    .accessibilityElement()
+                    .accessibilityLabel(item.title)
+                    .accessibilityAddTraits(on ? [.isButton, .isSelected] : .isButton)
+            }
+        }
+        .padding(3)
+        .background(Capsule().fill(.quaternary.opacity(0.45)))
+    }
+}
+
+// Astronomy's working, in the same sections and lines as every other: under the card, its pages, so
+// that a result with a picture, many values and a long method is never one crowded column. The result
+// first, with what was typed above it; then its picture, if it has one; then how it was worked out;
+// then the model and where its data come from.
+private struct AstronomyWorkingView: View {
+    let answer: CardText
+    let details: Details
+    let shown: Bool
+    @State private var page: Page?
+
+    enum Page: Hashable { case result, picture, working, source }
+
+    private var working: AstronomyWorking? { details.astronomyWorking }
+    private var results: [AstronomyWorking.Row] { working?.results ?? [] }
+    private var picture: AstroDiagram? { details.diagram.flatMap { $0.hasVisual ? $0 : nil } }
+
+    private var pages: [PageBar<Page>.Item] {
+        var pages = [PageBar<Page>.Item(page: .result, title: "Result")]
+        if let picture { pages.append(.init(page: .picture, title: picture.title)) }
+        if working != nil || !details.steps.isEmpty { pages.append(.init(page: .working, title: "Working")) }
+        if working != nil || details.note != nil { pages.append(.init(page: .source, title: "Source")) }
+        return pages
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            let page = self.page ?? pages[min(DetailContent.astronomyPage, pages.count - 1)].page
+            if pages.count > 1 {
+                PageBar(items: pages, selection: Binding(get: { page }, set: { self.page = $0 }))
+                    .padding(.leading, 12)
+                    .opacity(shown ? 1 : 0)
+                    .animation(.easeOut(duration: 0.2).delay(0.04), value: shown)
+            }
+            VStack(alignment: .leading, spacing: 14) {
+                switch page {
+                case .result: resultPage
+                case .picture: picturePage
+                case .working: workingPage
+                case .source: sourcePage
+                }
+            }
+            .id(page)
+            .transition(.opacity)
+        }
+        .animation(.easeOut(duration: 0.15), value: page)
+        .padding(.horizontal, 12)
+    }
+
+    // MARK: Pages
+
+    @ViewBuilder private var resultPage: some View {
+        let typed = details.equation.plain
+        let shownQuery = typed.count > 280 ? String(typed.prefix(280)) + "…" : typed
+        WorkingSection(index: 0, shown: shown) {
+            CopyRow(copy: LineCopy(details.equation, whole: typed)) {
+                Labelled("Input") {
+                    MathText(math: AstronomyWorkingText.call(shownQuery), size: 19)
+                }
+            }
+            if results.isEmpty {
+                CopyRow(copy: LineCopy(.text(answer.solution.exact), whole: answer.solution.exact)) {
+                    Text(AstronomyWorkingText.shown(answer.solution.exact)).font(.system(size: 26)).fixedSize(horizontal: false, vertical: true)
+                }
+            } else {
+                // The answer larger than the rest where it is one value, as Solutions has it.
+                rows(results, size: results.count == 1 ? 26 : 19)
+            }
         }
     }
 
-    private func labelled<Content: View>(_ label: String, @ViewBuilder content: () -> Content) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(subscripted(label, size: 12)).font(.system(size: 12)).foregroundStyle(.secondary)
-            content()
+    @ViewBuilder private var picturePage: some View {
+        if let picture {
+            WorkingSection(index: 0, shown: shown) {
+                AstroDiagramView(diagram: picture)
+                    .frame(maxWidth: .infinity)
+                    .padding(14)
+                    .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(.quaternary.opacity(0.5)))
+            }
+        }
+    }
+
+    @ViewBuilder private var workingPage: some View {
+        if let working {
+            if !working.inputs.isEmpty {
+                WorkingSection(title: "Inputs", index: 0, shown: shown) { rows(working.inputs, size: 17) }
+            }
+            WorkingSection(title: "Method", index: 1, shown: shown) {
+                CopyRow(copy: LineCopy(.text(working.formula), whole: working.formula)) {
+                    // Typeset where it can be read, t₀ = ∫₀∞ dz/[(1+z)H(z)] with the integral's limits above
+                    // and below its sign; a formula that is all words stays as the text it is.
+                    Labelled("Formula") {
+                        if let math = AstronomyFormula.math(working.formula) {
+                            MathText(math: math, size: 19)
+                        } else {
+                            Text(subscripted(working.formula, size: 19)).font(.system(size: 19)).fixedSize(horizontal: false, vertical: true)
+                        }
+                    }
+                }
+                substitution(working)
+                rows(working.intermediates, size: 17)
+            }
+            if !working.constants.isEmpty {
+                WorkingSection(title: "Constants", index: 2, shown: shown) { rows(working.constants, size: 17) }
+            }
+        } else if !details.steps.isEmpty {
+            WorkingSection(title: "Method", index: 0, shown: shown) {
+                ForEach(Array(details.steps.enumerated()), id: \.offset) { i, step in
+                    CopyRow(copy: step.math.map { LineCopy($0) }) {
+                        Labelled("\(i + 1). \(step.label)") {
+                            if case .text(let text)? = step.math {
+                                Text(verbatim: text).font(.system(size: 17))
+                            } else if let math = step.math {
+                                MathText(math: math, size: 19)
+                            }
+                            if let note = step.note {
+                                Text(verbatim: note).font(.system(size: 13)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    @ViewBuilder private var sourcePage: some View {
+        if let working {
+            WorkingSection(title: "Model", index: 0, shown: shown) {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(verbatim: AstronomyWorkingText.sentence(working.model)).font(.system(size: 15)).fixedSize(horizontal: false, vertical: true)
+                    ForEach(Array(working.notes.enumerated()), id: \.offset) { _, note in
+                        Text(verbatim: AstronomyWorkingText.sentence(note)).font(.system(size: 13)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 10)
+            }
+            if let url = URL(string: working.source), let host = url.host {
+                WorkingSection(title: "Source", index: 1, shown: shown) {
+                    Link(host, destination: url)
+                        .font(.system(size: 15))
+                        .overlay(ClickTarget { NSWorkspace.shared.open(url) })
+                        .help(working.source)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 10)
+                }
+            }
+        }
+        // The engine's note is mostly the model's own, already given above.
+        if let note = details.note, !(working?.notes.contains(note) ?? false) {
+            WorkingSection(title: "Notes", index: 2, shown: shown) {
+                Text(verbatim: note).font(.system(size: 13)).foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 10)
+            }
+        }
+    }
+
+    // The numbers the formula was worked with: each value looked up, under what it is, with the letter
+    // it stands for where the formula has been worked through; then the formula with them in.
+    @ViewBuilder private func substitution(_ working: AstronomyWorking) -> some View {
+        let worked = AstronomySubstitution.work(working)
+        let shown: [(symbol: String?, used: AstronomyWorking.Used)] = worked.map { $0.assigned.map { (Optional($0.symbol), $0.used) } }
+            ?? working.values.map { (nil, $0) }
+        ForEach(Array(shown.enumerated()), id: \.offset) { _, entry in
+            let number = AstronomySubstitution.written(entry.used.value, figures: 6) + (entry.used.unit.isEmpty ? "" : " " + entry.used.unit)
+            let line = (entry.symbol.map { $0 + " = " } ?? "") + number
+            CopyRow(copy: LineCopy(.text(line), whole: line)) {
+                Labelled(AstronomyWorkingText.label(entry.used.label)) {
+                    if let symbol = entry.symbol, let math = AstronomyFormula.math(symbol) {
+                        MathText(math: .row([math, .text(" = " + number)]), size: 17)
+                    } else {
+                        Text(subscripted(line, size: 17)).font(.system(size: 17)).monospacedDigit()
+                    }
+                }
+            }
+        }
+        if let worked {
+            CopyRow(copy: LineCopy(worked.line)) {
+                Labelled("Substituting the values") {
+                    MathText(math: worked.line, size: 19)
+                }
+            }
+        }
+    }
+
+    // MARK: Lines
+
+    // Each value a line of its own under its name, copying the value as the engine gave it.
+    private func rows(_ rows: [AstronomyWorking.Row], size: CGFloat) -> some View {
+        ForEach(Array(rows.enumerated()), id: \.offset) { _, row in
+            CopyRow(copy: LineCopy(.text(row.value), whole: row.value)) {
+                Labelled(AstronomyWorkingText.name(row.name)) {
+                    Text(AstronomyWorkingText.shown(row.value)).font(.system(size: size)).monospacedDigit()
+                        .fixedSize(horizontal: false, vertical: true)
+                    if let detail = row.detail, !detail.isEmpty {
+                        Text(AstronomyWorkingText.shown(detail)).font(.system(size: 13)).foregroundStyle(.secondary).monospacedDigit()
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+            }
         }
     }
 }
@@ -501,6 +829,9 @@ struct LineCopy {
 // copy (a step that is only a sentence) is neither lit nor clicked.
 private struct CopyRow<Content: View>: View {
     let copy: LineCopy?
+    var horizontalPadding: CGFloat = 16
+    var verticalPadding: CGFloat = 10
+    var showsCopyIcon = false
     @ViewBuilder let content: Content
     @State private var hovering = false
     @State private var copied = false
@@ -517,11 +848,12 @@ private struct CopyRow<Content: View>: View {
                     if copied { Text("Copied").font(.system(size: 12, weight: .medium)) }
                 }
                 .foregroundStyle(.secondary)
-                .opacity(hovering || copied ? 1 : 0)
+                .frame(minWidth: showsCopyIcon ? 42 : nil)
+                .opacity(showsCopyIcon || hovering || copied ? 1 : 0)
             }
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 10)
+        .padding(.horizontal, horizontalPadding)
+        .padding(.vertical, verticalPadding)
         .background {
             RoundedRectangle(cornerRadius: 14, style: .continuous)   // concentric with the panel's corners
                 .fill(.quaternary)
@@ -557,10 +889,49 @@ private struct RowTarget: NSViewRepresentable {
     }
 }
 
-private final class RowTargetView: NSView {
+final class RowTargetView: NSView {
     var copy: LineCopy?
     var onHover: (Bool) -> Void = { _ in }
     var copied: () -> Void = {}
+    private(set) var inside = false
+    private var watching: NSObjectProtocol?
+    // Where the pointer is on the screen: the real one, or a test's.
+    nonisolated(unsafe) static var pointer: () -> NSPoint = { NSEvent.mouseLocation }
+
+    // The pointer's own place decides, not only its crossing the row's edge, which AppKit tells only
+    // when the pointer moves: the working scrolled under a pointer held still takes the shade off every
+    // row it is not on, and puts it on the one it is.
+    private func hover(_ now: Bool) {
+        guard now != inside else { return }
+        inside = now
+        onHover(now)
+    }
+
+    // On it: inside the row's own box, and where the scroll view shows it. (visibleRect is no help here:
+    // inside SwiftUI's scroll view it is the whole of what is shown, row or not.)
+    func look() {
+        guard let window, !isHiddenOrHasHiddenAncestor else { return hover(false) }
+        let screen = RowTargetView.pointer()
+        let inWindow = window.convertPoint(fromScreen: screen)
+        let shown = enclosingScrollView.map { $0.contentView.bounds.contains($0.contentView.convert(inWindow, from: nil)) } ?? true
+        hover(window.frame.contains(screen) && shown && bounds.contains(convert(inWindow, from: nil)))
+    }
+
+    // The working's scroll view tells when its content has moved, by the wheel, the trackpad or its
+    // momentum, after it has: each row looks again then.
+    override func viewDidMoveToWindow() {
+        super.viewDidMoveToWindow()
+        if let watching { NotificationCenter.default.removeObserver(watching) }
+        watching = nil
+        guard window != nil else { return hover(false) }
+        guard let clip = enclosingScrollView?.contentView else { return }
+        clip.postsBoundsChangedNotifications = true
+        watching = NotificationCenter.default.addObserver(forName: NSView.boundsDidChangeNotification, object: clip, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated { self?.look() }
+        }
+    }
+
+    deinit { if let watching { NotificationCenter.default.removeObserver(watching) } }
 
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
     override func mouseDown(with event: NSEvent) {}
@@ -589,19 +960,21 @@ private final class RowTargetView: NSView {
     override func updateTrackingAreas() {
         super.updateTrackingAreas()
         trackingAreas.forEach(removeTrackingArea)
-        addTrackingArea(NSTrackingArea(rect: .zero, options: [.mouseEnteredAndExited, .activeAlways, .inVisibleRect], owner: self))
+        // The row's own box, and not .inVisibleRect, which here would be all that is shown.
+        addTrackingArea(NSTrackingArea(rect: bounds, options: [.mouseEnteredAndExited, .mouseMoved, .activeAlways], owner: self))
     }
 
-    override func mouseEntered(with event: NSEvent) { onHover(true) }
-    override func mouseExited(with event: NSEvent) { onHover(false) }
+    override func mouseEntered(with event: NSEvent) { look() }
+    override func mouseMoved(with event: NSEvent) { look() }
+    override func mouseExited(with event: NSEvent) { look() }
 }
 
 // Each curve or line in the graph, the first solid, the next dashed, then dotted, crossing at the
 // marked points, which are labelled with where they are, over the two axes. As in Desmos: drag
-// to move about, scroll or pinch to zoom, double-click to go back. Monochrome, in the label
+// to move about, pinch to zoom, double-click to go back; scrolling scrolls the panel. Monochrome, in the label
 // colour, so it sits in the glass like the text does. Where a curve jumps (tan x, 1/x) its line
 // is broken rather than drawn up the asymptote.
-private struct Plot: View {
+struct Plot: View {
     let graph: Graph
 
     // Dashes long and dark enough not to be taken for the grid, which is solid and faint.
@@ -613,34 +986,12 @@ private struct Plot: View {
     // The plot's height over its width, as drawn, so that a unit across and a unit up are the same.
     @State private var aspect: Double = 0.5
 
-    struct Point: Identifiable {
-        let id: String
-        let x: Double
-        let y: Double
-        let series: String
-        let curve: Int
-    }
-
     var body: some View {
         let (xs, ys) = view ?? initial()
         VStack(alignment: .leading, spacing: 8) {
             Chart {
                 RuleMark(y: .value("x axis", 0)).foregroundStyle(Color.primary.opacity(0.35)).lineStyle(StrokeStyle(lineWidth: 1))
                 RuleMark(x: .value("y axis", 0)).foregroundStyle(Color.primary.opacity(0.35)).lineStyle(StrokeStyle(lineWidth: 1))
-                ForEach(samples(xs, ys)) { p in
-                    LineMark(x: .value(graph.xName, p.x), y: .value(graph.yName, p.y), series: .value("curve", p.series))
-                        .foregroundStyle(Color.primary.opacity(style(p.curve).opacity))
-                        // Butt ends: Charts draws a long line in pieces, and round ends overlapping
-                        // in a translucent colour leave darker dots where the pieces meet.
-                        .lineStyle(StrokeStyle(lineWidth: 2, lineCap: .butt, lineJoin: .round, dash: style(p.curve).dash))
-                }
-                ForEach(Array(graph.curves.enumerated()), id: \.offset) { i, curve in
-                    if case .vertical(let x) = curve.shape {
-                        RuleMark(x: .value(graph.xName, x))
-                            .foregroundStyle(Color.primary.opacity(style(i).opacity))
-                            .lineStyle(StrokeStyle(lineWidth: 2, dash: style(i).dash))
-                    }
-                }
                 ForEach(Array(graph.points.enumerated()).filter { xs.contains(Double($0.element.x)) }, id: \.offset) { _, point in
                     let (px, py) = (Double(point.x), Double(point.y))
                     PointMark(x: .value(graph.xName, px), y: .value(graph.yName, py))
@@ -655,23 +1006,22 @@ private struct Plot: View {
             .chartYScale(domain: ys)
             .chartXAxis { AxisMarks { AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5)).foregroundStyle(Color.primary.opacity(0.1)); AxisValueLabel() } }
             .chartYAxis { AxisMarks(position: .leading) { AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5)).foregroundStyle(Color.primary.opacity(0.1)); AxisValueLabel() } }
+            .axisTitles(graph.titles)
             .chartPlotStyle { $0.clipped() }
             .chartOverlay { proxy in
                 GeometryReader { geometry in
                     let plot = proxy.plotFrame.map { geometry[$0] } ?? geometry.frame(in: .local)
-                    // Curves given only as g(x, y) = 0 are traced over what is in view and drawn here.
+                    // Every curve drawn here, each as whole paths in screen points, so that a dash is the
+                    // same length at any zoom and runs on unbroken along the curve; and drawn from the same
+                    // view as the axes at every frame, so that they never part, moving or still.
                     Canvas { context, _ in
                         context.clip(to: Path(plot))
                         for (i, curve) in graph.curves.enumerated() {
-                            guard case .implicit(let g) = curve.shape else { continue }
-                            var path = Path()
-                            for line in Contour.lines(g, xs, ys) {
-                                let points = line.map { CGPoint(x: plot.minX + ($0.x - xs.lowerBound) / span(xs) * plot.width,
-                                                                y: plot.minY + (ys.upperBound - $0.y) / span(ys) * plot.height) }
-                                path.addLines(points)
+                            let (paths, phase) = paths(curve.shape, plot, xs, ys)
+                            for path in paths {
+                                context.stroke(path, with: .color(Color.primary.opacity(style(i).opacity)),
+                                               style: StrokeStyle(lineWidth: 2, lineCap: .butt, lineJoin: .round, dash: style(i).dash, dashPhase: phase))
                             }
-                            context.stroke(path, with: .color(Color.primary.opacity(style(i).opacity)),
-                                           style: StrokeStyle(lineWidth: 2, lineCap: .round, lineJoin: .round, dash: style(i).dash))
                         }
                         if graph.points.count <= 4 { label(&context, plot, xs, ys) }
                     }
@@ -686,24 +1036,16 @@ private struct Plot: View {
                         onDragEnd: { gestureStart = nil },
                         onZoom: { factor, point in
                             // About the point under the pointer, which stays where it is, as in Desmos.
-                            // From the latest view: scroll events can come faster than redraws.
+                            // From the latest view: pinch events can come faster than redraws.
                             let (cx, cy) = view ?? (xs, ys)
                             let x = cx.lowerBound + (point.x - plot.minX) / plot.width * span(cx)
                             let y = cy.upperBound - (point.y - plot.minY) / plot.height * span(cy)
-                            view = (scale(cx, factor, about: x), scale(cy, factor, about: y))
+                            view = (scale(cx, factor, about: x, x: true), scale(cy, factor, about: y, x: false))
                         },
-                        onReset: { withAnimation(.smooth(duration: 0.3)) { view = nil } })
+                        onReset: { glide(to: nil) })
                     // Buttons to zoom about the middle, and to go back to the first view.
-                    VStack(spacing: 0) {
-                        zoomButton("plus", "Zoom in") { zoom(0.6) }
-                        Divider().frame(width: 22)
-                        zoomButton("minus", "Zoom out") { zoom(1 / 0.6) }
-                        Divider().frame(width: 22)
-                        zoomButton("arrow.counterclockwise", "Back to the first view") { withAnimation(.smooth(duration: 0.3)) { view = nil } }
-                    }
-                    .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(.regularMaterial))
-                    .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).strokeBorder(Color.primary.opacity(0.12), lineWidth: 0.5))
-                    .position(x: plot.maxX - 20, y: plot.minY + 50)
+                    ZoomControls(zoomIn: { zoom(0.6) }, zoomOut: { zoom(1 / 0.6) }, reset: { glide(to: nil) })
+                        .position(ZoomControls.place(in: plot))
                     Color.clear
                         .onAppear { if plot.width > 0 { aspect = Double(plot.height / plot.width) } }
                         .onChange(of: plot.size) { _, size in if size.width > 0 { aspect = Double(size.height / size.width) } }
@@ -715,9 +1057,7 @@ private struct Plot: View {
             HStack(spacing: 16) {
                 ForEach(Array(graph.curves.enumerated()), id: \.offset) { i, curve in legend(i, curve.label) }
                 Spacer()
-                Text("Drag to move · + and −, pinch or scroll to zoom")
-                    .font(.system(size: 11))
-                    .foregroundStyle(.tertiary)
+                ZoomControls.Hint()
             }
         }
     }
@@ -744,7 +1084,7 @@ private struct Plot: View {
                         if y < r.minY - 2 { above = true } else if y > r.maxY + 2 { below = true } else { return true }
                     }
                     if above && below { return true }
-                case .implicit:
+                case .implicit, .samples:
                     break
                 }
             }
@@ -784,29 +1124,120 @@ private struct Plot: View {
         }
     }
 
-    private func zoomButton(_ symbol: String, _ help: String, _ action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            Image(systemName: symbol).font(.system(size: 12, weight: .semibold)).frame(width: 28, height: 26).contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .foregroundStyle(.secondary)
-        .help(help)
-    }
-
     // About the middle of what is in view, both ways alike, so the scale across and up is kept.
     private func zoom(_ factor: Double) {
         let (xs, ys) = view ?? initial()
-        withAnimation(.smooth(duration: 0.2)) {
-            view = (scale(xs, factor, about: (xs.lowerBound + xs.upperBound) / 2), scale(ys, factor, about: (ys.lowerBound + ys.upperBound) / 2))
+        glide(to: (scale(xs, factor, about: (xs.lowerBound + xs.upperBound) / 2, x: true),
+                   scale(ys, factor, about: (ys.lowerBound + ys.upperBound) / 2, x: false)))
+    }
+
+    // To another view, or back to the first (nil), over a third of a second, the view itself moved at
+    // each frame: everything (axes, curves, points) is drawn from it, so all move together. SwiftUI's own
+    // animation would tween the axes and the points while the curves jumped.
+    @State private var glides = 0
+    private func glide(to target: (x: ClosedRange<Double>, y: ClosedRange<Double>)?) {
+        let from = view ?? initial(), to = target ?? initial()
+        glides += 1
+        let mine = glides, start = Date(), duration = 0.3
+        func mix(_ a: ClosedRange<Double>, _ b: ClosedRange<Double>, _ e: Double) -> ClosedRange<Double> {
+            (a.lowerBound + (b.lowerBound - a.lowerBound) * e)...(a.upperBound + (b.upperBound - a.upperBound) * e)
+        }
+        let timer = Timer(timeInterval: 1.0 / 120, repeats: true) { timer in
+            guard mine == glides else { return timer.invalidate() }
+            let t = min(1, Date().timeIntervalSince(start) / duration), e = 1 - pow(1 - t, 3)
+            if t >= 1 { timer.invalidate(); view = target; return }
+            view = (mix(from.x, to.x, e), mix(from.y, to.y, e))
+        }
+        RunLoop.main.add(timer, forMode: .common)
+    }
+
+    // A curve as paths on the plot, in screen points, with where its dash begins. A function is sampled
+    // across the width at every point and a half, broken where it jumps or is undefined; its dash is
+    // measured from x = 0 along the curve, so that moving the graph moves the dashes with it rather than
+    // along it. Points given are joined in order, the dash from the first. A vertical line spans the plot.
+    private func paths(_ shape: Graph.Curve.Shape, _ plot: CGRect, _ xs: ClosedRange<Double>, _ ys: ClosedRange<Double>) -> ([Path], CGFloat) {
+        func at(_ x: Double, _ y: Double) -> CGPoint {
+            CGPoint(x: plot.minX + (x - xs.lowerBound) / span(xs) * plot.width, y: plot.minY + (ys.upperBound - y) / span(ys) * plot.height)
+        }
+        let height = span(ys)
+        switch shape {
+        case .function(let f):
+            let n = max(200, Int(plot.width * 1.5))
+            var paths: [Path] = [], path = Path(), previous: (Double, CGPoint)?
+            for i in 0...n {
+                let x = xs.lowerBound + span(xs) * Double(i) / Double(n), y = f(x)
+                guard y.isFinite else { if !path.isEmpty { paths.append(path) }; path = Path(); previous = nil; continue }
+                // Far off the plot only needs to be off it.
+                let p = at(x, min(max(y, ys.lowerBound - height), ys.upperBound + height))
+                if let (py, _) = previous, abs(y - py) > height * 3 { paths.append(path); path = Path(); previous = nil }
+                if previous == nil { path.move(to: p) } else { path.addLine(to: p) }
+                previous = (y, p)
+            }
+            if !path.isEmpty { paths.append(path) }
+            // From x = 0 to where the drawing begins, along the curve on the screen.
+            var phase: CGFloat = 0, last: CGPoint?
+            let steps = 300
+            for k in 0...steps {
+                let x = xs.lowerBound * Double(k) / Double(steps)
+                let y = f(x)
+                guard y.isFinite else { last = nil; continue }
+                let p = at(x, min(max(y, ys.lowerBound - height), ys.upperBound + height))
+                if let last { phase += hypot(p.x - last.x, p.y - last.y) }
+                last = p
+            }
+            return (paths, xs.lowerBound >= 0 ? phase : -phase)
+        case .samples(let given):
+            var paths: [Path] = [], path = Path()
+            for p in given {
+                guard p.x.isFinite, p.y.isFinite else { if !path.isEmpty { paths.append(path) }; path = Path(); continue }
+                let q = at(Double(p.x), Double(p.y))
+                if path.isEmpty { path.move(to: q) } else { path.addLine(to: q) }
+            }
+            if !path.isEmpty { paths.append(path) }
+            return (paths, 0)
+        case .vertical(let x):
+            var path = Path()
+            path.move(to: CGPoint(x: at(x, 0).x, y: plot.minY)); path.addLine(to: CGPoint(x: at(x, 0).x, y: plot.maxY))
+            return ([path], at(0, ys.upperBound).y - at(0, 0).y)
+        case .implicit(let g):
+            var path = Path()
+            for line in Contour.lines(g, xs, ys) { path.addLines(line.map { at($0.x, $0.y) }) }
+            return ([path], 0)
         }
     }
 
     private func span(_ r: ClosedRange<Double>) -> Double { r.upperBound - r.lowerBound }
     private func shift(_ r: ClosedRange<Double>, _ by: Double) -> ClosedRange<Double> { (r.lowerBound + by)...(r.upperBound + by) }
-    private func scale(_ r: ClosedRange<Double>, _ k: Double, about c: Double) -> ClosedRange<Double> {
+    // In as far as a millionth of the first view, and out as far as a million times it, on each axis:
+    // a strain of 10⁻²¹ zooms as far as a parabola does.
+    private func scale(_ r: ClosedRange<Double>, _ k: Double, about c: Double, x: Bool) -> ClosedRange<Double> {
         let lower = c - (c - r.lowerBound) * k, upper = c + (r.upperBound - c) * k
-        guard upper - lower > 1e-9, upper - lower < 1e9 else { return r }
+        let first = initial(), base = span(x ? first.0 : first.1)
+        guard upper - lower > base * 1e-6, upper - lower < base * 1e6, lower.isFinite, upper.isFinite else { return r }
         return lower...upper
+    }
+
+    private var sampled: [CGPoint] {
+        graph.curves.flatMap { curve -> [CGPoint] in
+            if case .samples(let points) = curve.shape { return points }
+            return []
+        }.filter { $0.x.isFinite && $0.y.isFinite }
+    }
+
+    // Every point in view with a little room round it; for an orbit, the same scale both ways.
+    private func framedSamples() -> (ClosedRange<Double>, ClosedRange<Double>) {
+        let all = sampled + graph.points
+        var lowX = Double(all.map(\.x).min() ?? 0), highX = Double(all.map(\.x).max() ?? 1)
+        var lowY = Double(all.map(\.y).min() ?? 0), highY = Double(all.map(\.y).max() ?? 1)
+        func widen(_ low: inout Double, _ high: inout Double) {
+            let pad = (high - low) * 0.06
+            if pad > 0 { low -= pad; high += pad } else { let d = max(abs(low) * 0.05, 1e-300); low -= d; high += d }
+        }
+        widen(&lowX, &highX); widen(&lowY, &highY)
+        guard graph.equalScale else { return (lowX...highX, lowY...highY) }
+        let width = max(highX - lowX, (highY - lowY) / aspect), height = width * aspect
+        let mx = (lowX + highX) / 2, my = (lowY + highY) / 2
+        return ((mx - width / 2)...(mx + width / 2), (my - height / 2)...(my + height / 2))
     }
 
     // Wide enough for the four solutions nearest zero with room either side (a periodic
@@ -822,6 +1253,7 @@ private struct Plot: View {
     private func initial() -> (ClosedRange<Double>, ClosedRange<Double>) {
         if let frame = graph.frame { return frame }
         if graph.curves.contains(where: { if case .implicit = $0.shape { true } else { false } }) { return framedCurves() }
+        if !sampled.isEmpty { return framedSamples() }
         let framed = graph.points.sorted { hypot($0.x, $0.y) < hypot($1.x, $1.y) }.prefix(4)
         let verticals = graph.curves.compactMap { if case .vertical(let x) = $0.shape { x } else { nil } }
         let px = framed.map { Double($0.x) }, py = framed.map { Double($0.y) }
@@ -874,27 +1306,6 @@ private struct Plot: View {
         let width = max(Double(box.width), Double(box.height) / aspect), height = width * aspect
         return ((Double(box.midX) - width / 2)...(Double(box.midX) + width / 2),
                 (Double(box.midY) - height / 2)...(Double(box.midY) + height / 2))
-    }
-
-    private func samples(_ xs: ClosedRange<Double>, _ ys: ClosedRange<Double>) -> [Point] {
-        let height = span(ys)
-        var points: [Point] = []
-        for (c, curve) in graph.curves.enumerated() {
-            guard case .function(let f) = curve.shape else { continue }
-            var segment = 0
-            var previous: Double?
-            for i in 0...400 {
-                let x = xs.lowerBound + span(xs) * Double(i) / 400
-                let y = f(x)
-                guard y.isFinite else { previous = nil; segment += 1; continue }
-                if let p = previous, abs(y - p) > height * 3 { segment += 1 }
-                // Far off the chart only needs to be off the chart.
-                let shown = min(max(y, ys.lowerBound - height), ys.upperBound + height)
-                points.append(Point(id: "\(c)-\(i)", x: x, y: shown, series: "\(c)-\(segment)", curve: c))
-                previous = y
-            }
-        }
-        return points
     }
 }
 
@@ -959,5 +1370,110 @@ enum Contour {
             if line.count > 1 { out.append(line) }
         }
         return out
+    }
+}
+
+extension View {
+    // A chart's axis titles, where it has them; none, and no room kept for them, where it has not.
+    @ViewBuilder func axisTitles(_ titles: (x: String, y: String)?) -> some View {
+        if let titles { chartXAxisLabel(titles.x).chartYAxisLabel(titles.y) } else { self }
+    }
+}
+
+// A drawing that zooms as the graph does: pinched about the pointer or zoomed with + and −, dragged to
+// move about, double-clicked back to the whole. It is drawn again at the larger size rather than
+// enlarged as a picture, so its lines stay sharp and its labels the size they are; it fills its box,
+// and never shows less than the whole of it.
+struct ZoomableDiagram<Content: View>: View {
+    @ViewBuilder let content: Content
+    @State private var zoom: CGFloat = 1
+    @State private var offset: CGSize = .zero     // the drawing's top left from the box's: zero or less
+    @State private var dragStart: CGSize?
+
+    var body: some View {
+        GeometryReader { geometry in
+            let size = geometry.size
+            ZStack(alignment: .topLeading) {
+                content
+                    .frame(width: size.width * zoom, height: size.height * zoom)
+                    .offset(offset)
+                    .allowsHitTesting(false)
+                GraphInput(onDrag: { translation in
+                               let start = dragStart ?? offset
+                               dragStart = start
+                               offset = kept(CGSize(width: start.width + translation.width, height: start.height + translation.height), size, zoom)
+                           },
+                           onDragEnd: { dragStart = nil },
+                           onZoom: { factor, point in zoom(by: 1 / factor, about: point, size) },
+                           onReset: { withAnimation(.smooth(duration: 0.3)) { zoom = 1; offset = .zero } })
+                ZoomControls(zoomIn: { withAnimation(.smooth(duration: 0.2)) { zoom(by: 1 / 0.6, about: CGPoint(x: size.width / 2, y: size.height / 2), size) } },
+                             zoomOut: { withAnimation(.smooth(duration: 0.2)) { zoom(by: 0.6, about: CGPoint(x: size.width / 2, y: size.height / 2), size) } },
+                             reset: { withAnimation(.smooth(duration: 0.3)) { zoom = 1; offset = .zero } })
+                    .position(ZoomControls.place(in: CGRect(origin: .zero, size: size)))
+            }
+            .frame(width: size.width, height: size.height, alignment: .topLeading)
+            .clipped()
+        }
+        .safeAreaInset(edge: .bottom, spacing: 8) { HStack { Spacer(); ZoomControls.Hint() } }
+    }
+
+    // From the whole to eight times it, about the point given, which stays where it is.
+    private func zoom(by k: CGFloat, about point: CGPoint, _ size: CGSize) {
+        let next = min(max(zoom * k, 1), 8), actual = next / zoom
+        let moved = CGSize(width: point.x - (point.x - offset.width) * actual, height: point.y - (point.y - offset.height) * actual)
+        zoom = next
+        offset = kept(moved, size, next)
+    }
+
+    // The drawing kept over the whole box: never dragged so far that an edge of it comes inside.
+    private func kept(_ o: CGSize, _ size: CGSize, _ zoom: CGFloat) -> CGSize {
+        CGSize(width: min(0, max(o.width, size.width - size.width * zoom)), height: min(0, max(o.height, size.height - size.height * zoom)))
+    }
+
+}
+
+// The zoom buttons every graph and drawing has, alike and in the same place on each, at the top right
+// of what is drawn: in, out, and back to the first view; and the one line, under it, saying how to move
+// about. The graph, the colour diagram and Astronomy's drawings all use these, so that each is worked
+// the same way.
+struct ZoomControls: View {
+    let zoomIn: () -> Void
+    let zoomOut: () -> Void
+    let reset: () -> Void
+
+    static let hint = "Drag to move · Pinch or + and − to zoom · Double-click to go back"
+    // Where the buttons' middle goes within what is drawn.
+    static func place(in rect: CGRect) -> CGPoint { CGPoint(x: rect.maxX - 20, y: rect.minY + 50) }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            button("plus", "Zoom in", zoomIn)
+            Divider().frame(width: 22)
+            button("minus", "Zoom out", zoomOut)
+            Divider().frame(width: 22)
+            button("arrow.counterclockwise", "Back to the first view", reset)
+        }
+        .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(.regularMaterial))
+        .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).strokeBorder(Color.primary.opacity(0.12), lineWidth: 0.5))
+    }
+
+    private func button(_ symbol: String, _ help: String, _ action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: symbol).font(.system(size: 12, weight: .semibold)).frame(width: 28, height: 26).contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .foregroundStyle(.secondary)
+        .help(help)
+    }
+
+    // The line saying how, with whatever else a drawing can do before it: Click a colour for its xyY · Drag to move ….
+    struct Hint: View {
+        var before: [String] = []
+        var body: some View {
+            Text((before + [ZoomControls.hint]).joined(separator: " · "))
+                .font(.system(size: 11))
+                .foregroundStyle(.tertiary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
     }
 }

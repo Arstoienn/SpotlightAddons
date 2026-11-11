@@ -2,16 +2,19 @@ import SwiftUI
 
 // The pictures of Astronomy mode, drawn in the working under the answer: an orbit from above, a star
 // on the Hertzsprung–Russell diagram, a black hole to scale, and a spectrum with its lines shifted.
+// In the label colour, as the graph is; colour only where it says something: a star's colour is its
+// temperature's, and a spectrum's strip the colours of its wavelengths. What is marked is marked by
+// weight and a ring, not by an accent.
 // What each shows is decided in Astronomy.swift (AstroDiagram); this only draws it.
 struct AstroDiagramView: View {
     let diagram: AstroDiagram
 
     var body: some View {
         switch diagram {
-        case .orbit(let orbit): OrbitView(orbit: orbit).frame(height: 320)
-        case .hr(let hr): HRView(hr: hr).frame(height: 360)
-        case .blackHole(let hole): BlackHoleView(hole: hole).frame(height: 300)
-        case .spectrum(let spectrum): SpectrumView(spectrum: spectrum).frame(height: 230)
+        case .orbit(let orbit): ZoomableDiagram { OrbitView(orbit: orbit) }.frame(height: 320)
+        case .hr(let hr): ZoomableDiagram { HRView(hr: hr) }.frame(height: 360)
+        case .blackHole(let hole): ZoomableDiagram { BlackHoleView(hole: hole) }.frame(height: 300)
+        case .spectrum(let spectrum): ZoomableDiagram { SpectrumView(spectrum: spectrum) }.frame(height: 230)
         case .scientific(let picture): AstronomyScientificView(picture: picture)
         }
     }
@@ -74,11 +77,11 @@ private struct OrbitView: View {
 
             if let hill = orbit.hill {
                 let drawn = max(hill * scale, 10)
-                ctx.stroke(circle(body, drawn), with: .color(.accentColor.opacity(0.8)), style: StrokeStyle(lineWidth: 1.2, dash: [3, 2]))
+                ctx.stroke(circle(body, drawn), with: .color(.primary.opacity(0.7)), style: StrokeStyle(lineWidth: 1.2, dash: [3, 2]))
                 let enlarged = drawn > hill * scale * 1.05
                 label(ctx, enlarged ? "Hill sphere, r_H = \(quantity(hill, "m", .length)) (enlarged ×\(Format.number(drawn / (hill * scale))))"
                                     : "Hill sphere, r_H = \(quantity(hill, "m", .length))",
-                      at: CGPoint(x: body.x + drawn + 6, y: body.y + drawn + 4), anchor: .topLeading, size: 10, colour: .accentColor)
+                      at: CGPoint(x: body.x + drawn + 6, y: body.y + drawn + 4), anchor: .topLeading, size: 10, colour: .primary)
             }
 
             let tangent = CGVector(dx: -sin(phi), dy: -cos(phi))
@@ -175,7 +178,7 @@ private struct HRView: View {
                 let r: CGFloat = star.marked ? 7 : 5
                 ctx.fill(circle(p, r), with: .color(Self.colour(star.temperature)))
                 ctx.stroke(circle(p, r), with: .color(.primary.opacity(star.marked ? 0.9 : 0.35)), lineWidth: star.marked ? 1.5 : 0.6)
-                if star.marked { ctx.stroke(circle(p, r + 4), with: .color(.accentColor), lineWidth: 1.5) }
+                if star.marked { ctx.stroke(circle(p, r + 4), with: .color(.primary.opacity(0.85)), lineWidth: 1.5) }
                 let right = p.x < plot.maxX - 110
                 label(ctx, star.name, at: CGPoint(x: p.x + (right ? 1 : -1) * (r + 6), y: p.y), anchor: right ? .leading : .trailing,
                       size: star.marked ? 12 : 10, weight: star.marked ? .semibold : .regular, colour: star.marked ? .primary : .secondary)
@@ -288,7 +291,7 @@ private struct SpectrumView: View {
                 var joint = Path()
                 joint.move(to: CGPoint(x: a, y: rest.maxY + 2))
                 joint.addLine(to: CGPoint(x: b, y: seen.minY - 2))
-                ctx.stroke(joint, with: .color(marked ? .accentColor : .primary.opacity(0.35)), style: StrokeStyle(lineWidth: marked ? 1.5 : 0.8, dash: marked ? [] : [3, 3]))
+                ctx.stroke(joint, with: .color(.primary.opacity(marked ? 0.85 : 0.35)), style: StrokeStyle(lineWidth: marked ? 1.5 : 0.8, dash: marked ? [] : [3, 3]))
                 label(ctx, line.name, at: CGPoint(x: a, y: rest.minY - 8), anchor: .center, size: 10, weight: marked ? .semibold : .regular, colour: marked ? .primary : .secondary)
                 label(ctx, Format.number(line.rest * factor), at: CGPoint(x: b, y: seen.maxY + 9), anchor: .center, size: 9)
             }

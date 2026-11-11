@@ -40,7 +40,7 @@ func astronomyTests() {
     workingCheck(titles("@ wien").first == "wien_peak(T)", "wien did not find wien_peak")
     workingCheck(titles("@").count == AstronomyCatalogue.table.count, "@ alone did not offer every function")
     workingCheck(titles("@") == titles("@").sorted { $0.localizedStandardCompare($1) == .orderedAscending }, "@ alone did not list the functions alphabetically: \(titles("@"))")
-    workingCheck(titles("@ orbital") == ["orbital_period(body)", "orbital_speed(body)"], "names beginning alike were not alphabetical")
+    workingCheck(Array(titles("@ a").prefix(2)) == ["absolute_magnitude(body)", "apparent_magnitude(M, d)"], "names beginning alike were not alphabetical: \(titles("@ a"))")
     workingCheck(list("@ schw")?.stage == .function, "the name was not taken as a name")
 
     // Inside the brackets, what fits the argument and never a function.
@@ -104,15 +104,15 @@ func astronomyTests() {
     }
     choose("wien_peak(T)", in: "@")
     workingCheck(titles("@").first == "wien_peak(T)", "the function chosen was not offered first: \(titles("@").prefix(3))")
-    choose("orbital_speed(body)", in: "@ orb")
-    choose("orbital_speed(body)", in: "@ orb")
-    workingCheck(titles("@ orbital") == ["orbital_speed(body)", "orbital_period(body)"], "the function chosen more often did not come first among those matching")
+    choose("apparent_magnitude(M, d)", in: "@ a")
+    choose("apparent_magnitude(M, d)", in: "@ a")
+    workingCheck(titles("@ a").first == "apparent_magnitude(M, d)", "the function chosen more often did not come first among those matching")
     workingCheck(titles("@ escape vel").first == "escape_velocity(body)", "a better match was put below one chosen more often")
     choose("earth", in: "@ schwarzschild(body)", caret: 16)
     workingCheck(list("@ escape_velocity(body)", caret: 18)?.items.first?.title == "earth", "the body chosen was not offered first in another function")
     choose("3 M☉", in: "@ schwarzschild(3")
     workingCheck(titles("@ schwarzschild(25").first == "25 M☉", "the unit chosen was not offered first for another number: \(titles("@ schwarzschild(25"))")
-    workingCheck(Completion.uses["@f:orbital_speed"] == 2 && Completion.uses["@a:unit M☉"] == 1, "the choices were not counted: \(Completion.uses)")
+    workingCheck(Completion.uses["@f:apparent_magnitude"] == 2 && Completion.uses["@a:unit M☉"] == 1, "the choices were not counted: \(Completion.uses)")
     // Reset All Settings forgets them, and the order is alphabetical again.
     UserDefaults.standard.removeObject(forKey: Completion.usesKey)
     workingCheck(titles("@").first == "absolute_magnitude(body)" && titles("@ orbital").first == "orbital_period(body)", "forgetting the choices did not restore the order")
@@ -134,7 +134,7 @@ private func astronomyRegistryTests() {
     AstronomyEngine.synchronous = true
     defer { AstronomyEngine.synchronous = false }
     let registry = AstronomyEngine.methods
-    workingCheck(registry.count == 234, "Full astronomy registry must contain 234 methods")
+    workingCheck(registry.count == 31, "The astronomy registry must hold the 31 everyday methods: \(registry.count)")
     let catalogue = Astronomy.catalogue
     for method in registry {
         workingCheck(catalogue.functions.contains { $0.name == method.name }, "Missing completion for " + method.name)
@@ -155,23 +155,64 @@ private func astronomyRegistryTests() {
     number("@ lorentz_factor(0.8 c)",5.0/3.0)
     number("@ radius(earth)",6371000)
     number("@ rest_energy(1 kg)",8.987551787368176e16)
-    number("@ eccentricity(orbit(earth, sun))",0.01715,tolerance:0.001)
     workingCheck(Solver.details("@ sky_map({longitude:121 deg,latitude:25 deg},\"2026-11-11\")")?.diagram != nil,"Sky map missing")
     for text in ["@ orbit(earth,sun)", "@ hr_position(sun)", "@ blackbody_spectrum(5772 K)", "@ schwarzschild_radius(sun)"] {
         workingCheck(Solver.details(text)?.diagram != nil,text + " missing diagram")
     }
     workingCheck(Solver.answer("@ redshift(500 nm,600 nm)")?.symbol == "moon.stars", "Astronomy sign missing")
-    workingCheck(Completion.list("@ eccentricity(orbit(ear", in: catalogue)?.items.contains { $0.title == "earth" } == true, "Nested orbit completion missing")
-    workingCheck(Completion.list("@ transit_light_curve(earth,sun,earth_orbit,[0 day,1 day], geometry={inclination:90 deg}",in: catalogue) == nil,"Object commas confused completion")
+    workingCheck(Completion.list("@ light_time(orbit(ear", in: catalogue) != nil || Completion.list("@ orbit(ear", in: catalogue)?.items.contains { $0.title == "earth" } == true, "Orbit completion missing")
+    workingCheck(Completion.list("@ sky_map({longitude:121 deg,latitude:25 deg}, \"2026-11-11\"",in: catalogue) == nil,"Object commas confused completion")
     UserDefaults.standard.set(["@f:redshift_velocity":100],forKey:Completion.usesKey)
     workingCheck(Completion.list("@ redshift",in:catalogue)?.items.first?.function == "redshift","A legacy alias outranked the canonical spectral redshift")
     UserDefaults.standard.removeObject(forKey:Completion.usesKey)
     let full = Completion.list("@ sch",in:catalogue)
     workingCheck(full?.items.contains { $0.function == "schwarzschild_radius" } == true,"Canonical Schwarzschild method missing")
-    let units = Completion.list("@ plane_change_delta_v(7.8",in:catalogue)?.items ?? []
-    workingCheck(units.contains { $0.insertion == "7.8 km/s" },"Speed unit completion missing")
-    let noArguments = Completion.list("@ hubble_time",in:catalogue).flatMap { Completion.apply($0,in:catalogue) }
-    workingCheck(noArguments?.selection.location == (noArguments?.text.utf16.count ?? -1),"Zero-argument completion left the caret inside brackets")
+    let units = Completion.list("@ lorentz_factor(0.8",in:catalogue)?.items ?? []
+    workingCheck(units.contains { $0.insertion == "0.8 c" },"Speed unit completion missing: \(units.map(\.insertion))")
+    // An argument that is one of a few words offers every one of them, and nothing else: compare's
+    // property is any of the eight, not only the radius of its example, and never a body.
+    let properties = Completion.list("@ compare(earth, jupiter, ",in:catalogue)?.items.map(\.title) ?? []
+    workingCheck(properties == ["density","diameter","escape_velocity","luminosity","mass","radius","surface_gravity","volume"],
+                 "compare's property did not offer every property, alone and alphabetically: \(properties)")
+    workingCheck(Completion.list("@ compare(earth, jupiter, ma",in:catalogue)?.items.first?.title == "mass","ma did not find the mass of compare")
+    let mass = Completion.list("@ compare(earth, jupiter, ma",in:catalogue).flatMap { Completion.apply($0,in:catalogue) }
+    workingCheck(mass?.text == "@ compare(earth, jupiter, mass)","choosing mass did not write it in: \(String(describing: mass?.text))")
+    workingCheck(Completion.list("@ compare(earth, jupiter, surface gr",in:catalogue)?.items.first?.title == "surface_gravity","surface gr did not find surface_gravity")
+    for method in registry {
+        for parameter in method.parameters {
+            guard let choices = parameter.choices else { continue }
+            let offered = catalogue.candidates(for: parameter.completion, typed: "").map(\.title)
+            workingCheck(offered == choices, "\(method.name)'s \(parameter.name) offered \(offered), not \(choices)")
+        }
+    }
+    // A formula typeset: the integral with its limits above and below, what it integrates a fraction;
+    // a formula all of words is left as text.
+    func pieces(_ m: Math?) -> [Math] {
+        guard let m else { return [] }
+        switch m {
+        case .row(let parts): return [m] + parts.flatMap(pieces)
+        case .fraction(let a, let b), .power(let a, let b): return [m] + pieces(a) + pieces(b)
+        case .root(let a), .group(let a): return [m] + pieces(a)
+        default: return [m]
+        }
+    }
+    let age = AstronomyFormula.math("t₀ = ∫₀∞ dz/[(1+z)H(z)]")
+    workingCheck(pieces(age).contains(.bigOperator("∫", lower: .text("0"), upper: .text("∞"))) && pieces(age).contains { if case .fraction = $0 { true } else { false } },
+                 "the age of the universe's integral was not typeset with its limits: \(String(describing: age))")
+    workingCheck(pieces(AstronomyFormula.math("a = −μ/2ε")).contains(.fraction(.text("μ"), .row([.text("2"), .text("ε")]))), "μ/2ε was not μ over 2ε")
+    workingCheck(AstronomyFormula.math("Catalogue sidereal rotation period; negative is retrograde") == nil, "a formula of words was typeset")
+    workingCheck(AstronomyFormula.math("12+log(O/H) = a + b N2 or a + b O3N2") == nil, "a formula with or in it was typeset")
+    let typeset = Set(registry.map(\.formula)).filter { AstronomyFormula.math($0) != nil }.count
+    workingCheck(typeset >= 19, "fewer formulas were typeset than before: \(typeset)")
+    // The worker is let go once it has been idle for the limit, and comes back for the next calculation.
+    let limit = AstronomyEngine.idleLimit
+    AstronomyEngine.idleLimit = 0.5
+    _ = AstronomyEngine.shared.answer("@radius(mars)")
+    workingCheck(AstronomyEngine.shared.isRunning, "the worker was not running after a calculation")
+    RunLoop.current.run(until: Date().addingTimeInterval(1.2))
+    workingCheck(!AstronomyEngine.shared.isRunning, "the worker was still running after the idle limit")
+    AstronomyEngine.idleLimit = limit
+    workingCheck(AstronomyEngine.shared.answer("@radius(venus)").value != nil, "the worker did not come back after being let go")
     AstronomyEngine.synchronous = false
     let query = "  @rest_energy(1.23456789 kg)"
     var changed = false

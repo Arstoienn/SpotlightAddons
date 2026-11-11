@@ -298,7 +298,7 @@ private struct RateRow: View {
         HStack(spacing: 8) {
             Image(systemName: state.offline ? "exclamationmark.triangle.fill" : state.recorded == nil ? "circle.dashed" : "checkmark.circle.fill")
                 .foregroundStyle(state.offline ? Color.orange : state.recorded == nil ? Color.secondary : Color.green)
-            Text(group.title)
+            Text(Rates.title(group))
             Spacer()
             Text(status)
                 .foregroundStyle(!busy && fresh && !state.offline ? Color.green : Color.secondary)
@@ -315,7 +315,7 @@ private struct RateRow: View {
             }
             .frame(width: 18)
         }
-        .help([group.explanation, "Source: " + group.source, state.error].compactMap { $0 }.joined(separator: "\n"))
+        .help([group.explanation, "Source: " + Rates.source(group), state.error].compactMap { $0 }.joined(separator: "\n"))
     }
 
     private func refresh() {

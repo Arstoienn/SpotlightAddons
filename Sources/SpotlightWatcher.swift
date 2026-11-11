@@ -89,6 +89,15 @@ final class SpotlightWatcher {
     // What is in the search field at this moment.
     func current() -> String? { field.flatMap { string($0, kAXValueAttribute) } }
 
+    // Whether Spotlight is searching, and not in one of its modes (Applications, Files, Actions,
+    // Clipboard), where what is typed only narrows that list and is no question for the card. Each mode
+    // puts its own name in the field as its placeholder, with a Back button beside it; searching, the
+    // placeholder names Spotlight itself, in every language: Spotlight Search, Spotlight 搜尋.
+    func searching() -> Bool {
+        guard let field, let placeholder = string(field, kAXPlaceholderValueAttribute), !placeholder.isEmpty else { return true }
+        return placeholder.localizedCaseInsensitiveContains("Spotlight")
+    }
+
     // What is selected in the search field, or where the caret is (a selection of nothing), in
     // UTF-16 units; nil where Spotlight does not say.
     func selection() -> NSRange? {
@@ -163,12 +172,13 @@ final class SpotlightWatcher {
 
     // Where the panel is now and how opaque, asked of its one window only: cheap enough to ask
     // every frame, so the card can follow Spotlight while it is dragged. Nil once it is gone.
-    static func panel(_ p: Placement) -> (rect: CGRect, alpha: Double)? {
+    // windowWidth: its window's own width, which changes when Spotlight goes into a mode and out of it.
+    static func panel(_ p: Placement) -> (rect: CGRect, alpha: Double, windowWidth: CGFloat)? {
         guard let w = (CGWindowListCopyWindowInfo([.optionIncludingWindow], p.window) as? [[String: Any]])?.first,
               w[kCGWindowIsOnscreen as String] as? Bool == true,
               let b = w[kCGWindowBounds as String] as! CFDictionary?, let bounds = CGRect(dictionaryRepresentation: b)
         else { return nil }
-        return (panelRect(bounds, p.width), w[kCGWindowAlpha as String] as? Double ?? 0)
+        return (panelRect(bounds, p.width), w[kCGWindowAlpha as String] as? Double ?? 0, bounds.width)
     }
 
     // How opaque Spotlight's panel is, or nil when it has none on screen. Closing, it fades out in

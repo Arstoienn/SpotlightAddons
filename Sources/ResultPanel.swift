@@ -227,6 +227,12 @@ struct CardFace: View {
                         // Exactly as typed: not through subscripted(), which would lower the f of ls my_file.
                         Text(verbatim: answer.solution.exact).font(.system(size: 20, design: .monospaced))
                             .truncationMode(.middle).minimumScaleFactor(0.6)
+                    } else if answer.isAstronomy {
+                        // Set as every other answer in words is: at the answer's size, made smaller rather than cut short.
+                        Text(subscripted(AstronomyWorkingText.line(answer.solution.exact), size: CardText.answerSize))
+                            .font(.system(size: CardText.answerSize)).minimumScaleFactor(0.55)
+                            .lineLimit(showInput && answer.astronomyImage != nil ? 2 : 1)
+                            .frame(maxWidth: .infinity, alignment: .leading)
                     } else if let math = answer.answer {
                         MathText(math: math, size: CardText.answerSize, wraps: false).frame(maxWidth: .infinity, alignment: .leading)
                     } else {
@@ -240,7 +246,14 @@ struct CardFace: View {
                 }
             }
             .lineLimit(1)
-            Spacer(minLength: 24)
+            if showInput, let image = answer.astronomyImage {
+                AstronomyImagePreview(picture: image)
+                    .frame(width: CardText.imageSize, height: CardText.imageSize)
+                    .clipShape(RoundedRectangle(cornerRadius: 6))
+                    .padding(.horizontal, 12)
+            } else {
+                Spacer(minLength: 24)
+            }
             CopyButton()
         }
         .frame(height: showInput ? answer.height : CardText(solution: answer.solution, answer: answer.answer).height)
@@ -284,13 +297,26 @@ struct CardText {
     var symbol = "function"   // the sign on the card's left, for what kind of answer it is
     var swatch: Swatch?        // a colour, drawn in place of the sign
     var list: Completion.List? // completions offered for what is being typed, shown in place of an answer
+    var astronomyImage: AstronomyPicture?
 
     static let inputSize: CGFloat = 14, answerSize: CGFloat = 22
+    static let imageSize: CGFloat = 80
+    var isAstronomy: Bool { symbol == "moon.stars" }
 
     static func of(_ typed: String) -> CardText? {
         guard let found = Solver.answer(typed) else { return nil }
         if Command.parse(typed) != nil { return CardText(solution: found.solution, verbatim: true, symbol: found.symbol) }
         let d = found.details
+        if Astronomy.marked(typed) {
+            let input = typed.trimmingCharacters(in: .whitespacesAndNewlines)
+            let prefix = input.prefix(160)
+            let preview = String(prefix) + (prefix.endIndex == input.endIndex ? "" : "…")
+            var card = CardText(solution: found.solution, input: AstronomyWorkingText.call(preview), symbol: found.symbol)
+            if case .scientific(let picture)? = d?.diagram, picture.data["kind"] as? String == "image" {
+                card.astronomyImage = picture
+            }
+            return card
+        }
         // The answer typeset only where the working's one solution is the card's line itself.
         var line = d?.solutions.count == 1 && d?.solutions.first?.plain == found.solution.exact ? d?.solutions.first : nil
         var solution = found.solution
@@ -338,16 +364,19 @@ struct CardText {
 
     var height: CGFloat {
         if let list { return CompletionFace.height(list) }
-        let inputHeight = input.map { tall($0, CardText.inputSize) + 2 } ?? 0
+        let inputHeight = input == nil ? 0 : self.inputHeight + 2
         let answerHeight = answer.map { tall($0, CardText.answerSize) } ?? 27
         let total = 20 + inputHeight + answerHeight + (solution.approx == nil ? 0 : 19)
-        return min(max(Chrome.cardHeight, total), 160)
+        let minimum = astronomyImage == nil ? Chrome.cardHeight : Self.imageSize + 24
+        return min(max(minimum, total), 160)
     }
 }
 
 // The completions offered as a call after @ is typed: a heading saying what is being chosen, a few
 // rows at a time with the chosen one marked as Spotlight marks its own, and the keys that work it.
 // The rows scroll with the choice, so the chosen one is always in view.
+// The rule for what is chosen, kept everywhere: what the keyboard chooses, as here, is in Spotlight's
+// own blue, as Spotlight's list is; what the pointer rests on, and the page shown, are grey.
 struct CompletionFace: View {
     let list: Completion.List
     let symbol: String
@@ -356,6 +385,8 @@ struct CompletionFace: View {
     static func height(_ list: Completion.List) -> CGFloat {
         20 + 18 + CGFloat(min(list.items.count, rows)) * rowHeight + 20
     }
+    // A click on a row chooses it, as Tab does. Set by the app, which keeps the list.
+    static var choose: (Int) -> Void = { _ in }
 
     private var heading: String {
         switch list.stage {
@@ -366,9 +397,12 @@ struct CompletionFace: View {
         }
     }
 
+    // The whole list in a scroll view of six rows, as Spotlight's own list is: the trackpad moves it
+    // smoothly, with its momentum, and the wheel a line at a time. The arrows glide the highlight to
+    // the next row, and the list along only as far as keeps it in view. The scroll view is the same
+    // one from key to key, as the card is only given new contents, so where it was scrolled to stays.
     var body: some View {
-        let first = max(0, min(list.selected - CompletionFace.rows / 2, list.items.count - CompletionFace.rows))
-        let shown = Array(list.items.enumerated()).dropFirst(first).prefix(CompletionFace.rows)
+        let glide = Animation.spring(response: 0.22, dampingFraction: 0.9)
         HStack(alignment: .top, spacing: 0) {
             Image(systemName: symbol)
                 .font(.system(size: 17, weight: .medium))
@@ -379,20 +413,34 @@ struct CompletionFace: View {
             VStack(alignment: .leading, spacing: 0) {
                 Text(heading).font(.system(size: 11, weight: .semibold)).foregroundStyle(.secondary).lineLimit(1)
                     .frame(height: 18, alignment: .center)
-                ForEach(Array(shown), id: \.offset) { i, item in
-                    let chosen = i == list.selected
-                    HStack(spacing: 12) {
-                        Text(verbatim: item.title).font(.system(size: 15, design: .monospaced)).lineLimit(1).layoutPriority(1)
-                        Spacer(minLength: 8)
-                        Text(subscripted(item.detail, size: 12)).font(.system(size: 12)).lineLimit(1).truncationMode(.tail)
-                            .foregroundStyle(chosen ? AnyShapeStyle(Color.white.opacity(0.85)) : AnyShapeStyle(.secondary))
+                ScrollViewReader { proxy in
+                    ScrollView(.vertical) {
+                        VStack(spacing: 0) {
+                            ForEach(Array(list.items.enumerated()), id: \.offset) { i, item in
+                                row(item, chosen: i == list.selected)
+                                    .id(i)
+                                    .contentShape(Rectangle())
+                                    .overlay(ClickTarget { CompletionFace.choose(i) })
+                            }
+                        }
+                        // One highlight, sliding from row to row rather than leaping.
+                        .background(alignment: .top) {
+                            RoundedRectangle(cornerRadius: 7, style: .continuous)
+                                .fill(Color.accentColor)
+                                .frame(height: CompletionFace.rowHeight)
+                                .offset(y: CGFloat(list.selected) * CompletionFace.rowHeight)
+                                .animation(glide, value: list.selected)
+                        }
                     }
-                    .foregroundStyle(chosen ? AnyShapeStyle(Color.white) : AnyShapeStyle(.primary))
-                    .padding(.horizontal, 10)
-                    .frame(height: CompletionFace.rowHeight)
-                    .background(RoundedRectangle(cornerRadius: 7, style: .continuous).fill(chosen ? Color.accentColor : Color.clear))
+                    .scrollIndicators(list.items.count > CompletionFace.rows ? .automatic : .never)
+                    .frame(height: CGFloat(min(list.items.count, CompletionFace.rows)) * CompletionFace.rowHeight)
+                    .onChange(of: list.selected) { _, chosen in
+                        withAnimation(glide) { proxy.scrollTo(chosen) }
+                    }
+                    // A new list, as each key typed makes, starts from its top.
+                    .onChange(of: list.items.map(\.insertion)) { _, _ in proxy.scrollTo(0, anchor: .top) }
                 }
-                Text("↑ ↓ to choose · Tab or Return to complete · Esc to close")
+                Text("↑ ↓ or scroll to move · Click, Tab or Return to complete · Esc to close")
                     .font(.system(size: 11)).foregroundStyle(.tertiary).lineLimit(1)
                     .frame(height: 20, alignment: .center)
             }
@@ -400,5 +448,18 @@ struct CompletionFace: View {
         }
         .padding(.vertical, 10)
         .frame(maxWidth: .infinity, alignment: .topLeading)
+    }
+
+    private func row(_ item: Completion.Item, chosen: Bool) -> some View {
+        HStack(spacing: 12) {
+            Text(verbatim: item.title).font(.system(size: 15, design: .monospaced)).lineLimit(1).layoutPriority(1)
+            Spacer(minLength: 8)
+            Text(subscripted(item.detail, size: 12)).font(.system(size: 12)).lineLimit(1).truncationMode(.tail)
+                .foregroundStyle(chosen ? AnyShapeStyle(Color.white.opacity(0.85)) : AnyShapeStyle(.secondary))
+        }
+        .foregroundStyle(chosen ? AnyShapeStyle(Color.white) : AnyShapeStyle(.primary))
+        .animation(.easeOut(duration: 0.12), value: chosen)
+        .padding(.horizontal, 10)
+        .frame(height: CompletionFace.rowHeight)
     }
 }

@@ -342,7 +342,8 @@ expect("2x+3x=10", "x = 2")
 expect(#"\frac{1}{7b}=\frac{11x}{y}"#, "x = y/(77b)")
 expect("\\frac{1}{7b}=\\frac{11x}{y}\nx=?", "x = y/(77b)")
 expect(#"\frac{1}{7b}=\frac{11x}{y}, y=?"#, "y = 77bx")
-expect("x+y=3", "x = 3 − y")
+// An equation in x and y alone is a curve, drawn, and not a formula turned round (Tests/RelationTests.swift).
+expect("x+y=3", "Straight line with gradient −1 and y-intercept 3", "x-intercept 3; y-intercept 3")
 expect("ax+bx=c", "x = c/(a + b)")
 expect("F=ma, a=?", "a = F/m")
 expect("v=u+at, t=?", "t = (v − u)/a")
@@ -723,7 +724,7 @@ expectDetails("(x+1)(x-1)=3", "(x + 1)(x − 1) = 3", [("Expanding brackets and 
 expectDetails("x^3-6x^2+11x-6=0", "x³ − 6x² + 11x − 6 = 0", [("Factorising", "(x − 1)(x − 2)(x − 3) = 0")], ["x = 1", "x = 2", "x = 3"])
 expectDetails("x^3=2", "x³ = 2", [("Subtracting the right-hand side from both sides", "x³ − (2) = 0"),
                ("Collecting like terms", "x³ − 2 = 0"),
-               ("Solving numerically", "This polynomial of degree 3 is not readily factorised; its real roots are therefore determined numerically.")], ["x ≈ 1.25992"])
+               ("Isolating x³", "x³ = 2"), ("Taking the cube root", "x ≈ 1.25992")], ["x ≈ 1.25992"])
 expectDetails("sin(n rad)=1", "sin(n) = 1", [("Stating the general solution", "n = π/2 + 2kπ, k ∈ ℤ")], ["n = π/2 ≈ 1.571 (90°)"],
               note: "These are the solutions for 0 ≤ n ≤ 2π; further solutions lie outside this interval.")
 expectDetails("sin(x rad)=0.5", "sin(x) = 0.5", [("Stating the general solution", "x = π/6 + 2kπ or x = 5π/6 + 2kπ, k ∈ ℤ")],
@@ -982,7 +983,7 @@ for (typed, want) in [("3+1=4 || 3=1", "True"), ("3=1 || 2=5", "False"), ("3=1 &
                       ("0.5===1/2", "True"), ("2^10===1024", "True"), ("sqrt(2)^2===2", "True"), ("0.1+0.2==0.3", "True"), ("1/3==0.3333", "False"),
                       ("5 !== 5", nil), ("3=1 and 2=2", "False"), ("3=1 or 2=2", "True"), ("3=1 AND 2=2", "False"), ("not 3=1", "True"), ("!(3=1)", "True"),
                       ("!(3=1 || 2=2)", "False"), ("(1=1 || 2=3) && 3=3", "True"), ("1=1 and not 2=3", "True"), ("not (1=1 and 2=3) or 4=5", "True"),
-                      ("2 and 3", nil), ("salt and pepper", nil), ("x or y", nil)] as [(String, String?)] {
+                      ("2 and 3", nil), ("salt and pepper", nil), ("x or y", "Q = Σm(1, 2, 3)")] as [(String, String?)] {
     let got = Solver.solve(typed)?.exact
     if got != want { failures += 1; print("FAIL \(typed)\n  want \(want ?? "nil")\n  got  \(got ?? "nil")") }
 }
@@ -1273,7 +1274,17 @@ expectDetails("2x+3=7", "2x + 3 = 7", [("Subtracting 3 on both sides", "2x = 4")
 expect("mgh=1/2mv^2", "Insufficient information", "A value is required for h or v.")
 expect("2a+3b=7", "Insufficient information", "A value is required for a or b.")
 expect("5.05=f*1.6, f=N*mu", "Insufficient information", "A value is required for N or μ.")
-expect("s=ut+1/2at^2, u=0", "Insufficient information", "Values are required for two of s, t and a.")
+// A formula whose subject stands alone is not wanting with too few values: it is that formula, the
+// values written in, as it would be written on paper: y = mx + c with m and c given is the line.
+expect("s=ut+1/2at^2, u=0", "s = t²a/2", "Taking u = 0")
+expect("y=mx+c,m=2,c=21", "y = 2x + 21", "Taking m = 2, c = 21")
+expect("y=mx+c, m=1/2, c=-3", "y = x/2 − 3", "Taking m = 1/2, c = −3")
+expect("v=u+at, u=2, a=3", "v = 3t + 2", "Taking u = 2, a = 3")
+expect("a=F/m, F=10", "a = 10/m", "Taking F = 10")
+expect("y=ax^2+bx+c, a=1, b=-3, c=2", "y = x² − 3x + 2", "Taking a = 1, b = −3, c = 2")
+expect("y=mx+c,m=2,c=21,x=3", "y = 27", "Taking m = 2, c = 21, x = 3")
+expect("mgh=1/2mv^2, m=2", "Insufficient information", "A value is required for h or v.")
+expectCopy("y=mx+c,m=2,c=21", "y = 2x + 21")
 expect("x+y+z, z=1", "= x + y + 1", "Taking z = 1")
 expectCopy("mgh=1/2mv^2", nil)
 // Each unknown in terms of the others, where one equation is left: on one line √(2gh), not √2gh.
@@ -1401,11 +1412,36 @@ expect("red / 2", "#800000", "rgb(128, 0, 0), which is maroon")
 expect("red * blue", "#000000", "rgb(0, 0, 0), which is black")
 expect("(red + blue) / 2", "#800080", "rgb(128, 0, 128), which is purple")
 expect("red / blue", "Not a colour", "Dividing by a colour has no meaning in light, and a channel of 0 would be division by nought.")
-expect("red + 2", "Not a colour", "A number cannot be added to or taken from a colour; multiply or divide it instead: red × 2.")
+expect("#FF0000 + 2", "Not a colour", "A number cannot be added to or taken from a colour; multiply or divide it instead: red × 2.")
 expect("color(display-p3 1 0 0)", "#FF0000", "xyY(0.6800, 0.3200, 0.2290); outside sRGB, within Display P3, so the hex is the nearest sRGB can show")
 expect("#FF5733 to xyy", "xyY(0.5671, 0.3550, 0.2832)", "#FF5733, near tomato")
 expect("2*3", "= 6")
 expect("tan + 1", nil)
+// Logic circuits: equations in words, symbols or LaTeX; one expression; two sides compared.
+expect("s0 = a0 xor b0, c1 = a0 and b0, s1 = a1 xor b1 xor c1, Cout = (a1 and b1) or (c1 and (a1 xor b1))",
+       "a_1, a_0, b_1, b_0 → s_0, c_1, s_1, Cout", "7 gates; a truth table of 16 rows")
+expect(#"\begin{aligned} s_0 &= a_0\oplus b_0\\ c_1 &= a_0\land b_0\\ s_1 &= a_1\oplus b_1\oplus c_1\\ C_{\text{out}} &= (a_1\land b_1)\lor (c_1\land(a_1\oplus b_1)) \end{aligned}"#,
+       "a_1, a_0, b_1, b_0 → s_0, c_1, s_1, C_out", "7 gates; a truth table of 16 rows")
+expect("A and B", "Q = Σm(3)", "True in 1 of 4 rows; simplest, A ∧ B")
+expect("A xor B", "Q = Σm(1, 2)", "True in 2 of 4 rows; simplest, (¬A ∧ B) ∨ (A ∧ ¬B)")
+expect("p implies q", "Q = Σm(0, 1, 3)", "True in 3 of 4 rows; simplest, ¬p ∨ q")
+expect(#"A \land \overline{B}"#, "Q = Σm(2)", "True in 1 of 4 rows; simplest, A ∧ ¬B")
+expect("truth table A'B + AB'", "Q = Σm(1, 2)", "True in 2 of 4 rows; simplest, (¬A ∧ B) ∨ (A ∧ ¬B)")
+expect("A or not A", "Always 1", "A tautology: true in all 2 rows.")
+expect("not (A and B) = not A or not B", "True", "The two sides agree in all 4 rows: they are equivalent.")
+expect("A and B = A or B", "False", "They differ where A = 0, B = 1.")
+expect("1 and 0", "= 0", "False")
+expect("me or you", nil)
+// A name with a prime that is given is a signal of its own; labels before &= are kept as written; a
+// LaTeX equation may run over two lines.
+expect("b0' = b0 xor M, b1' = b1 xor M, s0 = a0 xor b0' xor M, c1 = (a0 and b0') or (M and (a0 xor b0')), s1 = a1 xor b1' xor c1, Cout = (a1 and b1') or (c1 and (a1 xor b1'))",
+       "a_1, a_0, b_1, b_0, M → b′_0, b′_1, s_0, c_1, s_1, Cout", "12 gates; a truth table of 32 rows")
+expect(#"\begin{aligned}b'_0 &= b_0\oplus M\\ s_0 &= a_0\oplus b'_0\oplus M\end{aligned}"#,
+       "a_0, b_0, M → b′_0, s_0", "3 gates; a truth table of 8 rows")
+expect("\\begin{aligned}\nA>B &= (a_1\\land\\neg b_1)\\lor\n((a_1\\leftrightarrow b_1)\\land a_0\\land\\neg b_0)\\\\\nA=B &= (a_1\\leftrightarrow b_1)\\land(a_0\\leftrightarrow b_0)\\\\\nA<B &= (\\neg a_1\\land b_1)\\lor\n((a_1\\leftrightarrow b_1)\\land\\neg a_0\\land b_0)\n\\end{aligned}",
+       "a_1, a_0, b_1, b_0 → A>B, A=B, A<B", "13 gates; a truth table of 16 rows")
+expect("F=m!a", nil)
+expect("3+1=4 || 3=1", "True", "3 + 1 = 4 is True; 3 = 1 is False.")
 // A limit with a letter in it, read from the series; a\sin x is a times sin x, not the arcsine.
 expect(#"\lim_{x\to0}\frac{\sin(ax)-a\sin(x)}{x^3}"#, "= a/6 − a³/6")
 expect("limit((1-cos(ax))/x^2, x, 0)", "= a²/2")
@@ -1766,6 +1802,15 @@ workingCheck(refreshRequests == 4 && !Rates.state(.fiat).offline && Rates.table?
 Rates.transport = originalRatesTransport; Rates.persist = originalRatesPersistence; Rates.fixed = true
 
 astronomyTests()
+relationTests()
+ratesFallbackTests()
+substitutionTests()
+compoundUnitTests()
+seriesAndLetterTests()
+conditionedTests()
+twoReadingsTests()
+robustnessTests()
+proofTests()
 
 print(failures == 0 ? "all passed" : "\(failures) failed")
 exit(failures == 0 ? 0 : 1)

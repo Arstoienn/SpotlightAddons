@@ -115,6 +115,14 @@ extension Solver {
         case .money(let money):
             answer = Answer(money.solution, details: { money.details }, copy: { money.copyText }, values: { money.value.isFinite ? [money.value] : [] })
         case .digest(let hash): answer = Answer(hash.solution, details: { hash.details }, copy: { hash.written }, values: { [] })
+        case .circuit(let circuit):
+            answer = Answer(circuit.solution, details: { circuit.details }, copy: { circuit.copyText }, values: { [] })
+        case .proof(let proof):
+            answer = Answer(proof.solution, details: { proof.details }, copy: { proof.verdict }, values: { [] })
+        case .conditioned(let conditioned):
+            answer = Answer(conditioned.solution, details: { conditioned.details }, copy: { conditioned.copyText }, values: { conditioned.roots })
+        case .relation(let relation):
+            answer = Answer(relation.solution, details: { relation.details }, copy: { relation.copyText }, values: { [] })
         case .colour(let colour):
             answer = Answer(colour.solution, details: { colour.details }, copy: { colour.copyText }, values: { [] })
             answer?.swatch = colour.swatch

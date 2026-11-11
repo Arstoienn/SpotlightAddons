@@ -43,7 +43,8 @@ indirect enum Math: Equatable {
             if !e.isEmpty, e.allSatisfy({ $0.isASCII && $0.isNumber }), let k = Int(e) { return base.plain + superscript(k) }
             // 2x in an exponent is a product, as much as 2·x is: e^(2x).
             if let first = e.first, first.isNumber, e.dropFirst().contains(where: { $0.isLetter }) { return base.plain + "^(" + e + ")" }
-            return base.plain + "^" + Math.bracketed(exponent)
+            // e once: worked out again here, a tower 2^2^…^2 would be written 2³² times over.
+            return base.plain + "^" + Math.bracketed(text: e)
         case .bigOperator(let symbol, let lower, let upper):
             return "\(symbol)(\(lower.plain)…\(upper.plain)) "
         case .group(let x): return "(" + x.plain + ")"
@@ -169,8 +170,9 @@ indirect enum Math: Equatable {
     }
 
     // An operator anywhere but at the very start (a leading minus is part of the number).
-    private static func bracketed(_ m: Math) -> String {
-        let s = m.plain
+    private static func bracketed(_ m: Math) -> String { bracketed(text: m.plain) }
+
+    private static func bracketed(text s: String) -> String {
         // (n − r)! is in brackets already, and is one factor: n!/(n − r)!, not n!/((n − r)!).
         if s.hasPrefix("(") {
             var depth = 0
@@ -207,7 +209,8 @@ func subscriptRuns(_ s: String) -> [(text: String, lowered: Bool)] {
     var i = s.startIndex
     while i < s.endIndex {
         let next = s.index(after: i)
-        if s[i] == "_", let before = current.last, before.isLetter, next < s.endIndex, s[next].isASCII, s[next].isLetter || s[next].isNumber {
+        // b_0, and b′_0, a name with a prime and then its subscript.
+        if s[i] == "_", let before = current.last(where: { $0 != "′" }), before.isLetter, next < s.endIndex, s[next].isASCII, s[next].isLetter || s[next].isNumber {
             let digits = s[next].isNumber
             var j = next
             while j < s.endIndex, s[j].isASCII, digits ? s[j].isNumber : s[j].isLetter { j = s.index(after: j) }

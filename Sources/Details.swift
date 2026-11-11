@@ -19,8 +19,13 @@ struct Details {
     var roots: [Double]         // the solutions listed, to mark on the plot
     var graph: Graph? = nil      // none for a value worked out, which has nothing to plot
     var whole: String? = nil     // what copying any line of the solutions gives, where they are one value over several lines
+    var title: String? = nil     // the heading of the solutions where they are not solutions: a curve's Features
+    var truthTable: TruthTable? = nil       // a logic circuit's every row
+    var circuit: CircuitLayout? = nil       // and its gates, drawn
+    var probe: CircuitProbe? = nil          // the row they are both looking at
     var chromaticity: Chromaticity? = nil   // a colour's place on the CIE 1931 diagram, drawn in place of the graph
     var diagram: AstroDiagram? = nil        // an orbit, a star on the H–R diagram, a black hole, a spectrum, drawn above the graph
+    var astronomyWorking: AstronomyWorking? = nil
 
     struct Presentation {
         var steps: [Step]
@@ -44,7 +49,7 @@ struct Details {
                 note = last.note
             }
         }
-        return Presentation(steps: visible, solutionTitle: title, solutionNote: note)
+        return Presentation(steps: visible, solutionTitle: self.title ?? title, solutionNote: note)
     }
 }
 
@@ -56,6 +61,7 @@ struct Graph {
             case function((Double) -> Double)   // y as a function of x
             case vertical(Double)               // x = a constant
             case implicit((Double, Double) -> Double)   // where g(x, y) = 0: a circle, say
+            case samples([CGPoint])             // measured or computed points joined in order: a light curve, an orbit
         }
         var shape: Shape
         var label: Math
@@ -67,6 +73,10 @@ struct Graph {
     // The window to open on, where the curve's own scale would leave the point lost: an orbit
     // measured in astronomical units against years, a spectrum in nanometres.
     var frame: (x: ClosedRange<Double>, y: ClosedRange<Double>)? = nil
+    // Axis titles with their units, where the axes are quantities: Time / days, Relative flux.
+    var titles: (x: String, y: String)? = nil
+    // A unit across as long as a unit up, however the points lie: an orbit stays round.
+    var equalScale = false
 }
 
 extension Expr {
@@ -222,7 +232,7 @@ func evaluationDetails(_ ev: Evaluation) -> Details {
     }
     // Where nothing was left to do on paper, what the value is, or why there is none.
     if d.steps.isEmpty, let line = ev.solution {
-        if ["Undefined", "Too large", "Too small"].contains(line.exact) {
+        if ["Undefined", "Too large", "Too small", "Too much to work out"].contains(line.exact) {
             d.steps.append(Step(label: line.exact == "Undefined" ? "Why there is no value" : "Why it is not shown", math: nil, note: line.approx))
         } else if !ev.value.isFinite {
             d.steps.append(Step(label: "Using i² = −1", math: t(line.exact), note: line.approx))
@@ -415,6 +425,30 @@ func polynomialDetails(_ p: Poly, _ n: String, _ header: Math, _ f: @escaping (D
         // A linear equation is rearranged straight away, as on paper: 3.4641v = 10.2.
         if standard.plain != header.plain, p.count > 2 {
             d.steps += original.map { Working.standardForm($0, target: p) } ?? [Step(label: "Writing in standard form", math: standard)]
+        }
+        // axⁿ + c = 0, a power and a number only: xⁿ by itself, then its nth root, as x² is square-rooted.
+        let degree = p.count - 1
+        if p.count > 3, p.dropFirst().dropLast().allSatisfy({ $0 == 0 }) {
+            let value = -p[0] / p[degree]
+            let power = Math.power(t(n), t("\(degree)"))
+            d.steps.append(Step(label: "Isolating " + power.plain, math: row(power, t(" = "), closedForm(value))))
+            let even = degree % 2 == 0
+            if even && value < 0 {
+                d.steps.append(Step(label: "Hence", math: row(power, t(" < 0")), note: "An even power of a real number is never negative, so there is no real solution."))
+                d.solutions = [t("No real solutions")]
+                return d
+            }
+            let root = (value < 0 ? -1.0 : 1.0) * pow(abs(value), 1 / Double(degree))
+            let ordinal = [3: "cube", 4: "fourth", 5: "fifth", 6: "sixth"][degree] ?? "\(degree)th"
+            // ≈ where the root is only rounded, 1.25992 for ∛2.
+            let exactly = !closedForm(abs(root)).plain.contains(".")
+            let relation = exactly ? " = " : " ≈ "
+            let shown = even && root != 0 ? row(t("\(n)\(relation)±"), closedForm(abs(root))) : row(t("\(n)\(relation)"), closedForm(root))
+            d.steps.append(Step(label: "Taking the \(ordinal) root", math: shown,
+                                note: even ? "An even power has two real roots, equal and opposite." : nil))
+            d.roots = even && root != 0 ? [-abs(root), abs(root)] : [root]
+            d.solutions = d.roots.map { row(t("\(n)\(relation)"), closedForm($0)) }
+            return d
         }
         if p.count <= 3 {
             d.steps += decimalSteps(p, n)

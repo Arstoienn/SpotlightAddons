@@ -397,11 +397,23 @@ struct AstronomyCatalogue: Catalogue {
 
     // The bodies that fit, then, once a number is typed, that number with each unit that fits.
     func candidates(for parameter: Completion.Parameter, typed: String) -> [Completion.Item] {
+        // One of a few words: those words, and nothing else (no body is a property or a frame). A word
+        // that is not a name, as 220 is not, is quoted, so that it is read as written; an object, such
+        // as a model given by its coefficient, is written as it is.
+        if !parameter.choices.isEmpty {
+            let what = parameter.name.replacingOccurrences(of: "_", with: " ")
+            let usual = AstronomyEngine.methods.lazy.flatMap(\.parameters).first { $0.name == parameter.name && $0.choices == parameter.choices }?.default
+            return parameter.choices.map { word in
+                let bare = word.hasPrefix("{") || word.range(of: "^[A-Za-z_][A-Za-z_0-9]*$", options: .regularExpression) != nil
+                return Completion.Item(title: word, detail: what.prefix(1).uppercased() + what.dropFirst() + (word == usual ? " · default" : ""),
+                                       insertion: bare ? word : "\"" + word + "\"", keys: [word.replacingOccurrences(of: "_", with: " ")])
+            }
+        }
         let units: [String: [String]] = [
             "speed": ["m/s", "km/s", "c"], "time": ["s", "day", "yr", "Myr", "Gyr"],
             "angle": ["deg", "rad", "arcsec", "mas"], "frequency": ["Hz", "kHz", "MHz", "GHz", "THz"],
             "length": ["m", "km", "mm", "um", "AU", "pc"], "density": ["kg/m3", "g/cm3"],
-            "acceleration": ["m/s2"], "force": ["N"], "mass_flow": ["kg/s", "M_sun/yr"]
+            "acceleration": ["m/s2"], "force": ["N"], "mass_flow": ["kg/s", "M_sun/yr"], "opacity": ["m2/kg", "cm2/g"]
         ]
         if let choices = units[parameter.kind],
            let range = typed.range(of: "^[-+−]?(?:[0-9]+(?:\\.[0-9]*)?|\\.[0-9]+)(?:[eE][-+]?[0-9]+)?", options: .regularExpression) {
@@ -422,9 +434,6 @@ struct AstronomyCatalogue: Catalogue {
             if !snippets.contains(where: { $0.insertion == value }), !value.contains("=") {
                 snippets.append(Completion.Item(title: value, detail: "Example · " + method.name, insertion: value))
             }
-        }
-        if parameter.kind == "cosmology_model" {
-            snippets += ["Planck18", "Planck15", "WMAP9"].map { Completion.Item(title: $0, detail: "Cosmology model", insertion: "\"" + $0 + "\"") }
         }
         let kind = Kind.of(parameter.kind)
         var items = Body.all.compactMap { body -> Completion.Item? in
@@ -479,15 +488,6 @@ struct AstronomyCatalogue: Catalogue {
         Entry(function: Completion.Function(name: "orbital_period", forms: [[p("body", "satellite")], [p("a", "orbit"), p("M", "central")]],
                                             summary: "Kepler’s third law, T² = 4π²a³/GM", aliases: ["kepler", "period", "year_length"]),
               work: Worked.period),
-        Entry(function: Completion.Function(name: "orbital_speed", forms: [[p("body", "satellite")], [p("a", "orbit"), p("M", "central")]],
-                                            summary: "Speed in a circular orbit, v = √(GM/a)", aliases: ["orbital_velocity", "circular_speed"]),
-              work: Worked.speed),
-        Entry(function: Completion.Function(name: "hill_radius", forms: [[p("body", "satellite")], [p("a", "orbit"), p("m", "mass"), p("M", "central")]],
-                                            summary: "Hill sphere, r_H ≈ a ∛(m/3M)", aliases: ["hill_sphere"]),
-              work: Worked.hill),
-        Entry(function: Completion.Function(name: "roche_limit", forms: [[p("body", "satellite")], [p("primary", "body"), p("satellite", "body")]],
-                                            summary: "Roche limit of a rigid satellite, d = R ∛(2ρ_M/ρ_m)", aliases: ["roche"]),
-              work: Worked.roche),
         Entry(function: Completion.Function(name: "luminosity", forms: [[p("body", "star")], [p("R", "radius"), p("T", "temperature")]],
                                             summary: "Stefan–Boltzmann law, L = σ4πR²T⁴", aliases: ["stefan_boltzmann", "power"]),
               work: Worked.luminosity),
@@ -503,12 +503,6 @@ struct AstronomyCatalogue: Catalogue {
         Entry(function: Completion.Function(name: "apparent_magnitude", forms: [[p("M", "absolute"), p("d", "distance")]],
                                             summary: "m = M + 5 log₁₀(d/10 pc)", aliases: ["app_mag", "magnitude"]),
               work: Worked.apparent),
-        Entry(function: Completion.Function(name: "apparent_brightness", forms: [[p("body", "luminous")], [p("L", "luminosity"), p("d", "distance")]],
-                                            summary: "Inverse-square law, b = L/4πd²", aliases: ["brightness", "flux", "intensity"]),
-              work: Worked.brightness),
-        Entry(function: Completion.Function(name: "redshift_velocity", forms: [[p("z", "redshift")], [p("λ", "wavelength"), p("λ0", "wavelength")]],
-                                            summary: "Recession speed, v ≈ cz with z = Δλ/λ₀", aliases: ["redshift", "doppler", "recession"]),
-              work: Worked.redshift),
     ]
 }
 
@@ -762,74 +756,6 @@ struct Worked {
         return w
     }
 
-    static func speed(_ form: Int, _ a: [Argument]) throws -> Worked {
-        let (r, M, what) = try orbit(form, a)
-        let v = (G.value * M.value / r.value).squareRoot()
-        var w = Worked(title: "Orbital speed of \(what)", symbol: "v", value: v, unit: "m s⁻¹", dimension: .speed, given: [r, M],
-                       sources: sources([r, M]), formula: row(t("v = "), .root(.fraction(t("GM"), t("a")))),
-                       substituted: row(t("v = "), .root(.fraction(t("\(G.text) × \(M.bare)"), t(r.bare)))))
-        let x = Plotting.length(r.value)
-        let gm = G.value * M.value
-        w.graph = Plotting.graph(x: x.name, y: "km s⁻¹", label: "v in km s⁻¹ against a in \(x.name)",
-                                 f: { u in u > 0 ? (gm / (u * x.factor)).squareRoot() / 1e3 : .nan },
-                                 point: (r.value / x.factor, v / 1e3), xMax: 3 * r.value / x.factor, yMax: 2.4 * v / 1e3)
-        w.diagram = picture(form, a, r, M)
-        return w
-    }
-
-    static func hill(_ form: Int, _ a: [Argument]) throws -> Worked {
-        let r: Datum, m: Datum, M: Datum, what: String
-        if form == 0 {
-            guard let body = a[0].body, let o = body.orbit, let primary = body.primary else { throw Problem(message: "Not in orbit", detail: "Give a, m and M") }
-            r = Datum(symbol: "a", value: o.a, unit: "m", from: "the radius of \(body.possessive) orbit")
-            m = Datum(symbol: "m", value: body.mass, unit: "kg", from: "\(body.possessive) mass")
-            M = Datum(symbol: "M", value: primary.mass, unit: "kg", from: "\(primary.possessive) mass")
-            what = body.name
-        } else {
-            r = given(a[0], "orbit", "a", "m", word: "orbital radius")
-            m = given(a[1], "mass", "m", "kg", word: "mass")
-            M = given(a[2], "central", "M", "kg", word: "mass")
-            what = "a body of mass \(m.from ?? m.shown)"
-        }
-        guard m.value < M.value else { throw Problem(message: "The satellite is the heavier", detail: "m must be much less than M") }
-        let rH = r.value * pow(m.value / (3 * M.value), 1.0 / 3)
-        var w = Worked(title: "Hill radius of \(what)", symbol: "r_H", value: rH, unit: "m", dimension: .length, given: [r, m, M],
-                       sources: sources([r, m, M]), formula: row(t("r_H ≈ a"), .radical(.fraction(t("m"), t("3M")), index: t("3"))),
-                       substituted: row(t("r_H ≈ \(r.bare) × "),
-                                        .radical(.fraction(t(m.bare), t("3 × \(M.bare)")), index: t("3"))))
-        w.note = "Within this distance the body’s own gravity holds a moon against the pull of what it orbits."
-        w.diagram = picture(form, form == 0 ? a : [a[0], a[2]], r, M, hill: rH)
-        return w
-    }
-
-    static func roche(_ form: Int, _ a: [Argument]) throws -> Worked {
-        let primary: Body, satellite: Body
-        if form == 0 {
-            guard let s = a[0].body, let p = s.primary else { throw Problem(message: "Not in orbit", detail: "Give the primary and the satellite") }
-            (primary, satellite) = (p, s)
-        } else {
-            guard let p = a[0].body, let s = a[1].body else { throw Problem(message: "Two bodies are wanted", detail: "roche_limit(earth, moon)") }
-            (primary, satellite) = (p, s)
-        }
-        guard let R = primary.radius, let rhoM = primary.density, let rhoS = satellite.density else {
-            throw Problem(message: "No radius for \(primary.name)", detail: "The Roche limit needs both densities")
-        }
-        let d = R * pow(2 * rhoM / rhoS, 1.0 / 3)
-        let RG = Datum(symbol: "R", value: R, unit: "m", from: "\(primary.possessive) radius")
-        var w = Worked(title: "Roche limit of \(satellite.name) round \(primary.name)", symbol: "d", value: d, unit: "m", dimension: .length,
-                       given: [RG], sources: sources([RG]),
-                       formula: row(t("d = R"), .radical(.fraction(t("2ρ_M"), t("ρ_m")), index: t("3"))),
-                       substituted: row(t("d = \(n(R)) × "), .radical(.fraction(t("2 × \(n(rhoM))"), t(n(rhoS))), index: t("3"))))
-        w.extra = [Step(label: "Finding the densities", math: t("ρ_M = \(n(rhoM)) kg m⁻³,  ρ_m = \(n(rhoS)) kg m⁻³"),
-                        note: "Each is the mass over the volume of a sphere, ρ = M/(4/3 πR³), for \(primary.name) and \(satellite.name).")]
-        if let o = satellite.orbit, o.around == primary.id {
-            w.after.append(Step(label: "Comparing it with the orbit", math: t("a/d = \(n(o.a / d))"),
-                                note: "\(satellite.title) orbits at \(n(o.a)) m, well outside the limit."))
-        }
-        w.note = "For a rigid satellite. A fluid one is pulled apart further out, at about 2.44 R ∛(ρ_M/ρ_m)."
-        return w
-    }
-
     static func luminosity(_ form: Int, _ a: [Argument]) throws -> Worked {
         let R = given(a[0], "radius", "R", "m", word: "radius")
         let T = given(a[form == 0 ? 0 : 1], "temperature", "T", "K", word: "surface temperature")
@@ -919,56 +845,6 @@ struct Worked {
         w.copyValue = (m * 100).rounded() / 100
         return w
     }
-
-    static func brightness(_ form: Int, _ a: [Argument]) throws -> Worked {
-        let L = given(a[0], "luminosity", "L", "W", word: "luminosity")
-        let d = given(a[form == 0 ? 0 : 1], "distance", "d", "m", word: "distance from the Earth")
-        let b = L.value / (4 * Double.pi * d.value * d.value)
-        var w = Worked(title: title("Apparent brightness", a, [L, d]), symbol: "b", value: b, unit: "W m⁻²", dimension: .none, given: [L, d],
-                       sources: sources([L, d]), formula: row(t("b = "), .fraction(t("L"), row(t("4π"), power("d", "2")))),
-                       substituted: row(t("b = "), .fraction(t(L.bare), row(t("4π × "), .power(bracketed(d.bare), t("2"))))))
-        if a[0].body?.id == "sun" { w.note = "This is the solar constant, the power arriving on each square metre above the atmosphere." }
-        w.diagram = form == 0 ? hr(a) : nil
-        return w
-    }
-
-    static func redshift(_ form: Int, _ a: [Argument]) throws -> Worked {
-        var given: [Datum] = [], extra: [Step] = []
-        let z: Double
-        if form == 0 {
-            guard case .value(let v, let w) = a[0] else { throw Problem(message: "A redshift is a number", detail: "z") }
-            z = v
-            given = [Datum(symbol: "z", value: v, unit: "", from: w, written: w)]
-        } else {
-            guard case .value(let l, let lw) = a[0], case .value(let l0, let l0w) = a[1], l0 > 0 else { throw Problem(message: "Two wavelengths are wanted", detail: "observed, then at rest") }
-            z = (l - l0) / l0
-            given = [Datum(symbol: "λ", value: l, unit: "m", from: lw), Datum(symbol: "λ₀", value: l0, unit: "m", from: l0w)]
-            extra = [Step(label: "Finding the redshift", math: row(t("z = "), .fraction(t("Δλ"), t("λ₀")), t(" = "),
-                                                                    .fraction(t("\(n(l)) − \(n(l0))"), t(n(l0))), t(" = \(Format.number(z))")))]
-        }
-        let v = c.value * z
-        var w = Worked(title: z < 0 ? "Approach speed for a blueshift of \(Format.number(-z))" : "Recession speed for z = \(form == 0 ? given[0].bare : Format.number(z))",
-                       symbol: "v", value: v, unit: "m s⁻¹", dimension: .speed, given: given, sources: nil,
-                       formula: row(t("v ≈ cz")), substituted: row(t("v ≈ \(c.text) × \(Format.number(z))")))
-        w.extra = extra
-        if abs(z) > 0.1 {
-            w.note = "z = v/c holds only for speeds much less than that of light; at z = \(Format.number(z)) it is no longer a good approximation."
-        } else if z < 0 {
-            w.note = "A negative z is a blueshift: the source is coming nearer."
-        }
-        var lines = SpectrumPicture.hydrogen
-        var marked: Int?
-        if form == 1, case .value(let l0, _) = a[1] {
-            // The line given, among the usual ones where it is one of them, and otherwise added.
-            let nm = l0 / 1e-9
-            if let i = lines.firstIndex(where: { abs($0.rest - nm) < 2 }) { marked = i } else {
-                lines.append(SpectrumPicture.Line(name: "λ₀", rest: nm))
-                marked = lines.count - 1
-            }
-        }
-        w.diagram = .spectrum(SpectrumPicture(z: z, lines: lines, marked: marked))
-        return w
-    }
 }
 
 // MARK: - Diagrams
@@ -980,6 +856,12 @@ enum AstroDiagram {
     case blackHole(BlackHolePicture)
     case spectrum(SpectrumPicture)
     case scientific(AstronomyPicture)
+
+    var hasVisual: Bool {
+        guard case .scientific(let picture) = self else { return true }
+        let kind = picture.data["kind"] as? String ?? "panel"
+        return picture.series != nil || kind != "panel"
+    }
 
     var title: String {
         switch self {

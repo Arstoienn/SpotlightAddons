@@ -4,7 +4,8 @@ import Foundation
 // a coin or a metal said in another. The rates are fetched as they stand, in the background, each
 // against the US dollar: currencies from open.er-api.com (once a day), coins from api.coinbase.com
 // (and those it does not have, such as Monero, from api.kraken.com) and metals from api.gold-api.com
-// (as they trade). The card is answered from the last that were
+// (as they trade). Where Coinbase cannot be reached, as where a network blocks it, its coins are had
+// from Kraken instead, all but the few Kraken does not list. The card is answered from the last that were
 // had, and made again when fresh ones arrive. With no connection the last rates recorded are used,
 // and the card says when they were recorded: that is said only then.
 enum Rates {
@@ -53,6 +54,8 @@ enum Rates {
     private static var lastTry: [Group: Date] = [:]
     private static var fetching: Set<Group> = []
     private static var errors: [Group: String] = [:]
+    // The groups last had from Kraken in Coinbase's place.
+    private static var standingIn: Set<Group> = []
     static var isRefreshing: Bool { !fetching.isEmpty }
     // Injectable transport and storage let the retry path be checked without real requests or
     // overwriting anyone's saved rates.
@@ -87,9 +90,12 @@ enum Rates {
     static func state(_ g: Group) -> (recorded: Date?, offline: Bool, updating: Bool, error: String?) {
         (saved?.recorded[g.rawValue].map { Date(timeIntervalSince1970: $0) }, failed.contains(g), fetching.contains(g), errors[g])
     }
+    // Where this group's rates came from the last time they were had: Kraken, where it stood in for Coinbase.
+    static func source(_ g: Group) -> String { standingIn.contains(g) ? Group.moreCrypto.source : g.source }
+    static func title(_ g: Group) -> String { standingIn.contains(g) ? "Cryptocurrency (Kraken, in place of Coinbase)" : g.title }
     static func sources(_ codes: [String]) -> [String] {
         var out: [String] = []
-        for code in codes { let s = group(of: code).source; if !out.contains(s) { out.append(s) } }
+        for code in codes { let s = source(group(of: code)); if !out.contains(s) { out.append(s) } }
         return out
     }
 
@@ -99,9 +105,9 @@ enum Rates {
         let stamp = recorded.timeIntervalSince1970
         saved = Saved(recorded: Dictionary(uniqueKeysWithValues: Group.allCases.map { ($0.rawValue, stamp) }), perDollar: perDollar)
         failed = offline ? Set(Group.allCases) : []
-        lastTry = [:]; errors = [:]; fetching = []
+        lastTry = [:]; errors = [:]; fetching = []; standingIn = []
     }
-    static func installNothing(offline: Bool) { fixed = true; saved = nil; failed = offline ? Set(Group.allCases) : []; lastTry = [:]; errors = [:]; fetching = [] }
+    static func installNothing(offline: Bool) { fixed = true; saved = nil; failed = offline ? Set(Group.allCases) : []; lastTry = [:]; errors = [:]; fetching = []; standingIn = [] }
 
     // How long before a group is asked for again. The currencies come from a source that has them
     // once a day and asks to be asked no oftener than once an hour (a request too soon is refused for
@@ -126,15 +132,24 @@ enum Rates {
         let lock = NSLock(), done = DispatchGroup()
         var got: [Group: [String: Double]] = [:]
         var problems: [Group: String] = [:]
+        var stoodIn: Set<Group> = []
 
-        func ask(_ address: String, _ then: @escaping (Any) -> [String: Double]?, group: Group) {
+        // otherwise: asked for in its place where this source fails, for the same group, before it is
+        // counted as failed. Each reason is said with its source, so that both are told where both fail.
+        func ask(_ address: String, _ then: @escaping (Any) -> [String: Double]?, group: Group, otherwise: (() -> Void)? = nil) {
             guard let url = URL(string: address) else { return }
             var request = URLRequest(url: url, timeoutInterval: 6)
             request.cachePolicy = .reloadIgnoringLocalCacheData
             done.enter()
             transport(request) { data, response, error in
                 defer { done.leave() }
-                func failed(_ reason: String) { lock.lock(); problems[group] = reason; lock.unlock() }
+                func failed(_ reason: String) {
+                    lock.lock()
+                    let said = (url.host ?? address) + ": " + reason
+                    problems[group] = problems[group].map { $0 + "\n" + said } ?? said
+                    lock.unlock()
+                    otherwise?()
+                }
                 if let error { failed(error.localizedDescription); return }
                 guard let status = (response as? HTTPURLResponse)?.statusCode else { failed("The source did not return a valid response."); return }
                 guard status == 200 else { failed(status == 429 ? "The source is limiting requests. Try again later." : "The source returned HTTP \(status)."); return }
@@ -146,6 +161,18 @@ enum Rates {
             guard let o = object as? [String: Any], o["result"] as? String == "success", let r = o["rates"] as? [String: Double], r["USD"] == 1 else { return nil }
             return r
         }, group: .fiat) }
+        // Kraken gives each pair's last trade, the price of one coin in dollars.
+        func krakenAddress(_ pairs: [String: String]) -> String { "https://api.kraken.com/0/public/Ticker?pair=" + pairs.values.sorted().joined(separator: ",") }
+        func krakenRates(_ pairs: [String: String]) -> (Any) -> [String: Double]? {
+            { object in
+                guard let r = (object as? [String: Any])?["result"] as? [String: Any] else { return nil }
+                let found = pairs.compactMap { code, pair -> (String, Double)? in
+                    guard let last = ((r[pair] as? [String: Any])?["c"] as? [String])?.first, let price = Double(last), price > 0 else { return nil }
+                    return (code, 1 / price)
+                }
+                return found.isEmpty ? nil : Dictionary(uniqueKeysWithValues: found)
+            }
+        }
         if due.contains(.crypto) { ask("https://api.coinbase.com/v2/exchange-rates?currency=USD", { object in
             guard let o = (object as? [String: Any])?["data"] as? [String: Any], let r = o["rates"] as? [String: String] else { return nil }
             let found = r.compactMap { key, value -> (String, Double)? in
@@ -153,16 +180,14 @@ enum Rates {
                 return (key, v)
             }
             return found.isEmpty ? nil : Dictionary(uniqueKeysWithValues: found)
-        }, group: .crypto) }
-        // Kraken gives each pair's last trade, the price of one coin in dollars.
-        if due.contains(.moreCrypto) { ask("https://api.kraken.com/0/public/Ticker?pair=" + Currency.kraken.values.sorted().joined(separator: ","), { object in
-            guard let r = (object as? [String: Any])?["result"] as? [String: Any] else { return nil }
-            let found = Currency.kraken.compactMap { code, pair -> (String, Double)? in
-                guard let last = ((r[pair] as? [String: Any])?["c"] as? [String])?.first, let price = Double(last), price > 0 else { return nil }
-                return (code, 1 / price)
-            }
-            return found.isEmpty ? nil : Dictionary(uniqueKeysWithValues: found)
-        }, group: .moreCrypto) }
+        }, group: .crypto, otherwise: {
+            ask(krakenAddress(Currency.krakenStandIn), { object in
+                let rates = krakenRates(Currency.krakenStandIn)(object)
+                if rates != nil { lock.lock(); stoodIn.insert(.crypto); lock.unlock() }
+                return rates
+            }, group: .crypto)
+        }) }
+        if due.contains(.moreCrypto) { ask(krakenAddress(Currency.kraken), krakenRates(Currency.kraken), group: .moreCrypto) }
         for metal in Currency.metals.sorted() where due.contains(.metals) {
             ask("https://api.gold-api.com/price/\(metal)", { object in
                 guard let o = object as? [String: Any], let price = o["price"] as? Double, price > 0 else { return nil }
@@ -180,6 +205,13 @@ enum Rates {
                     next.recorded[g.rawValue] = Date().timeIntervalSince1970
                     failed.remove(g)
                     errors[g] = nil
+                    if stoodIn.contains(g) {
+                        standingIn.insert(g)
+                        // What Kraken does not list is not given an old Coinbase price as if it were today's.
+                        for code in Currency.coins where Currency.kraken[code] == nil && rates[code] == nil { next.perDollar[code] = nil }
+                    } else {
+                        standingIn.remove(g)
+                    }
                 } else {
                     failed.insert(g)
                     errors[g] = problems[g] ?? "The source returned incomplete rates."
@@ -221,6 +253,28 @@ enum Currency {
         "XMR": "XXMRZUSD", "TRX": "TRXUSD", "OKB": "OKBUSD", "BGB": "BGBUSD", "KAS": "KASUSD", "NEXO": "NEXOUSD", "XDC": "XDCUSD",
         "DCR": "DCRUSD", "CFX": "CFXUSD", "BTT": "BTTUSD", "JST": "JSTUSD", "AR": "ARUSD", "USDE": "USDEUSD", "RLUSD": "RLUSDUSD",
         "XAUT": "XAUTUSD"]
+    // The coins Coinbase prices, by the name Kraken gives their pair with the US dollar, for where
+    // Coinbase cannot be reached. BSV, EOS, IOTX, MATIC, MKR and ZEN are not listed by Kraken.
+    static let krakenStandIn: [String: String] = [
+        "AAVE": "AAVEUSD", "ADA": "ADAUSD", "AERO": "AEROUSD", "AKT": "AKTUSD", "ALGO": "ALGOUSD", "ANKR": "ANKRUSD",
+        "APE": "APEUSD", "APT": "APTUSD", "ARB": "ARBUSD", "ATOM": "ATOMUSD", "AVAX": "AVAXUSD", "AXS": "AXSUSD",
+        "BAL": "BALUSD", "BAND": "BANDUSD", "BAT": "BATUSD", "BCH": "BCHUSD", "BNB": "BNBUSD", "BONK": "BONKUSD",
+        "BTC": "XXBTZUSD", "CAKE": "CAKEUSD", "CHZ": "CHZUSD", "COMP": "COMPUSD", "CRO": "CROUSD", "CRV": "CRVUSD",
+        "CVX": "CVXUSD", "DAI": "DAIUSD", "DASH": "DASHUSD", "DOGE": "XDGUSD", "DOT": "DOTUSD", "EGLD": "EGLDUSD",
+        "EIGEN": "EIGENUSD", "ENA": "ENAUSD", "ENJ": "ENJUSD", "ENS": "ENSUSD", "ETC": "XETCZUSD", "ETH": "XETHZUSD",
+        "ETHFI": "ETHFIUSD", "EURC": "EURCUSD", "FET": "FETUSD", "FIL": "FILUSD", "FLOKI": "FLOKIUSD", "FLR": "FLRUSD",
+        "GALA": "GALAUSD", "GNO": "GNOUSD", "GRT": "GRTUSD", "HBAR": "HBARUSD", "HNT": "HNTUSD", "HYPE": "HYPEUSD",
+        "ICP": "ICPUSD", "IMX": "IMXUSD", "INJ": "INJUSD", "JASMY": "JASMYUSD", "JTO": "JTOUSD", "JUP": "JUPUSD",
+        "KAVA": "KAVAUSD", "KSM": "KSMUSD", "LDO": "LDOUSD", "LINK": "LINKUSD", "LPT": "LPTUSD", "LRC": "LRCUSD",
+        "LTC": "XLTCZUSD", "MANA": "MANAUSD", "MINA": "MINAUSD", "MORPHO": "MORPHOUSD", "NEAR": "NEARUSD", "ONDO": "ONDOUSD",
+        "OP": "OPUSD", "PAXG": "PAXGUSD", "PENDLE": "PENDLEUSD", "PENGU": "PENGUUSD", "PEPE": "PEPEUSD", "POL": "POLUSD",
+        "PYTH": "PYTHUSD", "PYUSD": "PYUSDUSD", "QNT": "QNTUSD", "RENDER": "RENDERUSD", "RPL": "RPLUSD", "RUNE": "RUNEUSD",
+        "SAND": "SANDUSD", "SEI": "SEIUSD", "SHIB": "SHIBUSD", "SKY": "SKYUSD", "SNX": "SNXUSD", "SOL": "SOLUSD",
+        "STORJ": "STORJUSD", "STRK": "STRKUSD", "STX": "STXUSD", "SUI": "SUIUSD", "SUSHI": "SUSHIUSD", "TAO": "TAOUSD",
+        "TIA": "TIAUSD", "TRUMP": "TRUMPUSD", "UNI": "UNIUSD", "USDC": "USDCUSD", "USDS": "USDSUSD", "USDT": "USDTZUSD",
+        "VET": "VETUSD", "WBTC": "WBTCUSD", "WIF": "WIFUSD", "WLD": "WLDUSD", "WLFI": "WLFIUSD", "XLM": "XXLMZUSD",
+        "XRP": "XXRPZUSD", "XTZ": "XTZUSD", "YFI": "YFIUSD", "ZEC": "XZECZUSD", "ZRO": "ZROUSD"
+    ]
     static let metals: Set<String> = ["XAU", "XAG", "XPT", "XPD"]
 
     // And what else a currency is called: a symbol, or a name that is only its own.
@@ -447,7 +501,7 @@ enum Currency {
             let missing = Rates.table?[from] == nil ? from : to
             let (exact, why) = Rates.pending(missing) ? ("Fetching the rates", "One moment: the card is made again when they arrive.")
                 : Rates.refused(missing) ? ("No rates saved", "There is no connection, and no rates for \(missing) have yet been saved.")
-                : ("No rate", "\(Rates.group(of: missing).source) has no rate for \(missing).")
+                : ("No rate", "\(Rates.source(Rates.group(of: missing))) has no rate for \(missing).")
             let d = Details(name: "", equation: equation, steps: [Step(label: "Why there is no value", math: nil, note: why)], solutions: [t(exact), t(why)], note: nil, f: { _ in .nan }, roots: [])
             var c = Conversion(value: .nan, text: exact, approx: why, details: d)
             c.copy = ""

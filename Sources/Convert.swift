@@ -378,11 +378,133 @@ enum Units {
             if let from = temperature(tail), let to = temperature(target) {
                 return built(amount, expr, from: (tail, from.toKelvin), to: (target, to.fromKelvin), fromName: from.name, toName: to.name, text: text, temperature: true)
             }
-            guard let from = unit(tail), let to = unit(target), from.kind == to.kind else { continue }
-            return built(amount, expr, from: (tail, { $0 * from.factor }), to: (target, { $0 / to.factor }), fromName: tail.trimmingCharacters(in: .whitespaces),
-                         toName: target, text: text, temperature: false, factors: (from.factor, to.factor))
+            if let from = unit(tail), let to = unit(target), from.kind == to.kind {
+                return built(amount, expr, from: (tail, { $0 * from.factor }), to: (target, { $0 / to.factor }), fromName: tail.trimmingCharacters(in: .whitespaces),
+                             toName: target, text: text, temperature: false, factors: (from.factor, to.factor))
+            }
+            // Units made of others: 17 cm s⁻¹ to m s⁻¹, 9.8 m/s² to cm s^-2, 1000 kg m^-3 to g/cm3.
+            guard let (from, to) = compound(tail, target) else { continue }
+            // Written as typed where it was typed with a slash (cm/s), and with its powers raised where they were typed in a line (cms^-1, cm s⁻¹).
+            func written(_ typed: String, _ r: Reading) -> String { typed.contains("/") ? typed.trimmingCharacters(in: .whitespaces) : r.name }
+            return built(amount, expr, from: (tail, { $0 * from.factor }), to: (target, { $0 / to.factor }), fromName: written(tail, from),
+                         toName: written(target, to), text: text, temperature: false, factors: (from.factor, to.factor))
         }
         return nil
+    }
+
+    // MARK: Units made of others
+
+    // A unit's dimensions: the powers of length, mass, time, angle and data it is made of.
+    struct Dimension: Equatable {
+        var l = 0, m = 0, t = 0, a = 0, d = 0
+        static func + (x: Dimension, y: Dimension) -> Dimension { Dimension(l: x.l + y.l, m: x.m + y.m, t: x.t + y.t, a: x.a + y.a, d: x.d + y.d) }
+        static func * (x: Dimension, k: Int) -> Dimension { Dimension(l: x.l * k, m: x.m * k, t: x.t * k, a: x.a * k, d: x.d * k) }
+        var isNone: Bool { self == Dimension() }
+    }
+
+    // Each kind's dimensions, and how many SI units its base is: a litre is a thousandth of a cubic metre.
+    private static func dimension(_ kind: Kind) -> (Dimension, Double)? {
+        switch kind {
+        case .length: return (Dimension(l: 1), 1)
+        case .mass: return (Dimension(m: 1), 1)
+        case .time: return (Dimension(t: 1), 1)
+        case .volume: return (Dimension(l: 3), 1e-3)
+        case .area: return (Dimension(l: 2), 1)
+        case .speed: return (Dimension(l: 1, t: -1), 1)
+        case .force: return (Dimension(l: 1, m: 1, t: -2), 1)
+        case .energy: return (Dimension(l: 2, m: 1, t: -2), 1)
+        case .power: return (Dimension(l: 2, m: 1, t: -3), 1)
+        case .pressure: return (Dimension(l: -1, m: 1, t: -2), 1)
+        case .frequency: return (Dimension(t: -1), 1)
+        case .angle: return (Dimension(a: 1), 1)
+        case .data: return (Dimension(d: 1), 1)
+        case .temperature: return nil
+        }
+    }
+
+    // One way of reading a unit made of others: how many SI units it is, its dimensions, how it is written
+    // (cm s⁻¹), and how many units it was read as.
+    struct Reading { var factor: Double; var dimension: Dimension; var name: String; var pieces: Int }
+
+    // Every way of reading what was typed as units multiplied and divided, each with a power: cm/s, cm s^-1,
+    // cms⁻¹, kg m^-3, m/s². Letters run together are split into units every way they can be, ms⁻¹ as
+    // metres per second and as per millisecond; which is meant is settled by the other side.
+    static func readings(_ typed: String) -> [Reading] {
+        var text = typed.trimmingCharacters(in: .whitespaces)
+        let raised: [Character: Character] = ["⁰": "0", "¹": "1", "²": "2", "³": "3", "⁴": "4", "⁵": "5", "⁶": "6", "⁷": "7", "⁸": "8", "⁹": "9", "⁻": "-"]
+        var plain = ""
+        var inPower = false
+        for c in text {
+            if let d = raised[c] { if !inPower { plain.append("^"); inPower = true }; plain.append(d) } else { inPower = false; plain.append(c) }
+        }
+        text = plain.replacingOccurrences(of: "·", with: " ").replacingOccurrences(of: "*", with: " ").replacingOccurrences(of: " per ", with: "/")
+        let parts = text.split(separator: "/", omittingEmptySubsequences: false).map(String.init)
+        guard parts.count <= 3, !parts.contains(where: { $0.trimmingCharacters(in: .whitespaces).isEmpty }) else { return [] }
+        var chunks: [(letters: String, power: Int)] = []
+        for (k, part) in parts.enumerated() {
+            for chunk in part.split(separator: " ") {
+                let piece = String(chunk) as NSString
+                guard let m = chunkPattern.firstMatch(in: piece as String, range: NSRange(location: 0, length: piece.length)),
+                      m.range.length == piece.length else { return [] }
+                let power = m.range(at: 2).location == NSNotFound ? 1 : Int(piece.substring(with: m.range(at: 2))) ?? 1
+                chunks.append((piece.substring(with: m.range(at: 1)), power * (k == 0 ? 1 : -1)))
+            }
+        }
+        guard !chunks.isEmpty, chunks.count <= 6 else { return [] }
+        // Each run of letters split into units every way it can be; its power belongs to the last.
+        func splits(_ s: String) -> [[(Unit, String)]] {
+            if s.isEmpty { return [[]] }
+            var out: [[(Unit, String)]] = []
+            for n in 1...min(s.count, 14) {
+                let head = String(s.prefix(n))
+                guard table[head] != nil || (head.count > 2 && unit(head) != nil), let u = unit(head) else { continue }
+                for rest in splits(String(s.dropFirst(n))) where out.count < 16 { out.append([(u, head)] + rest) }
+            }
+            return out
+        }
+        var results = [Reading(factor: 1, dimension: Dimension(), name: "", pieces: 0)]
+        for chunk in chunks {
+            var next: [Reading] = []
+            for split in splits(chunk.letters) {
+                var r = Reading(factor: 1, dimension: Dimension(), name: "", pieces: 0)
+                var ok = true
+                for (i, (u, written)) in split.enumerated() {
+                    guard let (dim, scale) = dimension(u.kind) else { ok = false; break }
+                    let power = i == split.count - 1 ? chunk.power : 1
+                    r.factor *= pow(u.factor * scale, Double(power))
+                    r.dimension = r.dimension + dim * power
+                    r.name += (r.name.isEmpty ? "" : " ") + written + (power == 1 ? "" : Units.raised(power))
+                    r.pieces += 1
+                }
+                guard ok else { continue }
+                for before in results where next.count < 64 {
+                    next.append(Reading(factor: before.factor * r.factor, dimension: before.dimension + r.dimension,
+                                        name: before.name.isEmpty ? r.name : before.name + " " + r.name, pieces: before.pieces + r.pieces))
+                }
+            }
+            results = next
+            if results.isEmpty { return [] }
+        }
+        return results
+    }
+
+    private static let chunkPattern = try! NSRegularExpression(pattern: "([A-Za-zµÅ°]+)\\^?(-?[0-9]+)?")
+
+    private static func raised(_ n: Int) -> String {
+        let signs: [Character: Character] = ["0": "⁰", "1": "¹", "2": "²", "3": "³", "4": "⁴", "5": "⁵", "6": "⁶", "7": "⁷", "8": "⁸", "9": "⁹", "-": "⁻"]
+        return String(String(n).map { signs[$0] ?? $0 })
+    }
+
+    // The two sides read alike, of the same dimensions; of the ways that are, the one in fewest units.
+    static func compound(_ from: String, _ to: String) -> (Reading, Reading)? {
+        let a = readings(from), b = readings(to)
+        var best: (Reading, Reading)?
+        for x in a where !x.dimension.isNone {
+            for y in b where y.dimension == x.dimension {
+                if best.map({ x.pieces + y.pieces < $0.0.pieces + $0.1.pieces }) ?? true { best = (x, y) }
+            }
+        }
+        return best
     }
 
     private static func built(_ amount: Double, _ expr: Expr, from: (String, (Double) -> Double), to: (String, (Double) -> Double),

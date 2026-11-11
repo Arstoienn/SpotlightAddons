@@ -34,6 +34,7 @@ enum Completion {
     struct Parameter: Equatable {
         var name: String     // what stands in its place until it is typed over: body, M, d
         var kind: String     // what it may be, as the calculator understands it: "mass", "body"
+        var choices: [String] = []   // where it is one of a few words, those words: mass, radius, density
     }
 
     struct Item: Equatable {

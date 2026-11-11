@@ -35,6 +35,12 @@ struct RGBA: Equatable {
 
     var xyz: (Double, Double, Double) { Gamut.srgb.toXYZ((RGBA.linear(r), RGBA.linear(g), RGBA.linear(b))) }
 
+    // Every channel a number, and so is what the panel works out from them: its CIE values.
+    var isFinite: Bool {
+        let (x, y, z) = xyz
+        return [r, g, b, a, x, y, z].allSatisfy(\.isFinite) && (0...1).contains(a)
+    }
+
     // x and y of CIE 1931, and Y. Black, which has no chromaticity, is put at the white point, as a
     // grey of any lightness is.
     var xyY: (Double, Double, Double) {
@@ -237,7 +243,24 @@ struct Colour {
 
     // MARK: Reading
 
+    // A colour only where every number in it is one: nan, 1e309 or a conversion that overflows, as
+    // lab(50, 1e300, 0) does, is no colour, and is said so rather than shown as #000000 or #FFFFFF.
     static func parse(_ input: String) -> Colour? {
+        guard let colour = unchecked(input) else { return nil }
+        let colours: [RGBA]
+        switch colour.kind {
+        case .one(let x, _): colours = [x]
+        case .mix(let a, let b, _), .distance(let a, let b), .gradient(let a, let b, _), .contrast(let a, let b): colours = [a, b]
+        case .arithmetic(_, let inputs): colours = inputs
+        case .invalid: return colour
+        }
+        guard (colours + [colour.result].compactMap { $0 }).allSatisfy(\.isFinite) else {
+            return Colour(kind: .invalid("One of its values is too large, or is not a number."), typed: colour.typed)
+        }
+        return colour
+    }
+
+    private static func unchecked(_ input: String) -> Colour? {
         let text = input.trimmingCharacters(in: .whitespaces)
         let lower = text.lowercased()
         // mix(a, b[, share]), interpolate(a, b, t), gradient(a, b[, n]), deltaE(a, b) and contrast(a, b).
@@ -269,7 +292,12 @@ struct Colour {
                 }
                 return Colour(kind: .gradient(a.0, b.0, count: count), typed: text)
             case "contrast":
-                return third == nil ? Colour(kind: .contrast(a.0, b.0), typed: text) : nil
+                guard third == nil else { return nil }
+                // The second is what the first is seen on: only an opaque one says what is behind it.
+                guard b.0.a >= 1 else {
+                    return Colour(kind: .invalid("The background is translucent, so what lies behind it is not known; give it opaque."), typed: text)
+                }
+                return Colour(kind: .contrast(a.0, b.0), typed: text)
             default:
                 return third == nil ? Colour(kind: .distance(a.0, b.0), typed: text) : nil
             }
@@ -297,7 +325,7 @@ struct Colour {
     // colours, in brackets or not. nil unless it has an operation and a colour in it.
     private static func arithmetic(_ text: String) -> Colour? {
         let chars = Array(text)
-        var at = 0, inputs: [RGBA] = [], refusal: String?
+        var at = 0, inputs: [RGBA] = [], refusal: String?, names = 0
         func skip() { while at < chars.count, chars[at] == " " { at += 1 } }
         func expression() -> Node? {
             guard var left = term() else { return nil }
@@ -342,14 +370,12 @@ struct Colour {
                 at += 1
             }
             word = word.trimmingCharacters(in: .whitespaces)
-            // In an arithmetic expression tan is the trigonometric function awaiting its input.
-            // The colour remains available by itself or as an explicit CSS value.
-            if word.lowercased() == "tan" { return nil }
             if let v = Double(word) { return .number(v) }
             if word.hasSuffix("%"), let v = Double(word.dropLast()) { return .number(v / 100) }
             switch read(word) {
-            case .success(let (colour, _))?:
+            case .success(let (colour, format))?:
                 inputs.append(colour)
+                if format == .name { names += 1 }
                 return .colour(inputs.count - 1)
             case .failure(let why)?:
                 refusal = why.reason
@@ -366,6 +392,9 @@ struct Colour {
             guard case .colour = try evaluate(tree, inputs, &operations).0 else { return nil }
             return Colour(kind: .arithmetic(tree, inputs: inputs), typed: text)
         } catch let refusal as Refusal {
+            // tan + 1 is no colour asked about: a refusal only where a colour is plainly meant, two of
+            // them or one written as a colour, red / blue or #FF0000 + 1.
+            guard inputs.count >= 2 || names < inputs.count else { return nil }
             return Colour(kind: .invalid(refusal.reason), typed: text)
         } catch {
             return nil
@@ -514,11 +543,13 @@ struct Colour {
     // 50%, 0.5, 128: a number, a percentage of the whole given, or bare, times what is given for that.
     private static func amount(_ s: String, percentOf whole: Double, bare: Double = 1) -> Double? {
         let t = s.trimmingCharacters(in: .whitespaces)
-        if t.hasSuffix("%") { return Double(t.dropLast()).map { $0 / 100 * whole } }
-        return Double(t).map { $0 * bare }
+        let value = t.hasSuffix("%") ? Double(t.dropLast()).map { $0 / 100 * whole } : Double(t).map { $0 * bare }
+        return value.flatMap { $0.isFinite ? $0 : nil }
     }
 
-    private static func angle(_ s: String) -> Double? {
+    private static func angle(_ s: String) -> Double? { degrees(s).flatMap { $0.isFinite ? $0 : nil } }
+
+    private static func degrees(_ s: String) -> Double? {
         let t = s.trimmingCharacters(in: .whitespaces)
         if t.hasSuffix("deg") { return Double(t.dropLast(3)) }
         if t.hasSuffix("°") { return Double(t.dropLast()) }
@@ -532,9 +563,14 @@ struct Colour {
         (0..<n).map { i in mixed(a, b, 1 - Double(i) / Double(n - 1)) }
     }
 
-    // Two colours mixed, the first's share given, channel by channel as Sass mixes them.
+    // Two colours mixed, the first's share given, as Sass's mix( ) does: each colour's share of the
+    // channels is weighed by how opaque it is beside the other, so that a clear colour gives none of
+    // its own (mix(rgba(255, 0, 0, 0), blue) is #0000FF80, not purple), and the opacity is the plain mix.
     static func mixed(_ a: RGBA, _ b: RGBA, _ w: Double) -> RGBA {
-        RGBA(r: w * a.r + (1 - w) * b.r, g: w * a.g + (1 - w) * b.g, b: w * a.b + (1 - w) * b.b, a: w * a.a + (1 - w) * b.a)
+        let normal = w * 2 - 1, apart = a.a - b.a
+        let combined = normal * apart == -1 ? normal : (normal + apart) / (1 + normal * apart)
+        let first = (combined + 1) / 2, second = 1 - first
+        return RGBA(r: first * a.r + second * b.r, g: first * a.g + second * b.g, b: first * a.b + second * b.b, a: w * a.a + (1 - w) * b.a)
     }
 
     // MARK: Converting
@@ -707,10 +743,20 @@ struct Colour {
         return shownFormat == .hex ? .rgb : .hex
     }
 
+    // The ratio of WCAG 2, of the first as it is seen on the second: laid over it first where it lets
+    // some of it through, so that rgba(0, 0, 0, 0) on white is white on white, 1 : 1.
     var ratio: Double? {
         guard case .contrast(let a, let b) = kind else { return nil }
-        let (l1, l2) = (max(a.luminance, b.luminance), min(a.luminance, b.luminance))
+        let seen = Colour.over(a, b)
+        let (l1, l2) = (max(seen.luminance, b.luminance), min(seen.luminance, b.luminance))
         return (l1 + 0.05) / (l2 + 0.05)
+    }
+
+    // One colour laid over an opaque one, as W3C's simple alpha compositing has it, channel by channel
+    // as sRGB writes them: c = cₛαₛ + c_b(1 − αₛ).
+    static func over(_ top: RGBA, _ below: RGBA) -> RGBA {
+        let a = top.a
+        return RGBA(r: top.r * a + below.r * (1 - a), g: top.g * a + below.g * (1 - a), b: top.b * a + below.b * (1 - a), a: 1)
     }
 
     // What a ΔE means to the eye, as the usual rule of thumb has it.
@@ -869,9 +915,15 @@ struct Colour {
             steps.append(Step(label: "Spacing the steps evenly", math: t("cₖ = A + (B − A) × k/\(n - 1),  k = 0, 1, …, \(n - 1)"),
                               note: "Each channel goes in \(n - 1) equal steps from A's to B's, and is rounded to a whole number."))
             return finished(Colour.stops(a, b, n).map { t(Colour.written($0, .hex) + "   " + Colour.written($0, .rgb)) })
-        case .contrast(let a, let b):
+        case .contrast(let typedFirst, let b):
             heading = typed
-            steps.append(Step(label: "Reading the colours", math: t("\(Colour.written(a, .hex)) = \(Colour.written(a, .rgb)),  \(Colour.written(b, .hex)) = \(Colour.written(b, .rgb))")))
+            steps.append(Step(label: "Reading the colours", math: t("\(Colour.written(typedFirst, .hex)) = \(Colour.written(typedFirst, .rgb)),  \(Colour.written(b, .hex)) = \(Colour.written(b, .rgb))")))
+            // A translucent first colour is seen as it lies over the second.
+            let a = Colour.over(typedFirst, b)
+            if typedFirst.a < 1 {
+                steps.append(Step(label: "Laying the first over the second", math: t("c = cₛ × \(Colour.number(typedFirst.a, 2)) + c_b × \(Colour.number(1 - typedFirst.a, 2)) = \(Colour.written(a, .rgb))"),
+                                  note: "The first lets some of the second through; what is seen is the two composited, as W3C's simple alpha compositing has it."))
+            }
             steps.append(Step(label: "Finding the relative luminance of each", math: t("L = 0.2126 R + 0.7152 G + 0.0722 B"),
                               note: "Each channel, from 0 to 1, is first made linear: c/12.92 up to 0.04045, ((c + 0.055)/1.055)^2.4 above."))
             steps.append(Step(label: "Working out each", math: t("L₁ = \(Colour.number(a.luminance, 4)),  L₂ = \(Colour.number(b.luminance, 4))")))

@@ -42,6 +42,12 @@ enum Solver {
 // MARK: - Expressions
 
 indirect enum Expr {
+    // The terms of sums worked out for the value being worked out, against the most there may be.
+    // overBudget says, once set, that some value was given up for that reason, so that the card can
+    // say so and not that it is undefined.
+    nonisolated(unsafe) static var sumTerms = 0, sumDepth = 0, overBudget = false
+    static let sumBudget = 2_000_000
+
     case num(Double)
     case unknown
     case neg(Expr)
@@ -71,12 +77,24 @@ indirect enum Expr {
         case .call(let f, let e): return Functions.apply(f, e.eval(x, indices))
         case .apply(let f, let args): return Lists.apply(f, args.map { $0.eval(x, indices) })
         case .sum(let k, let from, let to, let body, let product):
+            // Sums within sums are counted together: a hundred thousand terms in each of two is ten
+            // thousand million in all, which is not worked out while typing. The count starts again at
+            // the outermost sum of each value worked out.
+            if Expr.sumDepth == 0 { Expr.sumTerms = 0 }
+            Expr.sumDepth += 1
+            defer { Expr.sumDepth -= 1 }
+            func counted() -> Bool {
+                Expr.sumTerms += 1
+                if Expr.sumTerms > Expr.sumBudget { Expr.overBudget = true; return false }
+                return true
+            }
             // To infinity: terms added until they no longer change the total, and none at all for a
             // sum that does not settle, Σ 1/n among them.
             if !product, to.eval(x, indices) == .infinity, case let start = from.eval(x, indices), start.isFinite, start == start.rounded() {
                 var total = 0.0, quiet = 0, inner = indices, half = 0.0
                 let count = 200_000
                 for i in 0..<count {
+                    guard counted() else { return .nan }
                     inner[k] = start + Double(i)
                     let v = body.eval(x, inner)
                     guard v.isFinite else { return .nan }
@@ -98,6 +116,7 @@ indirect enum Expr {
             var total: Double = product ? 1 : 0
             var inner = indices
             for i in range {
+                guard counted() else { return .nan }
                 inner[k] = Double(i)
                 let v = body.eval(x, inner)
                 total = product ? total * v : total + v
@@ -1421,7 +1440,31 @@ func solvePolynomial(_ p: Poly, _ name: String, exact: Bool = true) -> Solution 
     case 1: return Solution(exact: "No solution", approx: nil)
     default:
         if exact, p.count <= 3, let ints = integerCoefficients(p) { return exactSolution(ints, name) }
-        return listRoots(realRoots(p), name, more: false)
+        // axⁿ + c = 0: its nth root, exactly where that is sure, k = ±√2 for 330k⁴ = 1320.
+        if exact, p.count > 3, p.dropFirst().dropLast().allSatisfy({ $0 == 0 }) {
+            let degree = p.count - 1, value = -p[0] / p[degree], even = degree % 2 == 0
+            if even && value < 0 { return Solution(exact: "No real solutions", approx: "An even power of a real number is never negative.") }
+            let root = (value < 0 ? -1.0 : 1.0) * pow(abs(value), 1 / Double(degree))
+            let shown = closedForm(abs(root)).plain, sign = even && root != 0 ? "±" : root < 0 ? "−" : ""
+            if shown.contains(".") { return Solution(exact: "\(name) ≈ \(sign)\(decimal(abs(root)))", approx: nil) }
+            return Solution(exact: "\(name) = \(sign)\(shown)", approx: shown.contains("√") || shown.contains("/") ? "≈ \(sign)\(decimal(abs(root)))" : nil)
+        }
+        // Roots that are all simple fractions, a⁵(4a − 8/7) = 0, written as fractions: a = 0, 2/7.
+        let roots = realRoots(p).sorted()
+        if exact, !roots.isEmpty {
+            let fractions = roots.compactMap { r -> (Int, Int)? in
+                guard let (n, d) = rational(r), d <= 1000, abs(Double(n) / Double(d) - r) <= 1e-9 * max(1, abs(r)) else { return nil }
+                return (n, d)
+            }
+            if fractions.count == roots.count {
+                let shown = fractions.map { fraction($0.0, $0.1) }
+                let symmetric = roots.count == 2 && fractions[0].0 == -fractions[1].0 && fractions[0].1 == fractions[1].1 && fractions[0].0 != 0
+                let text = symmetric ? "±" + fraction(abs(fractions[1].0), fractions[1].1) : shown.joined(separator: ", ")
+                let needsDecimals = shown.contains { $0.contains("/") }
+                return Solution(exact: "\(name) = \(text)", approx: needsDecimals ? "≈ " + (symmetric ? "±" + decimal(abs(roots[1])) : roots.map(decimal).joined(separator: ", ")) : nil)
+            }
+        }
+        return listRoots(roots, name, more: false)
     }
 }
 

@@ -364,7 +364,11 @@ struct Evaluation {
     var isLost: Bool { (value == 0 || value.isNaN) && expr.lostPart != nil }
 
     var solution: Solution? {
+        Expr.overBudget = false
         let v = value
+        if !v.isFinite, Expr.overBudget {
+            return Solution(exact: "Too much to work out", approx: "Its sums have more than \(Expr.sumBudget / 1_000_000) million terms in all.")
+        }
         if isLost, let lost = expr.lostPart { return Solution(exact: "Too \(v == 0 ? "small" : "large")", approx: lost.why("")) }
         // What no number is the answer to, said so and not left blank.
         if !v.isFinite {

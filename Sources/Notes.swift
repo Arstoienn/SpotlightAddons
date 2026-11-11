@@ -37,7 +37,56 @@ enum Notes {
             let rest = run.dropFirst().joined() + power
             return "1/\(run.joined())\(power) is read as (1/\(first))·\(rest); for 1/(\(run.joined())\(power)), write the brackets."
         }
+        // 84/21a⁶ is (84/21)a⁶, as 1/2x is (1/2)x; but it may have been copied from a fraction with 21a⁶
+        // under its line. Said how it was taken, and, in an equation, what the other way gives.
+        for i in tokens.indices.dropLast(2) where i > 0 && tokens[i] == .symbol("/") {
+            guard case .number(let below) = tokens[i + 1], let first = name(tokens[i + 2]) else { continue }
+            let above: String
+            switch tokens[i - 1] {
+            case .number(let n): above = decimal(n)
+            case .letter(let l): above = Greek.names[l] ?? l
+            default: continue
+            }
+            // A half before letters, ½mv² and ½at², is always the coefficient; and values given are a formula's.
+            if above == "1" && below == 2 || input.contains(",") { continue }
+            var j = i + 3, run = first
+            while j < tokens.count, let next = name(tokens[j]) { run += next; j += 1 }
+            var power = ""
+            if j + 1 < tokens.count, tokens[j] == .symbol("^"), case .number(let p) = tokens[j + 1] {
+                power = p == p.rounded() ? Int(fitting: p).map(superscript) ?? "^" + decimal(p) : "^" + decimal(p)
+            }
+            let term = decimal(below) + run + power
+            var note = "\(above)/\(term) is read as (\(above)/\(decimal(below)))·\(run)\(power)"
+            if input.contains("="), let other = fractions(input), let solved = Solver.solve(other), !solved.exact.contains("Insufficient") {
+                let shown = other.replacingOccurrences(of: "\\^([0-9]+)", with: "$1", options: .regularExpression)
+                    .replacingOccurrences(of: "*", with: "")
+                note += "; written " + superscripted(shown) + ", it gives " + solved.exact
+            } else {
+                note += "; for \(above)/(\(term)), write the brackets"
+            }
+            return note + "."
+        }
         return nil
+    }
+
+    // Each number over a number and letters, 84/21a^6, with what is below the line bracketed: 84/(21a^6).
+    static func fractions(_ input: String) -> String? {
+        let pattern = "(?<![A-Za-z0-9.)])([0-9.]+|[A-Za-z])/([0-9.]+[A-Za-z]+(?:\\^[0-9.]+)?)"
+        let out = input.replacingOccurrences(of: pattern, with: "$1/($2)", options: .regularExpression)
+        return out == input ? nil : out
+    }
+
+    private static func superscripted(_ s: String) -> String {
+        // a^6 as a⁶ in what is said.
+        let raised: [Character: Character] = ["0": "⁰", "1": "¹", "2": "²", "3": "³", "4": "⁴", "5": "⁵", "6": "⁶", "7": "⁷", "8": "⁸", "9": "⁹"]
+        var out = "", after = false
+        for c in s {
+            if c.isLetter { after = true; out.append(c) }
+            else if after, let r = raised[c] { out.append(r) }
+            else { after = false; out.append(c) }
+        }
+        return out.replacingOccurrences(of: "=", with: " = ").replacingOccurrences(of: "+", with: " + ")
+            .replacingOccurrences(of: "(?<=[0-9A-Za-z)⁰¹²³⁴⁵⁶⁷⁸⁹])-", with: " − ", options: .regularExpression)
     }
 
     // Where the one unknown of an equation or expression in one letter cannot be: x ≠ 2, x > 1.

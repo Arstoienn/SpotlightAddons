@@ -21,6 +21,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     var lastMove = Date.distantPast
     var lastAlpha = 1.0
     var typed = 0   // counts changes of text, so that a second look started for an old one gives up
+    var modeWatch: Timer?   // while Spotlight is in one of its modes: watching for it to search again
+    var framesSinceModeLook = 0
+    var lastWindowWidth: CGFloat?   // Spotlight's window's width at the last frame
     // Completions offered on the card while a call after @ is typed, and the text at which Escape
     // put them away, so that they stay away until something more is typed.
     var completion: Completion.List?
@@ -54,6 +57,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         Crash.watch()
         SettingsButton.open = { [weak self] in self?.settings.show() }
+        CompletionFace.choose = { [weak self] index in
+            guard let self, var list = completion, list.items.indices.contains(index) else { return }
+            list.selected = index
+            guard let edit = Completion.choose(list, in: Astronomy.catalogue) else { return }
+            watcher.write(edit.text, selecting: edit.selection)
+        }
         // Opened by hand, it shows its preferences; opened by the login, it keeps quiet but for its note.
         let launch = NSAppleEventManager.shared().currentAppleEvent?.paramDescriptor(forKeyword: 0x70726474)   // 'prdt'
         let atLogin = launch?.enumCodeValue == 0x6C676974                                                   // 'lgit'
@@ -175,6 +184,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if text != self.text { astronomyExpandRequested = nil }
         self.text = text
         typed += 1
+        // In one of Spotlight's modes, what is typed filters its list: no card, and no completions,
+        // until Spotlight is searching again.
+        guard watcher.searching() else {
+            completion = nil
+            hide()
+            return awaitSearching()
+        }
         Memory.answers = text == remembered ? ansBefore : ansNow
         // The clipboard is only read when it is asked for by name.
         if text.contains("clip") {
@@ -192,6 +208,26 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             return hide()
         }
         if present() { Log.note("typed \(text.count) characters: shown") } else { lost("no place for the card as it was typed") }
+    }
+
+    // Spotlight is in one of its modes: looked at ten times a second while it stays open, and the card
+    // put up for what is typed once it is searching again, as when Back is pressed, and has finished
+    // changing size: Applications is wider than searching, and a card put up while Spotlight is still
+    // narrowing would keep the wider width.
+    func awaitSearching() {
+        guard modeWatch == nil else { return }
+        var lastWidth: CGFloat?
+        modeWatch = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] timer in
+            guard let self else { return timer.invalidate() }
+            guard (SpotlightWatcher.alpha() ?? 0) > 0.5 else { timer.invalidate(); modeWatch = nil; return }
+            guard watcher.searching(), let width = watcher.geometry()?.placement.width else { lastWidth = nil; return }
+            defer { lastWidth = width }
+            guard width == lastWidth else { return }
+            timer.invalidate()
+            modeWatch = nil
+            Log.note("Spotlight is searching again")
+            update(watcher.current() ?? text)
+        }
     }
 
     // The answer showing becomes ans.
@@ -253,6 +289,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func watch() {
         guard link == nil, let screen = NSScreen.main else { return }
         lastAlpha = 1
+        lastWindowWidth = nil
         let link = screen.displayLink(target: self, selector: #selector(frame(_:)))
         link.add(to: .main, forMode: .common)
         self.link = link
@@ -266,6 +303,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         guard let placement, let now = SpotlightWatcher.panel(placement) else { return retarget() }
         if now.alpha < 0.05 || (now.alpha < 0.95 && now.alpha < lastAlpha) { return lost("Spotlight's window at \(now.alpha)") }
         lastAlpha = now.alpha
+        // Spotlight wider or narrower, as it is in Applications and back from it: the card as wide as it
+        // is now, measured again, and not the width it had when the card came up.
+        if let width = lastWindowWidth, abs(now.windowWidth - width) > 0.5, let geometry = watcher.geometry() {
+            self.placement = geometry.placement
+            spotlight = geometry.window
+            panel.place(geometry.window)
+        }
+        lastWindowWidth = now.windowWidth
+        // Switched to one of Spotlight's modes with the card up (⌘1 to ⌘4, or a click on one): the card
+        // and its panel go, and come back when it searches again. Looked at a few times a second.
+        framesSinceModeLook += 1
+        if framesSinceModeLook >= 8 {
+            framesSinceModeLook = 0
+            if !watcher.searching() {
+                Log.note("Spotlight went into one of its modes")
+                detail.close(animated: false)
+                completion = nil
+                hide()
+                return awaitSearching()
+            }
+        }
         if now.rect.origin != spotlight.origin {
             spotlight = now.rect
             lastMove = Date()

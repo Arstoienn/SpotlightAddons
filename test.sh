@@ -11,7 +11,7 @@ cd "$(dirname "$0")"
 mkdir -p build
 ./setup-astronomy.sh
 build/astronomy-runtime/bin/python3 -I Tests/AstronomyEngineTests.py
-sources="Sources/Solver.swift Sources/Latex.swift Sources/Math.swift Sources/Details.swift Sources/System.swift Sources/Comparison.swift Sources/Number.swift Sources/Hash.swift Sources/Simplify.swift Sources/Location.swift Sources/Convert.swift Sources/Inequality.swift Sources/Algebra.swift Sources/ComplexMath.swift Sources/MatrixMath.swift Sources/Domain.swift Sources/Given.swift Sources/Grouped.swift Sources/Insufficient.swift Sources/Interval.swift Sources/BigInt.swift Sources/RationalEquation.swift Sources/TrigSimplify.swift Sources/Sequence.swift Sources/Currency.swift Sources/Exact.swift Sources/Pipeline.swift Sources/Series.swift Sources/Integration.swift Sources/Differential.swift Sources/Letters.swift Sources/Intent.swift Sources/Roles.swift Sources/Notes.swift Sources/Command.swift Sources/TrigProof.swift Sources/Euler.swift Sources/AngleIdentity.swift Sources/Colour.swift Sources/Working.swift Sources/Completion.swift Sources/Astronomy.swift Sources/AstronomyEngine.swift"
+sources="Sources/Solver.swift Sources/Latex.swift Sources/Math.swift Sources/Details.swift Sources/System.swift Sources/Comparison.swift Sources/Number.swift Sources/Hash.swift Sources/Simplify.swift Sources/Location.swift Sources/Convert.swift Sources/Inequality.swift Sources/Algebra.swift Sources/ComplexMath.swift Sources/MatrixMath.swift Sources/Domain.swift Sources/Given.swift Sources/Grouped.swift Sources/Insufficient.swift Sources/Interval.swift Sources/BigInt.swift Sources/RationalEquation.swift Sources/TrigSimplify.swift Sources/Sequence.swift Sources/Currency.swift Sources/Exact.swift Sources/Pipeline.swift Sources/Series.swift Sources/Integration.swift Sources/Differential.swift Sources/Letters.swift Sources/Intent.swift Sources/Roles.swift Sources/Notes.swift Sources/Command.swift Sources/TrigProof.swift Sources/Euler.swift Sources/AngleIdentity.swift Sources/Colour.swift Sources/Circuit.swift Sources/Working.swift Sources/Completion.swift Sources/Relation.swift Sources/Conditioned.swift Sources/Proof.swift Sources/Astronomy.swift Sources/AstronomyEngine.swift Sources/AstronomyFormula.swift Sources/AstronomySubstitution.swift Sources/AstronomyText.swift"
 
 case "$1" in
 --snapshot|--baseline)
@@ -31,7 +31,7 @@ case "$1" in
     ./build/booklets Tests/booklets.json
     ;;
 *)
-    swiftc -O -o build/solver-tests $sources Tests/main.swift Tests/AstronomyTests.swift
+    swiftc -O -o build/solver-tests $sources Tests/main.swift Tests/AstronomyTests.swift Tests/RelationTests.swift Tests/RatesTests.swift Tests/SubstitutionTests.swift Tests/UnitTests.swift
     ./build/solver-tests
     ;;
 esac

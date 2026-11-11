@@ -16,34 +16,36 @@ struct AstronomyScientificView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             if kind == "sky" {
-                sky.frame(height: 330)
+                ZoomableDiagram { sky }.frame(height: 330)
                 HStack { Text("Rotate sky"); AstronomySlider(value: $rotation, range: -Double.pi...Double.pi) }
                 Text("North at top · East at right · Outer circle is the horizon · Faint objects lie below it")
                     .font(.caption).foregroundStyle(.secondary)
             } else if kind == "black_hole" {
-                blackHole.frame(height: 290)
+                ZoomableDiagram { blackHole }.frame(height: 290)
             } else if kind == "spectrum" {
-                spectrum.frame(height: 200)
+                ZoomableDiagram { spectrum }.frame(height: 200)
             } else if kind == "comparison" {
-                comparison.frame(height: 200)
+                comparison
             } else if kind == "habitable" {
-                habitable.frame(height: 250)
+                ZoomableDiagram { habitable }.frame(height: 250)
             } else if kind == "potential" {
-                potential.frame(height: 300)
+                ZoomableDiagram { potential }.frame(height: 300)
             } else if kind == "image" {
-                image.frame(height: 280)
+                ZoomableDiagram { AstronomyImagePreview(picture: picture) }
+                    .frame(height: 280)
+                    .frame(maxWidth: .infinity)
                 Text("Preview: \(Int(number("width"))) × \(Int(number("height"))) pixels; display uses 1–99% intensity stretch")
                     .font(.caption).foregroundStyle(.secondary)
             }
             if kind == "transit_controls" {
-                if let series = transitSeries ?? picture.series { AstronomyCurve(series: series).frame(height: 250) }
+                if let series = transitSeries ?? picture.series { AstronomyCurve(series: series) }
                 HStack { Text("Planet radius ×\(radiusScale, specifier: "%.2f")").frame(width: 155, alignment: .leading)
                     AstronomySlider(value: $radiusScale, range: 0.2...3, committed: updateTransit) }
                 HStack { Text("Inclination \(inclination, specifier: "%.3f")°").frame(width: 155, alignment: .leading)
                     AstronomySlider(value: $inclination, range: 85...90, committed: updateTransit) }
                 Text(calculating ? "Recomputing limb-darkened transit…" : "Quadratic limb darkening; radius and inclination are observer geometry controls")
                     .font(.caption).foregroundStyle(.secondary)
-            } else if let series = picture.series { AstronomyCurve(series: series).frame(height: series.kind == "orbit" ? 320 : 260) }
+            } else if let series = picture.series { AstronomyCurve(series: series) }
             if kind == "panel", picture.series == nil { resultRows }
         }
         .onAppear { inclination = number("inclination", 90) }
@@ -110,7 +112,8 @@ struct AstronomyScientificView: View {
                 let alt = item["alt"] as? Double ?? 0, az = (item["az"] as? Double ?? 0)+rotation
                 let rr = r*(1-min(max(alt,0),Double.pi/2)/(Double.pi/2))
                 let p = CGPoint(x:center.x+rr*sin(az),y:center.y-rr*cos(az))
-                let color:Color = alt >= 0 ? .accentColor : .secondary.opacity(0.4)
+                // Above the horizon in the label colour, below it faint.
+                let color:Color = alt >= 0 ? .primary : .secondary.opacity(0.4)
                 ctx.fill(Path(ellipseIn:CGRect(x:p.x-3,y:p.y-3,width:6,height:6)),with:.color(color))
                 safeLabel(ctx,item["label"] as? String ?? "",point:p,size:size,color:color,occupied:&occupied)
             }
@@ -121,10 +124,15 @@ struct AstronomyScientificView: View {
             let horizon = number("horizon"), isco = number("isco",horizon*3), photon = picture.data["photon"] as? Double
             let maxR = max(horizon,isco,photon ?? 0)*1.12, scale = min(size.width*0.35,size.height*0.4)/maxR
             let center = CGPoint(x:size.width*0.4,y:size.height*0.46)
-            for (radius,name,color) in [(isco,"Equatorial ISCO",Color.blue),(photon ?? 0,"Photon sphere (Schwarzschild)",Color.orange),(horizon,"Outer event horizon",Color.primary)] where radius>0 {
+            // Told apart as the graph tells its curves apart, by their lines: the horizon filled, the photon
+            // sphere dashed, the ISCO dotted; each named beside a sample of its own line.
+            for (radius,name,dash) in [(isco,"Equatorial ISCO",[CGFloat(1.5),3]),(photon ?? 0,"Photon sphere (Schwarzschild)",[CGFloat(6),3]),(horizon,"Outer event horizon",[CGFloat]())] where radius>0 {
                 let rr=radius*scale; let path=Path(ellipseIn:CGRect(x:center.x-rr,y:center.y-rr,width:rr*2,height:rr*2))
-                if name.contains("horizon") { ctx.fill(path,with:.color(.primary.opacity(0.8))) } else { ctx.stroke(path,with:.color(color),style:StrokeStyle(lineWidth:1.3,dash:[5,3])) }
-                draw(ctx,"\(name): \(Format.number(radius)) m",CGPoint(x:8,y:size.height-55+CGFloat(name.contains("horizon") ? 0 : name.contains("Photon") ? 17 : 34)),color:color,anchor:.leading)
+                if name.contains("horizon") { ctx.fill(path,with:.color(.primary.opacity(0.8))) } else { ctx.stroke(path,with:.color(.primary.opacity(0.7)),style:StrokeStyle(lineWidth:1.5,dash:dash)) }
+                let y=size.height-55+CGFloat(name.contains("horizon") ? 0 : name.contains("Photon") ? 17 : 34)
+                var sample=Path(); sample.move(to:CGPoint(x:8,y:y)); sample.addLine(to:CGPoint(x:26,y:y))
+                ctx.stroke(sample,with:.color(.primary.opacity(name.contains("horizon") ? 0.8 : 0.7)),style:StrokeStyle(lineWidth:name.contains("horizon") ? 4 : 1.5,dash:dash))
+                draw(ctx,"\(name): \(Format.number(radius)) m",CGPoint(x:32,y:y),anchor:.leading)
             }
             let spin=number("spin")
             draw(ctx,spin == 0 ? "Schwarzschild · concentric radii to scale" : "Kerr a* = \(spin) · Boyer–Lindquist radii",CGPoint(x:8,y:15),anchor:.leading)
@@ -143,17 +151,38 @@ struct AstronomyScientificView: View {
             draw(ctx,"z = \(Format.number(number("z"))) · Wavelength increases →",CGPoint(x:25,y:180),anchor:.leading)
         }
     }
+    // Two bodies side by side: a radius or diameter as circles to scale, anything else as bars on one
+    // scale, the smaller never too thin to see; and in words how many times the one is the other.
     private var comparison: some View {
-        Canvas { ctx,size in
-            let values=picture.data["values"] as? [Double] ?? [1,1], labels=picture.data["labels"] as? [String] ?? ["First","Second"]
-            let maxV=max(values.max() ?? 1,1e-100); let property=picture.data["property"] as? String ?? ""
-            for i in values.indices {
-                let x=size.width*(i==0 ? 0.25 : 0.72), v=values[i]/maxV
-                if ["radius","diameter"].contains(property) {
-                    let r=70*v; ctx.fill(Path(ellipseIn:CGRect(x:x-r,y:90-r,width:2*r,height:2*r)),with:.color(i==0 ? .blue : .orange))
-                } else { ctx.fill(Path(CGRect(x:x-30,y:150-120*v,width:60,height:120*v)),with:.color(i==0 ? .blue : .orange)) }
-                draw(ctx,labels.indices.contains(i) ? labels[i] : "Body",CGPoint(x:x,y:173))
-                draw(ctx,Format.number(values[i])+" "+(picture.data["unit"] as? String ?? ""),CGPoint(x:x,y:191))
+        let values = picture.data["values"] as? [Double] ?? [1, 1], labels = picture.data["labels"] as? [String] ?? ["First", "Second"]
+        let property = picture.data["property"] as? String ?? "", unit = picture.data["unit"] as? String ?? ""
+        let radial = ["radius", "diameter"].contains(property)
+        let names = values.indices.map { i in labels.indices.contains(i) ? labels[i].prefix(1).uppercased() + labels[i].dropFirst() : "Body" }
+        return VStack(alignment: .leading, spacing: 10) {
+            ZoomableDiagram { Canvas { ctx, size in
+                let largest = max(values.max() ?? 1, 1e-100)
+                for i in values.indices {
+                    let share = values[i] / largest, tone = Color.primary.opacity(i == 0 ? 0.8 : 0.4)
+                    let value = Format.number(values[i]) + (unit.isEmpty ? "" : " " + AstronomyWorkingText.shown(unit))
+                    if radial {
+                        let x = size.width * (i == 0 ? 0.28 : 0.72), r = max(1.5, (size.height / 2 - 30) * share)
+                        ctx.fill(Path(ellipseIn: CGRect(x: x - r, y: size.height / 2 - 14 - r, width: 2 * r, height: 2 * r)), with: .color(tone))
+                        draw(ctx, names[i] + " · " + value, CGPoint(x: x, y: size.height - 10))
+                    } else {
+                        let y = 22 + CGFloat(i) * 44, start: CGFloat = 92, room = size.width - start - 150
+                        draw(ctx, names[i], CGPoint(x: 0, y: y), color: .primary, anchor: .leading)
+                        let length = max(2, room * share)
+                        ctx.fill(Path(roundedRect: CGRect(x: start, y: y - 9, width: length, height: 18), cornerRadius: 4), with: .color(tone))
+                        draw(ctx, value, CGPoint(x: start + length + 8, y: y), anchor: .leading)
+                    }
+                }
+            }
+            }
+            .frame(height: radial ? 200 : 88)
+            if values.count == 2, values.allSatisfy({ $0 > 0 }) {
+                let (big, small) = values[0] >= values[1] ? (0, 1) : (1, 0)
+                Text("The \(property.replacingOccurrences(of: "_", with: " ")) of \(names[big]) is \(Format.number(values[big] / values[small], figures: 5)) times that of \(names[small]).")
+                    .font(.system(size: 13)).foregroundStyle(.secondary)
             }
         }
     }
@@ -188,16 +217,6 @@ struct AstronomyScientificView: View {
             draw(ctx,"Ω = (x²+y²)/2 + (1−μ)/r₁ + μ/r₂ · separation units",CGPoint(x:10,y:size.height-12),color:.white,anchor:.leading)
         }
     }
-    private var image: some View {
-        Canvas { ctx,size in
-            let pixels=picture.data["pixels"] as? [[Double]] ?? []; let rows=pixels.count,cols=pixels.first?.count ?? 0
-            guard rows>0,cols>0 else { return }
-            let lo=number("low"),hi=max(number("high"),lo+1e-12); let scale=min(size.width/Double(cols),size.height/Double(rows)); let left=(size.width-Double(cols)*scale)/2
-            for y in 0..<rows { for x in 0..<min(cols,pixels[y].count) {
-                let v=min(1,max(0,(pixels[y][x]-lo)/(hi-lo)));ctx.fill(Path(CGRect(x:left+Double(x)*scale,y:Double(y)*scale,width:scale+0.5,height:scale+0.5)),with:.color(Color(white:v)))
-            } }
-        }
-    }
     private func safeLabel(_ ctx: GraphicsContext,_ text: String,point: CGPoint,size: CGSize,color: Color,occupied: inout [CGRect]) {
         let width = CGFloat(text.count)*6.2+6
         var box = CGRect(x:point.x+7,y:point.y-14,width:width,height:15)
@@ -219,28 +238,45 @@ struct AstronomyScientificView: View {
     }
 }
 
+struct AstronomyImagePreview: View {
+    let picture: AstronomyPicture
+
+    var body: some View {
+        if let image {
+            Image(image, scale: 1, label: Text("Image data preview"))
+                .resizable()
+                .interpolation(.none)
+                .scaledToFit()
+        }
+    }
+
+    private var image: CGImage? {
+        guard let pixels = picture.data["pixels"] as? [[Double]], let width = pixels.first?.count, width > 0,
+              pixels.allSatisfy({ $0.count == width }) else { return nil }
+        let low = picture.data["low"] as? Double ?? 0
+        let high = picture.data["high"] as? Double ?? 0
+        let span = max(high - low, 1e-12)
+        let grayscale = pixels.flatMap { row in
+            row.map { pixel in UInt8((255 * min(1, max(0, (pixel - low) / span))).rounded()) }
+        }
+        guard let provider = CGDataProvider(data: Data(grayscale) as CFData) else { return nil }
+        return CGImage(width: width, height: pixels.count, bitsPerComponent: 8, bitsPerPixel: 8,
+                       bytesPerRow: width, space: CGColorSpaceCreateDeviceGray(), bitmapInfo: [],
+                       provider: provider, decode: nil, shouldInterpolate: false, intent: .defaultIntent)
+    }
+}
+
+// A sampled curve (a light curve, a periodogram, an orbit) drawn by the same graph as everything else:
+// dragged to move, pinched or zoomed with + and −, double-clicked back, across the whole width; an
+// orbit to the same scale both ways, round, with what it goes round marked at the middle.
 struct AstronomyCurve: View {
     let series: AstronomySeries
     var body: some View {
-        Chart {
-            ForEach(series.x.indices,id:\.self) { i in
-                LineMark(x:.value(series.xLabel,series.x[i]),y:.value(series.yLabel,series.y[i]))
-                    .interpolationMethod(.linear)
-            }
-            if series.kind == "orbit" { PointMark(x:.value(series.xLabel,0),y:.value(series.yLabel,0)).foregroundStyle(.orange).symbolSize(80) }
-        }
-        .chartXAxisLabel(series.xLabel).chartYAxisLabel(series.yLabel)
-        .chartXScale(domain: extent(series.kind == "orbit" ? series.x + series.y : series.x)).chartYScale(domain: extent(series.kind == "orbit" ? series.x + series.y : series.y))
-        .chartPlotStyle { plot in
-            if series.kind == "orbit" { plot.background(.primary.opacity(0.025)).aspectRatio(1,contentMode:.fit) }
-            else { plot.background(.primary.opacity(0.025)) }
-        }
-        .accessibilityLabel(series.label)
-    }
-    private func extent(_ values:[Double]) -> ClosedRange<Double> {
-        let lo=values.min() ?? 0, hi=values.max() ?? 1
-        let pad=max((hi-lo)*0.05,max(abs(hi),1e-30)*0.001)
-        return (lo-pad)...(hi+pad)
+        let orbit = series.kind == "orbit"
+        Plot(graph: Graph(xName: series.xLabel, yName: series.yLabel,
+                          curves: [Graph.Curve(shape: .samples(zip(series.x, series.y).map { CGPoint(x: $0, y: $1) }), label: .text(series.label))],
+                          points: orbit ? [CGPoint(x: 0, y: 0)] : [], titles: (series.xLabel, series.yLabel), equalScale: orbit))
+            .accessibilityLabel(series.label)
     }
 }
 

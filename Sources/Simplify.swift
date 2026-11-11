@@ -22,7 +22,14 @@ struct Simplification {
     static func parse(_ input: String, always: Bool = false, constants: Set<String> = []) -> Simplification? {
         // It must look like algebra and not like a word: something in it other than letters and
         // hyphens (wi-fi), and no run of four letters or more (rock+roll).
-        guard input.contains(where: { $0.isNumber || "+*/^()".contains($0) }), !hasWord(input),
+        // A minus between letters is algebra too, px − qx, but for the few words written with a hyphen
+        // whose parts are as short as letters: wi-fi, sci-fi, x-ray.
+        let hyphenated: Set<String> = ["wi-fi", "hi-fi", "sci-fi", "lo-fi", "x-ray", "co-op", "k-pop", "j-pop", "a-ha", "uh-oh", "ha-ha",
+                                       "no-no", "yo-yo", "so-so", "oh-no", "hip-hop", "tic-tac", "ex-gf", "ex-bf", "e-mail", "t-shirt", "u-turn"]
+        // A dash with a space before it and a letter straight after, ls -la, is a command's option.
+        let option = input.range(of: "(^|\\s)-[A-Za-z]", options: .regularExpression) != nil
+        let minus = input.contains("-") && !option && !hyphenated.contains(input.trimmingCharacters(in: .whitespaces).lowercased())
+        guard input.contains(where: { $0.isNumber || "+*/^()".contains($0) }) || minus, !hasWord(input),
               let tokens = try? Parser.tokenize(input), !tokens.contains(.symbol("=")) else { return nil }
 
         var letters: [String] = []

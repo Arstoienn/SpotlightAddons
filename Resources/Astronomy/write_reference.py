@@ -4,7 +4,7 @@ from pathlib import Path
 root=Path(__file__).resolve().parents[2]
 methods=json.loads((Path(__file__).with_name('methods.json')).read_text())
 rows=['# Astronomy method reference','',
-'The complete specification contains **234 methods in 14 families**. This reference is generated from the executable registry.', '',
+f'Astronomy offers **{len(methods)} everyday methods in {len(set(m["category"] for m in methods))} families**. This reference is generated from the executable registry.', '',
 'Bare numbers use SI units, including radians. Parallax is the explicit exception: a bare parallax is in arcseconds. Prefer units such as `30 deg`, `1 AU`, `10 M_sun` and `100 mas`. Astronomical units follow Astropy/IAU definitions; `R_earth` is the nominal equatorial radius, while `radius(earth)` returns the mean volumetric radius.', '',
 'Dates default to UTC. An omitted astronomical epoch is **J2000**, never silently the current time. Orbits use ICRS axes and TDB epochs. Inclination is to the ICRS equatorial plane, unless an explicit orbit is provided; transit geometry supplies its own observer inclination.', '',
 'The app bundles [JPL DE440s](https://ssd.jpl.nasa.gov/doc/Park.2021.AJ.DE440.pdf), covering 1849-12-26 through 2150-01-22, verified by SHA-256 during setup. Astropy returns planetary barycenters for Mars through Pluto, and Earth/Moon centers. Earth orientation uses the pinned bundled IERS tables, and extrapolation/leap-second warnings are preserved in the working. Fixed stellar coordinates are approximate reference positions, not a complete proper-motion catalogue.', '',

@@ -10,6 +10,7 @@ struct Given {
     var details: Details?
     var found: [Double]? = nil    // the answers, where several equations were solved one at a time
     var given: [String] = []      // n = 1/2, θ = 30°: the values as they are shown
+    var formula: String? = nil    // y = 2x + 21: what is left, a formula and no number, which is what copying gives
 
     static func parse(_ input: String) -> Given? {
         let parts = LinearSystem.parts(input)
@@ -76,7 +77,28 @@ struct Given {
             tidied = (rewritten, letters.filter { Constants.all[$0] != nil })
         }
         let left = tidied.flatMap { Simplification.parse($0.text, always: true, constants: Set($0.constants)) }
-        guard let solution = left?.solution ?? Solver.solve(rewritten) else { return nil }
+        let solved = left == nil ? Solver.solve(rewritten) : nil
+        // A formula whose subject stands alone, with too few values for it to be a number: that
+        // formula with the values written in and its other side tidied, as it is written on paper.
+        // y = mx + c, m = 2, c = 21 is y = 2x + 21, the line, and not too little information.
+        var wanting = solved == nil
+        // A curve, y = 2x + 21, is a formula too: given as the formula, and drawn.
+        let reread = Analyzer.read(rewritten)?.intent
+        if case .insufficient? = reread { wanting = true }
+        if case .relation? = reread { wanting = true }
+        if left == nil, wanting, equations.count == 1, let formula = subjectFormula(rewritten) {
+            let subject = formula.subject, other = formula.right
+            var d = Details(name: subject, equation: written(equation, header: true),
+                            steps: [Step(label: "Substituting \(taking)", math: written(rewritten))],
+                            solutions: [row(t(subject + " = "), other.result)], note: nil, f: { _ in .nan }, roots: [])
+            let tidiedSide = row(t(subject + " = "), other.result)
+            if tidiedSide.plain != written(rewritten).plain { d.steps.append(Step(label: "Simplifying", math: tidiedSide)) }
+            if case .relation(let curve)? = reread { d.graph = curve.details.graph }
+            return Given(assignments: assignments, substituted: rewritten,
+                         solution: Solution(exact: tidiedSide.plain, approx: "Taking " + taking), details: d, given: given,
+                         formula: tidiedSide.plain)
+        }
+        guard let solution = left?.solution ?? solved else { return nil }
         var d = left?.details ?? Solver.details(rewritten)
         // Several equations are each written out, with commas between.
         func lines(_ text: String) -> Math {
@@ -99,6 +121,17 @@ struct Given {
             if let first = d?.steps.first, first.label.hasPrefix("Substituting ") { d?.steps[0].label = "Substituting \(taking), " + Constants.values(constants) }
         }
         return Given(assignments: assignments, substituted: rewritten, solution: shown, details: d, given: given)
+    }
+
+    // y = 2x + 21: a letter alone on the left, not on the right, and letters still on the right,
+    // which is tidied. Every letter on the right stands for itself, c a letter and not the speed of light.
+    private static func subjectFormula(_ equation: String) -> (subject: String, right: Simplification)? {
+        let sides = equation.split(separator: "=", omittingEmptySubsequences: false).map { String($0).trimmingCharacters(in: .whitespaces) }
+        guard sides.count == 2, let left = try? Parser.tokenize(sides[0]), left.count == 1, case .letter(let subject) = left[0],
+              let right = try? Parser.tokenize(sides[1]), !right.contains(.letter(subject)),
+              right.contains(where: { if case .letter(let l) = $0 { l != "e" } else { false } }),
+              let tidied = Simplification.parse(sides[1], always: true) else { return nil }
+        return (subject, tidied)
     }
 
     // = 3.15625 where the figures shown are the whole of it, ≈ 11.5464 where they are rounded.
@@ -297,8 +330,8 @@ struct Given {
         return inside(left, false).union(inside(right, false))
     }
 
-    var values: [Double] { found ?? Solver.values(substituted) }
+    var values: [Double] { formula != nil ? [] : found ?? Solver.values(substituted) }
     // What was typed, as it was understood: the formula, then the values given to it.
     var interpretation: Math? { details.map { row($0.equation, t(",   " + given.joined(separator: ",   "))) } }
-    var copyText: String? { found.map { $0.map { String(format: "%.12g", $0) }.joined(separator: ", ") } ?? Solver.copy(substituted) }
+    var copyText: String? { if let formula { return formula }; return found.map { $0.map { String(format: "%.12g", $0) }.joined(separator: ", ") } ?? Solver.copy(substituted) }
 }

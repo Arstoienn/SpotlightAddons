@@ -10,6 +10,7 @@ enum MathIntent {
     case money(Conversion)
     case digest(Hash)
     case colour(Colour)
+    case circuit(Circuit)
     case sequence(Sequence)
     case severalAnswers(count: Int, named: String)   // ans, when the last question had several
     case matrix(MatrixValue)
@@ -31,6 +32,9 @@ enum MathIntent {
     case comparison(Comparison)
     case inequality(Inequality)
     case inequalities(InequalitySet)
+    case relation(Relation)                          // y = x², f(x) = sin x, x² + y² = 5: a curve, drawn
+    case proof(Proof)                                // p² − 8q − 11 = 0 has no integer solutions; n³ − n is divisible by 6; √2 is irrational
+    case conditioned(Conditioned)                    // C(11,4)x⁷k⁴, 330k⁴ = 1320: the equation solved, its value put into the expression
     case evaluate(Evaluation, Solution, asTyped: String)
     case factorise(Algebra)
     case simplify(Simplification)
@@ -51,6 +55,10 @@ enum MathIntent {
         case .money: return "banknote"
         case .digest: return "lock"
         case .colour: return "paintpalette"
+        case .circuit: return "cpu"
+        case .relation: return "chart.xyaxis.line"
+        case .conditioned: return "x.squareroot"
+        case .proof: return "checkmark.seal"
         case .sequence: return "list.number"
         case .severalAnswers: return "list.bullet"
         case .matrix: return "square.grid.3x3"
@@ -79,6 +87,10 @@ enum MathIntent {
         case .money: return "Converting money"
         case .digest: return "Taking a digest"
         case .colour: return "Working with a colour"
+        case .circuit: return "Working through a logic circuit"
+        case .relation: return "Drawing a graph"
+        case .conditioned: return "Solving for a letter in an expression"
+        case .proof: return "Proving a statement"
         case .sequence: return "Finding a sequence"
         case .severalAnswers: return "Choosing an answer"
         case .matrix: return "Working with matrices"
@@ -147,6 +159,10 @@ enum Analyzer {
         if let hash = Hash.parse(typed) { return Reading(intent: .digest(hash), input: typed) }
         // A colour, #FF5733 or rgb(255, 87, 51), is read as typed: # is no mark of mathematics either.
         if let colour = Colour.parse(typed) { return Reading(intent: .colour(colour), input: typed) }
+        // s0 = a0 xor b0, c1 = a0 and b0, or the same in LaTeX: a logic circuit, read before any of it is taken as arithmetic.
+        if let circuit = Circuit.parse(typed) { return Reading(intent: .circuit(circuit), input: typed) }
+        // A statement about whole numbers to prove, in words: read before the words turn it away as prose.
+        if let proof = Proof.parse(typed) { return Reading(intent: .proof(proof), input: typed) }
         let asTyped = typed   // before it is tidied: lcm(4,6) is not bracketed as it was written
         guard let tidied = Hash.numbers(in: typed).map(Prose.tidy), !Prose.reads(tidied) else { return nil }
         // (0 = 0) = 0: a statement in brackets used as a number is 1 or 0, and the card says which.
@@ -193,8 +209,13 @@ enum Analyzer {
             if let system = NonlinearSystem.parse(input) { return reading(.nonlinearSystem(system)) }
             // Linear in x, y (and z) with letters for coefficients: solved in those letters.
             if let lettered = LetterSystem.parse(input) { return reading(.letterSystem(lettered)) }
+            // An expression with the one equation that settles a letter in it.
+            if let conditioned = Conditioned.parse(input) { return reading(.conditioned(conditioned)) }
             return Insufficient.parse(input).map { reading(.insufficient($0)) }
         }
+        // One equation in x and y alone, or f(x) = …: a curve to draw, with nothing to solve for,
+        // unless a letter is asked for, as in x + y = 3, y = ?, which is the formula turned round.
+        if asked == nil, let relation = Relation.parse(input) { return reading(.relation(relation)) }
         if let conversion = Conversion.parse(input) { return reading(.conversion(conversion)) }
         if let complex = ComplexValue.parse(input) { return reading(.complex(complex)) }
         // A number by itself is said something of, and is nothing to copy or to keep as ans.

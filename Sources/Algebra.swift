@@ -60,7 +60,8 @@ struct Algebra {
             let head = String(s[m])
             let digits = head.dropFirst().prefix { $0.isNumber || $0 == "^" || $0 == "{" }.filter(\.isNumber)
             let v = head.last { $0.isLetter }!
-            return (Int(digits) ?? 1, "d/d\(v)" + s[m.upperBound...])
+            // An order too large for a whole number is no order to work to: -1 says so.
+            return (Int(digits) ?? -1, "d/d\(v)" + s[m.upperBound...])
         }
         let words = ["second": 2, "2nd": 2, "third": 3, "3rd": 3, "fourth": 4, "4th": 4]
         for (word, n) in words {
@@ -81,6 +82,15 @@ struct Algebra {
                 if c == ",", depth == 0 { parts.append(current); current = "" } else { current.append(c) }
             }
             return (parts + [current]).map { $0.trimmingCharacters(in: .whitespaces) }
+        }
+        // (1+x)^3 expand, x^2-1 factorise: the name after what it works on, as it is said. A closing
+        // bracket too many at its end, (1+qx)^-1), is a slip and is left out.
+        for word in ["expand", "factorise", "factorize", "factor"] {
+            guard let r = s.range(of: "\\s+" + word + "$", options: [.regularExpression, .caseInsensitive]) else { continue }
+            var body = String(s[..<r.lowerBound]).trimmingCharacters(in: .whitespaces)
+            while body.hasSuffix(")"), body.filter({ $0 == ")" }).count > body.filter({ $0 == "(" }).count { body.removeLast() }
+            guard !body.isEmpty else { continue }
+            return read(word + "(" + body + ")")
         }
         let names: [(String, Kind)] = [("expand", .expand), ("factorise", .factor), ("factorize", .factor), ("factor", .factor),
                                        ("differentiate", .derivative), ("derivative", .derivative), ("diff", .derivative),
@@ -151,7 +161,9 @@ struct Algebra {
     private static func expand(_ tokens: [Parser.Token], _ letters: [String]) -> Algebra? {
         guard !letters.isEmpty else { return nil }
         var state = Parser.State(tokens: tokens, unknown: "", bound: letters)
-        guard let expr = try? state.expression(), state.at == tokens.count, var terms = Simplification.collected(expr) else { return nil }
+        guard let expr = try? state.expression(), state.at == tokens.count else { return nil }
+        if let series = binomialSeries(expr, letters) { return series }
+        guard var terms = Simplification.collected(expr) else { return nil }
         // The highest power first.
         terms.sort { a, b in
             let (da, db) = (a.powers.values.reduce(0, +), b.powers.values.reduce(0, +))
@@ -165,6 +177,49 @@ struct Algebra {
                         solutions: [result], note: nil, f: { _ in .nan }, roots: [])
         d.graph = nil
         return Algebra(solution: Solution(exact: result.plain, approx: nil), details: d, copyText: plain(result.plain), values: [])
+    }
+
+    // (1 + qx)⁻¹, (4 − x)^(1/2): a sum with a number in it, to a power that is not a whole number of
+    // nought or more, has no end when multiplied out. Its binomial series is given to the fourth term,
+    // with the condition for it to hold: (c + u)ⁿ = cⁿ(1 + u/c)ⁿ = cⁿ[1 + n(u/c) + n(n − 1)/2!·(u/c)² + …],
+    // for |u/c| < 1.
+    private static func binomialSeries(_ expr: Expr, _ letters: [String]) -> Algebra? {
+        guard case .op("^", let base, let power) = expr, let n = power.number?.double, n.isFinite,
+              !(n == n.rounded() && n >= 0), let baseTerms = Simplification.collected(base), baseTerms.count >= 2,
+              let constant = baseTerms.first(where: { $0.powers.isEmpty })?.coefficient.double, constant != 0 else { return nil }
+        // u, the rest of the sum, over c.
+        let rest = Expr.op("/", .op("-", base, .num(constant)), .num(constant))
+        var series: Expr = .num(pow(constant, n))
+        var coefficient = 1.0
+        for k in 1...3 {
+            coefficient *= (n - Double(k - 1)) / Double(k)
+            series = .op("+", series, .op("*", .num(pow(constant, n) * coefficient), .op("^", rest, .num(Double(k)))))
+        }
+        guard var terms = Simplification.collected(series) else { return nil }
+        // Lowest power first, as a series is written.
+        terms.sort { a, b in
+            let (da, db) = (a.powers.values.reduce(0, +), b.powers.values.reduce(0, +))
+            if da != db { return da < db }
+            for letter in letters where a.powers[letter] != b.powers[letter] { return (a.powers[letter] ?? 0) < (b.powers[letter] ?? 0) }
+            return false
+        }
+        let writer = Simplification(expr: series, letters: letters, terms: terms)
+        let result = row(writer.math(terms), t(" + …"))
+        // u/c tidied, its sign dropped where it is one term, as the condition takes its size: |x/4| < 1.
+        var ratioTerms = Simplification.collected(rest) ?? []
+        if ratioTerms.count == 1, ratioTerms[0].coefficient.double < 0 { ratioTerms[0].coefficient = -ratioTerms[0].coefficient }
+        let ratio = ratioTerms.isEmpty ? typeset(rest, "") : Simplification(expr: rest, letters: letters, terms: ratioTerms).math(ratioTerms)
+        let general = t("(1 + u)ⁿ = 1 + nu + n(n − 1)/2!·u² + n(n − 1)(n − 2)/3!·u³ + …")
+        var steps = [Step(label: "Writing the binomial series", math: general, note: "For a power n that is not a whole number of nought or more, the series has no last term.")]
+        if constant != 1 {
+            let taken = Expr.op("*", .op("^", .num(constant), power), .op("^", .op("+", .num(1), .index("u")), power))
+            steps.append(Step(label: "Taking out the constant term", math: row(typeset(expr, ""), t(" = "), typeset(taken, "")),
+                              note: "Here u is the rest of the sum divided by \(decimal(constant)): u = " + ratio.plain + "."))
+        }
+        steps.append(Step(label: "Substituting u and n = \(decimal(n))", math: result))
+        let condition = "Valid for |" + ratio.plain + "| < 1."
+        let d = Details(name: "", equation: typeset(expr, ""), steps: steps, solutions: [result], note: condition, f: { _ in .nan }, roots: [])
+        return Algebra(solution: Solution(exact: result.plain, approx: condition), details: d, copyText: plain(writer.math(terms).plain), values: [])
     }
 
     // MARK: Factorising
@@ -319,19 +374,52 @@ struct Algebra {
 
     // MARK: Differentiating
 
+    // The most times a derivative is taken, and the largest it may grow to on the way: d¹⁰⁰/dx¹⁰⁰ sin(eˣ)
+    // doubles at every step, and is refused rather than worked at for ever.
+    static let highestOrder = 1000, largestDerivative = 4000
+
+    private static func refused(_ why: String, _ note: String) -> Algebra {
+        Algebra(solution: Solution(exact: why, approx: note),
+                details: Details(name: "", equation: t(why), steps: [], solutions: [t(why)], note: note, f: { _ in .nan }, roots: []),
+                copyText: "", values: [])
+    }
+
     private static func derivative(_ expr: Expr, _ name: String, point: String?, order: Int = 1) -> Algebra? {
+        guard order >= 0, order <= highestOrder || polynomialDegree(expr) != nil else {
+            return refused("Order too large", "Derivatives of order above \(highestOrder) are not worked out, but for a polynomial, whose high derivatives are 0.")
+        }
+        // The derivative of order nought is the function itself.
+        if order == 0 {
+            let original = typeset(expr, name)
+            var d = Details(name: name, equation: row(t("d⁰/d\(name)⁰ "), .group(original)), steps: [Step(label: "Taking no derivative", math: original,
+                            note: "The derivative of order 0 is the function itself.")], solutions: [original], note: nil, f: { expr.eval($0) }, roots: [])
+            d.graph = nil
+            return Algebra(solution: Solution(exact: original.plain, approx: "The derivative of order 0 is the function itself"), details: d, copyText: plain(original.plain), values: [])
+        }
         guard var raw = differentiated(expr) else { return nil }
         var steps = Working.derivative(expr, name)
         if order > 1 { steps.insert(Step(label: "Derivative 1 of \(order)", math: nil, note: "Differentiate the original expression first, then differentiate each result in turn."), at: 0) }
-        // Again for each order more, from the tidied form.
-        for _ in 1..<max(order, 1) {
+        // Again for each order more, from the tidied form; once it is 0, every one after it is 0 too.
+        var taken = 1
+        while taken < order {
             let previous = cleaned(raw)
+            if case .num(0) = previous {
+                steps.append(Step(label: "Hence", math: t("0"), note: "The derivative is 0 from order \(taken) on, so every higher derivative is 0 too."))
+                break
+            }
+            guard taken < highestOrder else {
+                return refused("Order too large", "Derivatives of order above \(highestOrder) are not worked out, but for a polynomial, whose high derivatives are 0.")
+            }
+            guard nodes(previous) <= largestDerivative else {
+                return refused("Too large to write out", "The derivative of order \(taken + 1) grows past \(largestDerivative) terms and factors, so it is not worked out.")
+            }
             guard let next = differentiated(previous) else { return nil }
             if steps.count < 60 {
                 steps.append(Step(label: "Differentiating once more", math: row(t("d/d\(name) "), .group(typeset(previous, name)))))
                 steps += Working.derivative(previous, name)
             }
             raw = next
+            taken += 1
         }
         let result = cleaned(raw)
         // A polynomial, in the form it is usually written, where that is the shorter.
@@ -358,6 +446,20 @@ struct Algebra {
         }
         return Algebra(solution: Solution(exact: shown.plain, approx: order > 1 ? "The derivative of order \(order) with respect to \(name)" : "The derivative with respect to \(name)"), details: d, copyText: plain(shown.plain), values: [])
     }
+
+    // How many parts an expression has: how much work it is to differentiate and to write.
+    static func nodes(_ e: Expr) -> Int {
+        switch e {
+        case .num, .unknown, .index, .constant: return 1
+        case .neg(let a), .call(_, let a): return 1 + nodes(a)
+        case .op(_, let a, let b): return 1 + nodes(a) + nodes(b)
+        case .apply(_, let args): return 1 + args.map(nodes).reduce(0, +)
+        case .sum(_, let from, let to, let body, _): return 1 + nodes(from) + nodes(to) + nodes(body)
+        }
+    }
+
+    // Its degree, where it is a polynomial in the unknown: its high derivatives are 0.
+    private static func polynomialDegree(_ e: Expr) -> Int? { poly(e).map(trim).map { $0.count - 1 } }
 
     // The derivative as the rules give it, before it is tidied; nil where there is no rule.
     static func differentiated(_ e: Expr) -> Expr? {
@@ -625,8 +727,12 @@ struct Algebra {
                                         note: "\(what) has a finite limit as \(name) approaches each of these from either side; hence the integral converges, and is the sum of the changes between them."))
                 }
             } else {
+                numericGaveUp = false
                 value = antiderivative.map { $0.eval(hi) - $0.eval(lo) } ?? numeric(expr, lo, hi)
-                if !value.isFinite { value = numeric(expr, lo, hi) }
+                if !value.isFinite, !numericGaveUp { value = numeric(expr, lo, hi) }
+                if numericGaveUp, !value.isFinite {
+                    return refused("Too much to work out", "The integrand changes too often over the interval to be integrated numerically here; it would need more than \(Algebra.mostPanels) pieces.")
+                }
                 if let F = antiderivative {
                     d.steps += Working.integral(expr, primitive: F, name: name)
                     d.steps.append(Step(label: "Fundamental theorem of calculus", math: row(sign, termMath(expr, name), t(" d\(name) = F(b) − F(a)")),
@@ -866,6 +972,9 @@ struct Algebra {
         return (Double(p / g), Double(q / g))
     }
 
+    static let mostPanels = 20_000
+    nonisolated(unsafe) static var numericGaveUp = false
+
     // Adaptive Gauss–Kronrod (7, 15) quadrature.
     static func numeric(_ e: Expr, _ a: Double, _ b: Double) -> Double {
         let xgk = [0.991455371120812639206854697526329, 0.949107912342758524526189684047851, 0.864864423359769072789712788640926,
@@ -886,7 +995,12 @@ struct Algebra {
             }
             return (k * h, g * h)
         }
+        // At most so many pieces in all: sin(10⁹x²) on [0, 1] would want 2⁴⁰ of them. Past that the
+        // integral is given up as too much to work out, rather than worked at for minutes.
+        var panels = 0
         func go(_ lo: Double, _ hi: Double, _ depth: Int) -> Double {
+            panels += 1
+            if panels > Algebra.mostPanels { numericGaveUp = true; return .nan }
             let (k, g) = panel(lo, hi)
             if !k.isFinite { return .nan }
             if depth >= 40 || abs(k - g) <= 1e-13 * max(abs(k), 1e-3) * max(1, (hi - lo)) { return k }

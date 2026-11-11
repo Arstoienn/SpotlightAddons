@@ -3,7 +3,10 @@ import Foundation
 // The registry is generated from the functions which actually execute, so completion and runtime
 // cannot drift. A persistent local worker imports scientific libraries once, off the UI thread.
 struct AstronomyMethod: Decodable {
-    struct Parameter: Decodable { let name: String; let kind: String; let required: Bool; let `default`: String? }
+    struct Parameter: Decodable {
+        let name: String; let kind: String; let required: Bool; let `default`: String?; let choices: [String]?
+        var completion: Completion.Parameter { Completion.Parameter(name: name, kind: kind, choices: choices ?? []) }
+    }
     let name: String
     let category: String
     let description: String
@@ -25,7 +28,7 @@ struct AstronomyMethod: Decodable {
         if name == "absolute_magnitude" {
             return Completion.Function(name:name,forms:[[Completion.Parameter(name:"body",kind:"seen")],
                 [Completion.Parameter(name:"apparent_mag",kind:"apparent"),Completion.Parameter(name:"distance",kind:"distance")],
-                parameters.map { Completion.Parameter(name:$0.name,kind:$0.kind) }],summary:category + " · " + description,aliases:aliases)
+                parameters.map(\.completion)],summary:category + " · " + description,aliases:aliases)
         }
         if name == "luminosity" {
             return Completion.Function(name:name,forms:[[Completion.Parameter(name:"body",kind:"star")],
@@ -37,8 +40,8 @@ struct AstronomyMethod: Decodable {
                 [Completion.Parameter(name:"a",kind:"orbit"),Completion.Parameter(name:"M",kind:"central")]],
                 summary:category + " · " + description,aliases:aliases)
         }
-        let required = parameters.filter(\.required).map { Completion.Parameter(name: $0.name, kind: $0.kind) }
-        let all = parameters.map { Completion.Parameter(name: $0.name, kind: $0.kind) }
+        let required = parameters.filter(\.required).map(\.completion)
+        let all = parameters.map(\.completion)
         return Completion.Function(name: name, forms: required == all ? [required] : [required, all],
                                    summary: category + " · " + description, aliases: aliases)
     }
@@ -67,6 +70,62 @@ struct AstronomyPicture {
     var result: Any
 }
 
+struct AstronomyWorking {
+    struct Row {
+        let name: String
+        let value: String
+        let detail: String?
+
+        init?(_ raw: [String: String]) {
+            guard let name = raw["name"], let value = raw["value"] else { return nil }
+            self.name = name
+            self.value = value
+            detail = raw["detail"]
+        }
+    }
+
+    // A value the method looked up as it worked, in SI: the mass of the Earth, a radius given.
+    struct Used {
+        let kind: String     // mass, radius, length, temperature, luminosity, time, angle, speed, mu, a, number
+        let label: String    // Mass of earth
+        let value: Double
+        let unit: String
+    }
+
+    let inputs: [Row]
+    let formula: String
+    let values: [Used]
+    let si: Double?          // the answer in SI units, which the formula gives from the values in SI
+    let siUnit: String
+    let constants: [Row]
+    let intermediates: [Row]
+    let results: [Row]
+    let model: String
+    let source: String
+    let notes: [String]
+
+    init?(_ raw: [String: Any], notes: [String]) {
+        guard let working = raw["working"] as? [String: Any], let formula = working["formula"] as? String else { return nil }
+        func rows(_ key: String) -> [Row] {
+            (working[key] as? [[String: String]] ?? []).compactMap(Row.init)
+        }
+        inputs = rows("inputs")
+        self.formula = formula
+        values = (working["values"] as? [[String: Any]] ?? []).compactMap { v in
+            guard let kind = v["kind"] as? String, let label = v["label"] as? String, let value = v["value"] as? Double else { return nil }
+            return Used(kind: kind, label: label, value: value, unit: v["unit"] as? String ?? "")
+        }
+        si = working["si"] as? Double
+        siUnit = working["si_unit"] as? String ?? ""
+        constants = rows("constants")
+        intermediates = rows("intermediates")
+        results = rows("results")
+        model = raw["model"] as? String ?? ""
+        source = raw["source"] as? String ?? ""
+        self.notes = notes
+    }
+}
+
 final class AstronomyEngine: @unchecked Sendable {
     static let shared = AstronomyEngine()
     static let changed = Notification.Name("AstronomyEngineChanged")
@@ -88,6 +147,11 @@ final class AstronomyEngine: @unchecked Sendable {
     private var input: FileHandle?
     private var output: FileHandle?
     private var buffer = Data()
+    // The worker holds about 100 MB once its libraries are loaded, and nothing while it is not there.
+    // Five minutes after the last calculation it is let go; the next @ starts it again in a second or so.
+    static var idleLimit: TimeInterval = 300
+    private var idle: DispatchWorkItem?
+    var isRunning: Bool { queue.sync { process?.isRunning == true } }
     // Tests use the same public parser and protocol synchronously; GUI work always runs on queue.
     static var synchronous = false
 
@@ -130,7 +194,16 @@ final class AstronomyEngine: @unchecked Sendable {
         try p.run()
         process = p; input = stdin.fileHandleForWriting; output = stdout.fileHandleForReading; buffer = Data()
     }
+    // On the queue, as every calculation is, so a calculation and the closing never meet.
+    private func closeWhenIdle() {
+        idle?.cancel()
+        let item = DispatchWorkItem { [weak self] in self?.stop() }
+        idle = item
+        queue.asyncAfter(deadline: .now() + Self.idleLimit, execute: item)
+    }
     private func compute(_ text: String) -> Astronomy {
+        idle?.cancel()
+        defer { closeWhenIdle() }
         do {
             try start()
             guard let input, let output else { throw Problem(message: "Astronomy worker unavailable", detail: "Restart the app.") }
@@ -152,18 +225,18 @@ final class AstronomyEngine: @unchecked Sendable {
                 throw Problem(message: "Invalid astronomy response", detail: "Rebuild the scientific runtime.")
             }
             if raw["ok"] as? Bool != true {
-                return failure(raw["error"] as? String ?? "Calculation failed", "Check the method signature, units and physical domain.")
+                return failure(raw["error"] as? String ?? "Calculation failed", "Check the method signature, units and physical domain.", query: text)
             }
             return decode(raw, query: text)
         } catch let error as Problem {
-            stop(); return failure(error.message, error.detail)
+            stop(); return failure(error.message, error.detail, query: text)
         } catch {
-            stop(); return failure("Astronomy runtime error", error.localizedDescription)
+            stop(); return failure("Astronomy runtime error", error.localizedDescription, query: text)
         }
     }
     private func stop() { process?.terminate(); process = nil; input = nil; output = nil; buffer = Data() }
-    private func failure(_ title: String, _ note: String) -> Astronomy {
-        let details = Details(name: "Astronomy", equation: .text(title), steps: [], solutions: [], note: note, f: { _ in .nan }, roots: [])
+    private func failure(_ title: String, _ note: String, query: String) -> Astronomy {
+        let details = Details(name: "Astronomy", equation: .text(query), steps: [], solutions: [], note: note, f: { _ in .nan }, roots: [])
         return Astronomy(solution: Solution(exact: title, approx: note), details: details)
     }
     private func decode(_ raw: [String: Any], query: String) -> Astronomy {
@@ -176,8 +249,10 @@ final class AstronomyEngine: @unchecked Sendable {
         var steps = (raw["steps"] as? [[String: String]] ?? []).map { Step(label: $0["label"] ?? "Working", math: .text($0["text"] ?? "")) }
         steps.append(Step(label: "Model and source", math: nil, note: model + "\n" + source))
         let result = raw["result"] ?? NSNull()
+        let context = notes.isEmpty ? ["Input values treated as exact; catalogue/model uncertainty is not included."] : notes
         var d = Details(name: name, equation: .text(query), steps: steps, solutions: [.text(summary)],
-                        note: notes.isEmpty ? "Input values treated as exact; catalogue/model uncertainty is not included." : notes.joined(separator: "\n"), f: { _ in .nan }, roots: [])
+                        note: context.joined(separator: "\n"), f: { _ in .nan }, roots: [])
+        d.astronomyWorking = AstronomyWorking(raw, notes: context)
         let series = (raw["plot"] as? [String: Any]).flatMap(AstronomySeries.init)
         let data = raw["diagram"] as? [String: Any] ?? [:]
         if data["kind"] as? String == "hr", let t = data["temperature"] as? Double, let l = data["luminosity"] as? Double {
@@ -196,6 +271,7 @@ final class AstronomyEngine: @unchecked Sendable {
         else if JSONSerialization.isValidJSONObject(result), let json = try? JSONSerialization.data(withJSONObject: result, options: [.prettyPrinted,.sortedKeys]), let s = String(data: json, encoding: .utf8) { copy = s }
         else { copy = summary }
         d.whole = copy
-        return Astronomy(solution: Solution(exact: summary, approx: name + " · " + model), details: d, copy: copy, value: value)
+        return Astronomy(solution: Solution(exact: summary, approx: AstronomyWorkingText.name(name) + " · " + AstronomyWorkingText.sentence(model)),
+                         details: d, copy: copy, value: value)
     }
 }

@@ -14,6 +14,11 @@ Opening Spotlight Add-ons itself, from Spotlight or Finder, opens the preference
   linear, quadratic and higher, exponential, logarithmic and trigonometric (in radians and in degrees, over
   one turn or a range you give), rational (`1/x+1/(x+1)=1`), systems, and formulas turned round or with
   values given. A quadratic with no real root gives its complex roots.
+- **Curves**: one equation in x and y alone, or a function written with its name, is drawn: `y = x^2`,
+  `f(x) = sin x`, `x^2 + y^2 = 5`. The card says what it is (a straight line with its gradient and intercept,
+  a parabola with its vertex, a circle with its centre and radius, an ellipse with its semi-axes, or a curve
+  with its turning points), and the working finds where it crosses the axes. Other letters make it a formula,
+  which is turned round instead.
 - **Inequalities** in one letter, alone or together: `x^2>4`, `1<x<5`, `x>1 && x<5`.
 - **Arithmetic**, with the functions of a calculator, percentages, whole numbers written out in full,
   complex numbers, statistics and distributions, matrices and vectors, and sequences.
@@ -109,23 +114,35 @@ A frequency table is two lists, the values and how often each comes: `mean([1,2,
 
 ### Colours
 
-A colour written as CSS writes it, `#FF5733`, `#f53`, `rgb(255, 87, 51)`, `rgb(255 87 51 / 50%)`, `hsl(11, 100%, 60%)`,
-or as `hsb( )` and `cmyk( )`, or by its CSS name after `colour`: `colour tomato`. The card shows it beside the answer,
-which is the colour written another way, or the way asked for: `#FF5733 to hsl`, `tomato in cmyk`, `#FF00FF to name`.
-The working converts it into each way step by step, finds the nearest named colour and its contrast with white and black,
-and marks it on the CIE 1931 chromaticity diagram.
+A colour by itself, as CSS writes it or by its CSS name: `red`, `#FF5733`, `#f53`, `rgb(255, 87, 51)`,
+`rgb(255 87 51 / 50%)`, `hsl(11, 100%, 60%)`, `hsb( )`, `cmyk( )`; or beyond sRGB, `color(display-p3 1 0 0)`,
+`color(rec2020 0 1 0)`, `lab( )`, `lch( )`, `oklab( )`, `oklch(70% 0.3 150)`, and by its CIE coordinates,
+`xyY(0.17, 0.75, 0.4)`. The card shows it beside the answer, which is the colour written another way, or the way asked
+for: `#FF5733 to hsl`, `tomato in cmyk`, `#FF5733 to oklch`, `#FF5733 to xyy`, `#FF00FF to name`. A colour beyond sRGB
+is said to be so, and in which gamut it lies; its hex is the nearest sRGB can show. The working converts it into each
+way step by step, gives its CIE xyY, the nearest named colour and its contrast with white and black.
 
 | Typed | Gives |
 | --- | --- |
 | `red + blue`, `#FF0000 + #0000FF` | light added, channel by channel, no more than 255: `#FF00FF` |
-| `#FFFFFF - #FF0000` | light taken away, no less than 0: `#00FFFF` |
+| `white - red` | light taken away, no less than 0: `#00FFFF` |
+| `red * 2`, `red / 2`, `(red + blue) / 2` | the light scaled, brighter or dimmer |
+| `red * blue` | the channels multiplied, as light through two filters |
+| `red / blue` | refused: dividing by a colour has no meaning in light |
 | `mix(#FF0000, #0000FF)`, `mix(a, b, 25%)` | the two mixed, half and half or the first's share given, as Sass's `mix( )`: `#800080` |
 | `gradient(a, b, 5)`, `interpolate(a, b, 25%)` | the colours evenly between, or the one a quarter of the way along |
-| `deltaE(a, b)` | how far apart they look, ΔE in CIELAB |
+| `deltaE(a, b)` | how far apart they look, ΔE 1976 in CIELAB (D50, as CSS has it) |
 | `contrast(#FFFFFF, #767676)` | the WCAG 2 ratio, 4.54 : 1, and the levels it meets |
 
-The diagram marks each colour, with dashed lines from the colours added or mixed to what they make, and through the
-colours of a gradient.
+Below the working is the CIE 1931 chromaticity diagram, in place of a graph: each colour where it truly lies, beyond the
+screen's gamut or not, labelled A, B and Result, with dashed lines from the colours added or multiplied to what they make,
+and the path a mixture or gradient goes along. The triangles of sRGB (solid), Display P3 (dashed) and Rec. 2020
+(dotted) show what each kind of screen can show; a colour beyond sRGB has a dashed ring. A colour typed can be dragged
+about the diagram, keeping its luminance, sliding along the edge of the horseshoe where the pointer goes beyond it, and
+what it makes moves with it; the result of a mixture can be dragged along its path, or moved with the slider; As typed
+glides them back. Clicking a colour gives its x, y and Y exactly. As the graph does, the diagram zooms with a pinch
+or + and −, while the wheel and two-finger scrolling scroll the panel; it moves about when dragged elsewhere, and goes back
+to the whole with a double-click.
 
 ### Units and bases
 
@@ -153,7 +170,7 @@ left out, as is one whose code is a word that might be meant otherwise (SUN, OHM
 
 The rates are fetched as the card is made, in the background, each against the US dollar, and the card is made again
 when they arrive: currencies from open.er-api.com (they are those of the day, as that is the finest it gives, and are asked for no oftener than once an hour, which is what the source asks), coins from
-api.coinbase.com (and those it does not have, such as XMR, TRX, KAS and OKB, from api.kraken.com) and metals from api.gold-api.com (as they trade). The last rates had are kept, and with no connection they
+api.coinbase.com (and those it does not have, such as XMR, TRX, KAS and OKB, from api.kraken.com) and metals from api.gold-api.com (as they trade). Where Coinbase cannot be reached, as on a network that blocks it, its coins are had from Kraken instead, and Preferences says so; Kraken does not list BSV, EOS, IOTX, MATIC, MKR or ZEN. The last rates had are kept, and with no connection they
 are used, and the card then says when they were recorded: `1 BTC = 82645.1 USD · offline, rates of 8 Oct 2026, 14:01`.
 With a connection it says nothing of the time. With neither a connection nor rates saved, there is no value to give, and
 the card says so.
@@ -243,6 +260,42 @@ exact, and `0.5===1/2` is True. `==` is the same as `=`. Also `!=`, `<`, `>`, `<
 `&&` or `and`, `||` or `or`, and are negated with `!( )` or `not`, with brackets to group: `3+1=4 || 3=1` is
 True, `&&` going first, and `not (1=1 and 2=3)` is True. In LaTeX: `\approx`, `\ne`, `\le`, `\ge`, `\land`, `\lor`, `\lnot`.
 
+### Logic circuits
+
+Equations of a circuit, one to a line or between commas, in words, in symbols or in LaTeX:
+
+```
+s0 = a0 xor b0, c1 = a0 and b0, s1 = a1 xor b1 xor c1, Cout = (a1 and b1) or (c1 and (a1 xor b1))
+\begin{aligned} s_0 &= a_0\oplus b_0 \\ c_1 &= a_0\land b_0 \\ … \end{aligned}
+```
+
+The card names the inputs and the outputs; the working gives the rows where each output is 1, each in its simplest
+sum of products (by the Quine–McCluskey method), the truth table, and the circuit drawn with its gates, a signal used
+twice made once and branching. One expression, `A and not B or C`, `A xor B`, `p implies q`, has its output called
+Q, and the card gives the rows where it is 1 (`Q = Σm(1, 2)`), or says it is always 1 or always 0. Two expressions
+said to be equal, `not (A and B) = not A or not B`, are compared row by row: True, or False and where they differ.
+
+| Written | Means |
+| --- | --- |
+| `and`, `&&`, `∧`, `\land`, `\wedge`, `·`, `*`, two side by side (`AB`) | and |
+| `or`, `\|\|`, `∨`, `\lor`, `\vee`, `+` | or |
+| `xor`, `⊕`, `\oplus`, `^` | exclusive or |
+| `not`, `!`, `~`, `¬`, `\lnot`, `\neg`, `\overline{ }`, `A'` | not |
+| `nand`, `nor`, `xnor`, `↑`, `↓`, `⊙` | the gates with a circle on their output |
+| `implies`, `→`, `\implies`; `iff`, `↔`, `\iff` | if, and if and only if |
+
+`¬` binds tightest, then `∧`, `⊕`, `∨`, and `→` loosest. `a0` is a with 0 below it, as `a_0` is. The marks that are
+arithmetic too (`+`, `*`, `^`, `!`, `'`) are read as logic only beside a word or a sign that says it is logic, or after
+`truth table`: `truth table A'B + AB'`. A circuit with feedback, as a latch has, is not worked through.
+
+A name with a prime that is given an equation, `b0' = b0 xor M` or `b'_0 &= b_0\oplus M`, is a signal of its own, and
+`b0'` after it is that signal, not "not b0". In LaTeX, what is before `&=` is the output's label however it is written:
+`A>B &= …`, `A=B &= …`; and an equation may run over two lines, a row ending only at `\\`. Inputs numbered as bits,
+a1 a0 b1 b0, are put in the order a number is read, so that a row's number is the numbers it holds written together.
+
+The circuit drawn works: each input and output shows its 0 or 1, and every wire carrying a 1 is lit. Clicking an input
+switches it; clicking a row of the truth table sets every input as that row has it, and that row is marked.
+
 ### Systems
 
 Equations separated by commas, `2x+y=5, x-y=1`. Linear ones are solved by elimination, written out as by
@@ -283,7 +336,7 @@ commands (`\,` `\;` `\quad`) ignored.
 
 ## Astronomy mode
 
-Type `@` to choose among **234 astronomy methods in 14 categories**, from celestial bodies and orbital mechanics to cosmology, telescope optics, data analysis and gravitational waves. [AstronomyMethods.md](AstronomyMethods.md) lists every signature, runnable example, formula, model, output type and source.
+Type `@` to choose among **31 everyday astronomy methods**: bodies (mass, radius, density, gravity, escape velocity, rotation, tilt, luminosity, comparisons), distances and light time, orbits and Kepler's third law, stars (luminosity, Wien's peak, blackbody spectrum, H–R position), Schwarzschild radius, Lorentz factor, rest energy, redshift, magnitudes and parallax, the Moon's phase and a sky map. [AstronomyMethods.md](AstronomyMethods.md) lists every signature, runnable example, formula, model, output type and source.
 
 ```text
 @ schwarzschild_radius(10 M_sun)
@@ -307,7 +360,7 @@ FITS/CSV images and CSV time/flux columns are read only; see the reference for i
 
 **Build and verification.** `./setup-astronomy.sh` prepares pinned portable CPython, scientific libraries and the checksummed JPL kernel inside `build/`. Setup needs network access once; normal calculations work offline. `./build.sh --no-install` builds and signs `build/Spotlight Add-ons.app` inside the worktree. `./build.sh` retains the original install/restart behavior.
 
-`./test.sh` runs all 234 registered examples, numerical invariants and data-file acceptance tests, followed by the Swift solver/completion/integration suite. `./test.sh --visual` additionally renders 12 representative diagrams to `build/astronomy-previews/`. Background calculations have a 60-second limit and a bounded cache.
+`./test.sh` runs every registered example, numerical invariants and data-file acceptance tests, followed by the Swift solver/completion/integration suite. `./test.sh --visual` additionally renders 12 representative diagrams to `build/astronomy-previews/`. Background calculations have a 60-second limit and a bounded cache.
 
 ## The panel
 
@@ -328,7 +381,27 @@ The top of the panel is the card itself, so opening it moves nothing. Below it:
   panel; at any other time Return is Spotlight's.
 - **Solutions**: exact and decimal, each copied by a click, as the working is.
 - **Graph**: each side of an equation, or each equation of a system, as its own line, crossing at
-  the solutions. Drag to move, scroll or pinch to zoom, double-click to reset.
+  the solutions; a curve with its intercepts, turning points and centre marked. Drag to move, pinch or use + and − to zoom, double-click to reset; scrolling scrolls the panel.
+
+### Design rules
+
+The card and its panel keep to these throughout, so that every kind of answer reads and works alike:
+
+- **What was typed comes first, typeset**: as mathematics for an equation, as the call it reads as for Astronomy
+  (Escape velocity (Earth)), never as raw code.
+- **Formal English**: step titles are gerunds, the conclusion is "Hence", notes are sentences, headings are in sentence
+  case with the hyphens English gives them (Semi-major axis), bodies by their names (the Earth), British spelling.
+- **The answer's heading names what it is**: Solution or Solutions for an equation, Features for a curve; on a working
+  with pages, the page's own name (Result) and no heading repeating it.
+- **One kind of row**: a small grey name above its value; every row shades under the pointer and copies on a click.
+- **Choosing**: what the keyboard chooses is in Spotlight's own blue, as in the @ list; what the pointer rests on, and
+  the page shown, are grey.
+- **Pages or one page**: a working whose parts are different kinds of thing (a result, a picture, the method, the source)
+  has pages, as Astronomy's does; one that reads as a single argument from the top (an equation) is one page.
+- **Graphs and drawings** sit in the same grey rounded card, in the label colour; colour appears only where it carries
+  meaning (a colour's place on the chromaticity diagram, a star's temperature, a wavelength). Every one zooms the same
+  way, with the same buttons at its top right and the same line under it: drag to move, pinch or + and − to zoom,
+  double-click to go back.
 
 The card follows Spotlight when it is dragged, and goes when Spotlight closes. Nothing takes the
 keyboard, so typing carries on going to Spotlight.
